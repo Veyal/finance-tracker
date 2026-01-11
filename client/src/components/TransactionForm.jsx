@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { transactions, categories, groups, paymentMethods } from '../api/api';
 import CustomSelect from './CustomSelect';
@@ -39,6 +39,22 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
     const [addPaymentLoading, setAddPaymentLoading] = useState(false);
 
     const isEditing = !!transaction;
+
+    // Prevent body scrolling when modal is open
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, []);
+
+    // Helper to ensure focused input is visible on mobile
+    const handleInputFocus = (e) => {
+        // Small delay to allow keyboard to appear
+        setTimeout(() => {
+            e.target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }, 300);
+    };
 
     async function handleSubmit(e) {
         e.preventDefault();
@@ -187,6 +203,7 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                             className="amount-input"
                             value={amount}
                             onChange={handleAmountChange}
+                            onFocus={handleInputFocus}
                             placeholder="0"
                             autoFocus
                         />
@@ -199,6 +216,7 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                             className="input name-input"
                             value={name}
                             onChange={(e) => setName(e.target.value)}
+                            onFocus={handleInputFocus}
                             placeholder="Transaction name (e.g., Starbucks, Grocery)"
                         />
                     </div>
@@ -214,6 +232,7 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                                     className="input"
                                     value={date}
                                     onChange={(e) => setDate(e.target.value)}
+                                    onFocus={handleInputFocus}
                                 />
                             </div>
                             {/* Category only for expenses */}
@@ -271,6 +290,7 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                                 className="input"
                                 value={note}
                                 onChange={(e) => setNote(e.target.value)}
+                                onFocus={handleInputFocus}
                                 placeholder="Add a note..."
                             />
                         </div>
@@ -306,6 +326,7 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                                     className="input"
                                     value={newCategoryName}
                                     onChange={(e) => setNewCategoryName(e.target.value)}
+                                    onFocus={handleInputFocus}
                                     placeholder="e.g., Groceries, Entertainment"
                                     autoFocus
                                     onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
@@ -343,6 +364,7 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                                     className="input"
                                     value={newGroupName}
                                     onChange={(e) => setNewGroupName(e.target.value)}
+                                    onFocus={handleInputFocus}
                                     placeholder="e.g., Personal, Family"
                                     autoFocus
                                     onKeyDown={(e) => e.key === 'Enter' && handleAddGroup()}
@@ -380,6 +402,7 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                                     className="input"
                                     value={newPaymentName}
                                     onChange={(e) => setNewPaymentName(e.target.value)}
+                                    onFocus={handleInputFocus}
                                     placeholder="e.g., Cash, Credit Card"
                                     autoFocus
                                     onKeyDown={(e) => e.key === 'Enter' && handleAddPayment()}
