@@ -32,7 +32,7 @@ jobs:
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
+        key: ${{ secrets.SSH_KEY }}
         port: 22
         source: "server,client/dist,package.json,package-lock.json,ecosystem.config.cjs"
         target: "/home/${{ secrets.USERNAME }}/finance-tracker"
@@ -43,7 +43,7 @@ jobs:
       with:
         host: ${{ secrets.HOST }}
         username: ${{ secrets.USERNAME }}
-        password: ${{ secrets.PASSWORD }}
+        key: ${{ secrets.SSH_KEY }}
         port: 22
         script: |
           export NVM_DIR=~/.nvm
