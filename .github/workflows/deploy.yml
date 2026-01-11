@@ -27,28 +27,26 @@ jobs:
       env:
         CI: false
 
-    - name: Deploy to Server
-      uses: appleboy/scp-action@v0.1.7
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.SSH_KEY }}
-        port: 22
-        source: "server,client/dist,package.json,package-lock.json,ecosystem.config.cjs"
-        target: "/home/${{ secrets.USERNAME }}/finance-tracker"
-        strip_components: 0
+    - name: Setup SSH Key
+      run: |
+        mkdir -p ~/.ssh
+        echo "${{ secrets.SSH_KEY_HEX }}" | xxd -r -p > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        ssh-keyscan -H ${{ secrets.HOST }} >> ~/.ssh/known_hosts
+
+    - name: Deploy Files
+      run: |
+        rsync -avz --delete --exclude 'node_modules' --exclude '.git' --exclude '.env' \
+          server client/dist package.json package-lock.json ecosystem.config.cjs \
+          ${{ secrets.USERNAME }}@${{ secrets.HOST }}:/home/${{ secrets.USERNAME }}/finance-tracker
 
     - name: Restart Application
-      uses: appleboy/ssh-action@v1.0.3
-      with:
-        host: ${{ secrets.HOST }}
-        username: ${{ secrets.USERNAME }}
-        key: ${{ secrets.SSH_KEY }}
-        port: 22
-        script: |
+      run: |
+        ssh ${{ secrets.USERNAME }}@${{ secrets.HOST }} "
           export NVM_DIR=~/.nvm
           source ~/.nvm/nvm.sh
           cd /home/${{ secrets.USERNAME }}/finance-tracker
           npm install --production
           cd server && npm install --production && cd ..
           pm2 restart finance-tracker || pm2 start ecosystem.config.cjs
+        "
