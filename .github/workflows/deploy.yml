@@ -1,0 +1,54 @@
+name: Deploy to Server
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install Dependencies
+      run: npm run install:all
+
+    - name: Build Application
+      run: npm run build
+      env:
+        CI: false
+
+    - name: Deploy to Server
+      uses: appleboy/scp-action@v0.1.7
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        port: 22
+        source: "server,client/dist,package.json,package-lock.json,ecosystem.config.cjs"
+        target: "/home/${{ secrets.USERNAME }}/finance-tracker"
+        strip_components: 0
+
+    - name: Restart Application
+      uses: appleboy/ssh-action@v1.0.3
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        password: ${{ secrets.PASSWORD }}
+        port: 22
+        script: |
+          export NVM_DIR=~/.nvm
+          source ~/.nvm/nvm.sh
+          cd /home/${{ secrets.USERNAME }}/finance-tracker
+          npm install --production
+          cd server && npm install --production && cd ..
+          pm2 restart finance-tracker || pm2 start ecosystem.config.cjs
