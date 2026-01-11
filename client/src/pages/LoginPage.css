@@ -1,0 +1,252 @@
+/* Login Page Styles - Full-screen, seamless design */
+
+.login-page {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-xl);
+    background: var(--bg-deep);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Dreamy background effects */
+.login-page::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background:
+        radial-gradient(ellipse at 30% 20%, rgba(255, 126, 179, 0.15) 0%, transparent 40%),
+        radial-gradient(ellipse at 70% 80%, rgba(201, 184, 255, 0.12) 0%, transparent 40%),
+        radial-gradient(ellipse at 50% 50%, rgba(255, 202, 176, 0.08) 0%, transparent 50%);
+    animation: float 20s ease-in-out infinite;
+    pointer-events: none;
+}
+
+.login-container {
+    width: 100%;
+    max-width: 360px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
+    position: relative;
+    z-index: 1;
+}
+
+.login-header {
+    text-align: center;
+}
+
+.login-icon {
+    font-size: 80px;
+    display: block;
+    margin-bottom: var(--space-md);
+    animation: float 3s ease-in-out infinite;
+    filter: drop-shadow(0 10px 30px rgba(255, 126, 179, 0.4));
+}
+
+.login-header h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: 800;
+    margin-bottom: var(--space-xs);
+    background: var(--gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.login-header p {
+    color: var(--text-muted);
+    font-size: var(--text-base);
+}
+
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+/* Username input - clean minimal style */
+.login-form .input {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    text-align: center;
+    font-size: var(--text-lg);
+}
+
+.login-form .input:focus {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+/* PIN Input - Hidden, we use dots only */
+.pin-input-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.pin-hidden-input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* PIN Dots - The main visual */
+.pin-dots {
+    display: flex;
+    justify-content: center;
+    gap: var(--space-md);
+    padding: var(--space-lg) var(--space-xl);
+    cursor: pointer;
+    border-radius: var(--radius-xl);
+    transition: all var(--duration-fast);
+}
+
+.pin-dots:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.pin-dots.focused {
+    background: rgba(255, 126, 179, 0.05);
+}
+
+.pin-dot {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid var(--border-subtle);
+    transition: all var(--duration-fast) var(--ease-bounce);
+}
+
+.pin-dot.filled {
+    background: var(--gradient-accent);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 16px var(--accent-glow);
+    transform: scale(1.15);
+}
+
+.pin-dot.current {
+    border-color: var(--accent-primary);
+    animation: pulse-dot 1s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+.login-error {
+    color: var(--expense-red);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-align: center;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--expense-red-glow);
+    border-radius: var(--radius-md);
+    border: 1px solid rgba(255, 107, 107, 0.3);
+}
+
+/* Login Status Overlay */
+.login-status {
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.status-loading {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--text-secondary);
+    font-family: var(--font-display);
+    font-weight: 600;
+}
+
+.status-retry {
+    color: var(--expense-red);
+    font-weight: 600;
+}
+
+.status-hint {
+    color: var(--text-muted);
+    font-size: var(--text-sm);
+    opacity: 0.7;
+    animation: fadeIn 0.3s ease;
+}
+
+.login-form .btn-lg {
+    width: 100%;
+}
+
+.login-switch {
+    text-align: center;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+}
+
+.login-switch button {
+    background: none;
+    border: none;
+    color: var(--accent-primary);
+    cursor: pointer;
+    font-family: var(--font-display);
+    font-weight: 700;
+    transition: all var(--duration-fast);
+}
+
+.login-switch button:hover {
+    color: var(--accent-light);
+    text-shadow: 0 0 10px var(--accent-glow);
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Mobile optimizations */
+@media (max-width: 480px) {
+    .login-page {
+        padding: var(--space-lg);
+        justify-content: flex-start;
+        padding-top: 15vh;
+    }
+
+    .login-icon {
+        font-size: 64px;
+    }
+
+    .login-header h1 {
+        font-size: var(--text-xl);
+    }
+}

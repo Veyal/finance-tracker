@@ -1,0 +1,184 @@
+/* TransactionCard Styles - Clean & Simple */
+
+.transaction-card {
+    position: relative;
+    margin-bottom: 10px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s var(--ease-bounce);
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+    user-select: none;
+}
+
+.transaction-card:hover {
+    border-color: var(--border-glow);
+}
+
+.transaction-card.expense {
+    border-left: 3px solid var(--expense-red);
+}
+
+.transaction-card.income {
+    border-left: 3px solid var(--income-green);
+}
+
+.transaction-card.expanded {
+    background: var(--bg-elevated);
+}
+
+/* Main Content */
+.transaction-content {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: 16px;
+}
+
+/* Left side - info */
+.transaction-left {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.transaction-primary {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.transaction-name {
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.review-dot {
+    color: var(--warning-yellow);
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.transaction-secondary {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.transaction-category,
+.transaction-payment,
+.transaction-source,
+.transaction-time {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.transaction-category::after,
+.transaction-payment::after,
+.transaction-source::after {
+    content: '·';
+    margin-left: 8px;
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+/* Right side - amount */
+.transaction-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    flex-shrink: 0;
+}
+
+.transaction-amount {
+    font-family: var(--font-display);
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.transaction-group {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 2px 8px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 100px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+/* Note */
+.transaction-note {
+    padding: 8px 16px 12px;
+    font-size: 13px;
+    color: var(--text-muted);
+    font-style: italic;
+    border-top: 1px solid var(--border-subtle);
+}
+
+/* Actions - tap to reveal */
+.transaction-actions {
+    display: flex;
+    gap: 8px;
+    padding: 12px 16px;
+    background: var(--bg-elevated);
+    border-top: 1px solid var(--border-subtle);
+    animation: slideDown 0.2s var(--ease-bounce);
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: none;
+    border-radius: 10px;
+    font-family: var(--font-display);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.action-btn:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.action-btn.edit:hover {
+    background: rgba(255, 126, 179, 0.15);
+    color: var(--accent-primary);
+}
+
+.action-btn.delete:hover {
+    background: rgba(255, 107, 138, 0.15);
+    color: var(--expense-red);
+}

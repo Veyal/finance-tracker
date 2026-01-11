@@ -1,0 +1,205 @@
+/* Transaction Form Styles - Premium */
+
+/* Modal override for transaction form - ensure scrollability */
+.transaction-form-modal {
+    max-height: 90vh;
+    max-height: 90dvh;
+    display: flex;
+    flex-direction: column;
+}
+
+.transaction-form-modal .modal-header {
+    flex-shrink: 0;
+}
+
+.transaction-form-modal .modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    overflow-y: auto;
+    overflow-x: hidden;
+    flex: 1;
+    padding-bottom: var(--space-xl);
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Type Toggle - Pill switcher */
+.type-toggle {
+    display: flex;
+    background: var(--bg-elevated);
+    border-radius: var(--radius-pill);
+    padding: var(--space-2xs);
+    border: 1px solid var(--border-subtle);
+    flex-shrink: 0;
+}
+
+.type-btn {
+    flex: 1;
+    padding: var(--space-sm) var(--space-md);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-pill);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: var(--text-sm);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all var(--duration-fast) var(--ease-bounce);
+}
+
+.type-btn:hover {
+    color: var(--text-primary);
+}
+
+.type-btn.active.expense {
+    background: var(--expense-red-glow);
+    color: var(--expense-red);
+    box-shadow: 0 0 15px var(--expense-red-glow);
+}
+
+.type-btn.active.income {
+    background: var(--income-green-glow);
+    color: var(--income-green);
+    box-shadow: 0 0 15px var(--income-green-glow);
+}
+
+/* Amount Input - The star */
+.amount-input-group {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-lg);
+    background: linear-gradient(145deg, rgba(255, 126, 179, 0.08) 0%, rgba(201, 184, 255, 0.05) 100%);
+    border-radius: var(--radius-xl);
+    border: 2px solid var(--border-subtle);
+    transition: all var(--duration-normal) var(--ease-smooth);
+    flex-shrink: 0;
+}
+
+.amount-input-group:focus-within {
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 4px var(--accent-glow), var(--shadow-glow-pink);
+}
+
+.amount-prefix {
+    font-family: var(--font-display);
+    font-size: var(--text-xl);
+    font-weight: 700;
+    color: var(--text-muted);
+}
+
+.amount-input {
+    flex: 1;
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    font-weight: 800;
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    min-width: 0;
+}
+
+.amount-input:focus {
+    outline: none;
+}
+
+.amount-input::placeholder {
+    color: var(--text-muted);
+}
+
+/* Name Input - Clean style */
+.name-input {
+    text-align: center;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+/* Details Section - Compact layout */
+.details-section {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+/* Form Row - Side by side fields */
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+}
+
+/* Compact form groups */
+.details-section .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xs);
+}
+
+.details-section .input-label {
+    font-size: var(--text-xs);
+    margin-bottom: 0;
+}
+
+.details-section .input,
+.details-section .select {
+    min-height: 44px;
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--text-sm);
+}
+
+.details-section .select {
+    padding-right: 36px;
+    background-position: right 8px center;
+    background-size: 16px;
+}
+
+/* Form Error */
+.form-error {
+    color: var(--expense-red);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    text-align: center;
+    padding: var(--space-sm);
+    background: var(--expense-red-glow);
+    border-radius: var(--radius-md);
+}
+
+/* Submit Button */
+.transaction-form-modal .btn-lg {
+    width: 100%;
+    margin-top: var(--space-xs);
+    flex-shrink: 0;
+}
+
+/* Mobile Optimizations */
+@media (max-width: 480px) {
+    .transaction-form-modal .modal-body {
+        padding: var(--space-md);
+        gap: var(--space-md);
+    }
+
+    .amount-input-group {
+        padding: var(--space-md);
+    }
+
+    .amount-prefix {
+        font-size: var(--text-lg);
+    }
+
+    .amount-input {
+        font-size: var(--text-2xl);
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: var(--space-md);
+    }
+
+    .type-btn {
+        padding: var(--space-xs) var(--space-sm);
+        font-size: var(--text-xs);
+    }
+}

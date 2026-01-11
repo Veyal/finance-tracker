@@ -1,0 +1,21 @@
+{
+    "name": "finance-tracker-server",
+    "version": "1.0.0",
+    "type": "module",
+    "scripts": {
+        "dev": "node --watch index.js",
+        "start": "node index.js",
+        "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js"
+    },
+    "dependencies": {
+        "better-sqlite3": "^11.6.0",
+        "bcrypt": "^5.1.1",
+        "cookie-parser": "^1.4.6",
+        "cors": "^2.8.5",
+        "express": "^4.21.1",
+        "uuid": "^10.0.0"
+    },
+    "devDependencies": {
+        "jest": "^29.7.0"
+    }
+}

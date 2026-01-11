@@ -1,0 +1,197 @@
+/* Navigation Styles - Premium */
+
+/* Mobile Bottom Nav */
+.nav-mobile {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(20, 20, 43, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid var(--border-subtle);
+    padding: var(--space-sm) var(--space-xs);
+    padding-bottom: calc(var(--space-sm) + env(safe-area-inset-bottom));
+    z-index: var(--z-dropdown);
+}
+
+.nav-mobile .nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-2xs);
+    padding: var(--space-xs);
+    color: var(--text-muted);
+    text-decoration: none;
+    font-family: var(--font-display);
+    font-size: var(--text-xs);
+    font-weight: 600;
+    transition: all var(--duration-fast) var(--ease-bounce);
+    border-radius: var(--radius-md);
+    position: relative;
+}
+
+.nav-mobile .nav-item::before {
+    content: '';
+    position: absolute;
+    top: 2px;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    opacity: 0;
+    transform: scale(0);
+    transition: all var(--duration-normal) var(--ease-bounce);
+    box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.nav-mobile .nav-item.active::before {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.nav-mobile .nav-item.active {
+    color: var(--accent-primary);
+}
+
+.nav-mobile .nav-item.active svg {
+    filter: drop-shadow(0 0 8px var(--accent-glow));
+    animation: glow-breathe 3s ease-in-out infinite;
+}
+
+.nav-mobile .nav-item:hover {
+    color: var(--text-primary);
+    background: var(--bg-glass);
+}
+
+/* Tablet Rail */
+.nav-tablet {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    background: rgba(20, 20, 43, 0.95);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--border-subtle);
+    flex-direction: column;
+    align-items: center;
+    padding-top: var(--space-xl);
+    gap: var(--space-sm);
+    z-index: var(--z-dropdown);
+}
+
+.nav-tablet .nav-item {
+    width: 52px;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-md);
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all var(--duration-fast) var(--ease-bounce);
+}
+
+.nav-tablet .nav-item:hover {
+    background: var(--bg-glass);
+    color: var(--text-primary);
+    transform: scale(1.1);
+}
+
+.nav-tablet .nav-item.active {
+    background: var(--gradient-accent);
+    color: var(--text-on-pink);
+    box-shadow: var(--shadow-glow-pink);
+}
+
+/* Desktop Sidebar */
+.nav-desktop {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 260px;
+    background: rgba(20, 20, 43, 0.95);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid var(--border-subtle);
+    padding: var(--space-xl);
+    z-index: var(--z-dropdown);
+}
+
+.nav-logo {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-2xl);
+}
+
+.nav-logo-icon {
+    font-size: 36px;
+    animation: float 3s ease-in-out infinite;
+}
+
+.nav-logo-text {
+    font-family: var(--font-display);
+    font-size: var(--text-2xl);
+    font-weight: 800;
+    background: var(--gradient-accent);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.nav-links {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-family: var(--font-display);
+    font-weight: 600;
+    transition: all var(--duration-fast) var(--ease-bounce);
+}
+
+.nav-link:hover {
+    background: var(--bg-glass);
+    color: var(--text-primary);
+    transform: translateX(4px);
+}
+
+.nav-link.active {
+    background: var(--gradient-accent);
+    color: var(--text-on-pink);
+    box-shadow: var(--shadow-glow-pink);
+}
+
+/* Responsive */
+@media (min-width: 641px) {
+    .nav-mobile {
+        display: none;
+    }
+
+    .nav-tablet {
+        display: flex;
+    }
+}
+
+@media (min-width: 1025px) {
+    .nav-tablet {
+        display: none;
+    }
+
+    .nav-desktop {
+        display: block;
+    }
+}

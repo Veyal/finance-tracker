@@ -1,0 +1,67 @@
+/* Today Page Styles - Refined Minimal */
+
+.today-page {
+    padding: var(--space-lg);
+}
+
+.today-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: var(--space-xl);
+}
+
+.today-header-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.today-greeting {
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    color: var(--text-muted);
+    margin-bottom: var(--space-2xs);
+    animation: fadeIn 0.5s var(--ease-out);
+}
+
+.today-header h1 {
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    font-weight: 800;
+    background: var(--gradient-accent-soft);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 2px;
+}
+
+.today-date {
+    color: var(--text-muted);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 500;
+}
+
+.transaction-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    margin-top: var(--space-lg);
+}
+
+/* Empty state enhancement */
+.today-page .empty-state {
+    margin-top: var(--space-2xl);
+}
+
+/* Bottom padding for FAB */
+.today-page {
+    padding-bottom: calc(var(--space-lg) + 100px);
+}
+
+@media (min-width: 641px) {
+    .today-page {
+        padding-bottom: var(--space-lg);
+    }
+}

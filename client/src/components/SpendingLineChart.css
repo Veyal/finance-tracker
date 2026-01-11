@@ -1,0 +1,178 @@
+/* SpendingLineChart Styles */
+
+.spending-line-chart {
+    position: relative;
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    padding: 16px;
+    padding-bottom: 8px;
+}
+
+.chart-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Grid lines */
+.grid-line {
+    stroke: var(--border-subtle);
+    stroke-width: 0.5;
+}
+
+/* Area fill animation */
+.area-fill {
+    opacity: 0;
+    animation: fadeInArea 0.8s ease-out 0.3s forwards;
+}
+
+@keyframes fadeInArea {
+    to {
+        opacity: 1;
+    }
+}
+
+/* Main line animation */
+.main-line {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: drawLine 1.5s ease-out forwards;
+}
+
+@keyframes drawLine {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* Average line */
+.average-line {
+    stroke: var(--text-muted);
+    stroke-width: 1;
+    opacity: 0.5;
+}
+
+/* Point dots */
+.point-dot {
+    transition: all 0.15s var(--ease-bounce);
+}
+
+.point-dot.active {
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+/* X-axis labels */
+.x-label {
+    font-family: var(--font-display);
+    font-size: 2.5px;
+    fill: var(--text-muted);
+    font-weight: 600;
+}
+
+/* Tooltip */
+.chart-tooltip {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    padding: 8px 12px;
+    border-radius: 10px;
+    pointer-events: none;
+    z-index: 10;
+    animation: tooltipPop 0.2s var(--ease-bounce);
+    white-space: nowrap;
+}
+
+.chart-tooltip.expense {
+    background: var(--expense-red);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(255, 107, 138, 0.4);
+}
+
+.chart-tooltip.income {
+    background: var(--income-green);
+    color: #000;
+    box-shadow: 0 4px 20px rgba(107, 255, 184, 0.4);
+}
+
+.chart-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+}
+
+.chart-tooltip.expense::after {
+    border-top-color: var(--expense-red);
+}
+
+.chart-tooltip.income::after {
+    border-top-color: var(--income-green);
+}
+
+.tooltip-date {
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.8;
+    margin-bottom: 2px;
+}
+
+.tooltip-amount {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+@keyframes tooltipPop {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -90%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -100%);
+    }
+}
+
+/* Average label */
+.avg-label {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 100px;
+}
+
+.avg-text {
+    font-size: 10px;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.avg-value {
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .spending-line-chart {
+        padding: 12px;
+    }
+
+    .avg-label {
+        top: 8px;
+        right: 12px;
+    }
+}

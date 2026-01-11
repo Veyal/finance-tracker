@@ -1,0 +1,30 @@
+/* Filter Chips Styles - Premium */
+
+.filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    padding: var(--space-sm) 0;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.filter-chips::-webkit-scrollbar {
+    display: none;
+}
+
+.filter-divider {
+    width: 2px;
+    height: 28px;
+    background: linear-gradient(180deg, transparent, var(--accent-primary), transparent);
+    align-self: center;
+    border-radius: var(--radius-pill);
+}
+
+.chip.active.chip-warning {
+    background: var(--warning-yellow);
+    color: var(--text-on-pink);
+    border-color: transparent;
+    box-shadow: 0 0 15px rgba(255, 230, 107, 0.4);
+}
