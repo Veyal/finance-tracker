@@ -89,7 +89,8 @@ export default function TransactionsPage() {
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
-                distance: 8, // Press and drag 8px to start, allows clicking buttons
+                delay: 250,
+                tolerance: 5,
             },
         }),
         useSensor(KeyboardSensor, {
