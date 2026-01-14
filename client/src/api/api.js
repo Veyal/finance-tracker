@@ -129,3 +129,11 @@ export const incomeSources = {
     update: (id, data) => request(`/income-sources/${id}`, { method: 'PATCH', body: data }),
     delete: (id) => request(`/income-sources/${id}`, { method: 'DELETE' }),
 };
+
+// Lending Sources API
+export const lendingSources = {
+    list: () => request('/lending'),
+    create: (data) => request('/lending', { method: 'POST', body: data }),
+    update: (id, data) => request(`/lending/${id}`, { method: 'PUT', body: data }),
+    delete: (id) => request(`/lending/${id}`, { method: 'DELETE' }),
+};

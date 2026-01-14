@@ -64,7 +64,7 @@ function SortableTransaction({ transaction, onEdit, onDelete }) {
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        touchAction: 'none', // Required for pointer sensor
+        touchAction: 'manipulation', // Allow scrolling, wait for delay to drag
     };
 
     return (

@@ -10,6 +10,7 @@ import TodayPage from './pages/TodayPage';
 import TransactionsPage from './pages/TransactionsPage';
 import CalendarPage from './pages/CalendarPage';
 import InsightsPage from './pages/InsightsPage';
+import LendingPage from './pages/LendingPage';
 import SettingsPage from './pages/SettingsPage';
 
 function ProtectedRoute({ children }) {
@@ -75,6 +76,13 @@ function AppRoutes() {
                         <ProtectedRoute>
                             <PageTransition>
                                 <InsightsPage />
+                            </PageTransition>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/split" element={
+                        <ProtectedRoute>
+                            <PageTransition>
+                                <LendingPage />
                             </PageTransition>
                         </ProtectedRoute>
                     } />

@@ -83,6 +83,19 @@ CREATE TABLE IF NOT EXISTS income_sources (
 
 CREATE INDEX IF NOT EXISTS idx_income_sources_user_id ON income_sources(user_id);
 
+-- Lending sources table
+CREATE TABLE IF NOT EXISTS lending_sources (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    name TEXT NOT NULL,
+    color TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_lending_sources_user_id ON lending_sources(user_id);
+
 -- Transactions table
 CREATE TABLE IF NOT EXISTS transactions (
     id TEXT PRIMARY KEY,
@@ -95,6 +108,8 @@ CREATE TABLE IF NOT EXISTS transactions (
     group_id TEXT REFERENCES groups(id),
     payment_method_id TEXT REFERENCES payment_methods(id),
     income_source_id TEXT REFERENCES income_sources(id),
+    lending_source_id TEXT REFERENCES lending_sources(id),
+    related_transaction_id TEXT REFERENCES transactions(id),
     note TEXT,
     merchant TEXT,
     created_at TEXT DEFAULT (datetime('now')),

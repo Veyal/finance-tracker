@@ -49,6 +49,7 @@ export default defineConfig({
             '/groups': 'http://localhost:3001',
             '/payment-methods': 'http://localhost:3001',
             '/income-sources': 'http://localhost:3001',
+            '/lending': 'http://localhost:3001',
             // Proxy /transactions API calls but not the frontend route
             '/transactions': {
                 target: 'http://localhost:3001',

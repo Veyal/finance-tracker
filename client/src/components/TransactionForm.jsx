@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { transactions, categories, groups, paymentMethods } from '../api/api';
 import CustomSelect from './CustomSelect';
-import NumberPad from './NumberPad';
 import './TransactionForm.css';
 
 export default function TransactionForm({ transaction, options, onSave, onClose, onOptionsChange }) {
@@ -19,6 +18,7 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
     const [groupId, setGroupId] = useState(transaction?.group_id || '');
     const [paymentMethodId, setPaymentMethodId] = useState(transaction?.payment_method_id || '');
     const [incomeSourceId, setIncomeSourceId] = useState(transaction?.income_source_id || '');
+    const [lendingSourceId, setLendingSourceId] = useState(transaction?.lending_source_id || '');
     const [name, setName] = useState(transaction?.merchant || '');
     const [note, setNote] = useState(transaction?.note || '');
     const [loading, setLoading] = useState(false);
@@ -77,8 +77,9 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                 date: new Date(date).toISOString(),
                 category_id: type === 'expense' ? (categoryId || null) : null,
                 group_id: type === 'expense' ? (groupId || null) : null,
-                payment_method_id: type === 'expense' ? (paymentMethodId || null) : null,
+                payment_method_id: paymentMethodId || null,
                 income_source_id: type === 'income' ? (incomeSourceId || null) : null,
+                lending_source_id: null,
                 merchant: name || null,
                 note: note || null,
             };
@@ -198,22 +199,14 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                     {/* Amount Input */}
                     <div className="amount-input-group">
                         <span className="amount-prefix">Rp</span>
-                        <div className={`amount-display ${!amount ? 'placeholder' : ''}`}>
-                            {amount ? new Intl.NumberFormat('id-ID').format(amount) : '0'}
-                        </div>
-                    </div>
-
-                    {/* Number Pad */}
-                    <div className="form-numpad">
-                        <NumberPad
-                            onInput={(val) => {
-                                if (val === '.' && amount.includes('.')) return;
-                                setAmount(prev => {
-                                    if (prev === '0' && val !== '.') return val;
-                                    return prev + val;
-                                });
-                            }}
-                            onDelete={() => setAmount(prev => prev.slice(0, -1))}
+                        <input
+                            type="text"
+                            inputMode="decimal"
+                            className="amount-input-field"
+                            value={amount}
+                            onChange={handleAmountChange}
+                            placeholder="0"
+                            autoFocus
                         />
                     </div>
 
@@ -267,7 +260,7 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                             )}
                         </div>
 
-                        {/* Group + Payment - Only for expenses */}
+                        {/* Group - Only for expenses */}
                         {type === 'expense' && (
                             <div className="form-row">
                                 <CustomSelect
@@ -279,17 +272,21 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                                     onAddNew={() => setShowAddGroup(true)}
                                     addNewLabel="Add Group"
                                 />
-                                <CustomSelect
-                                    label="Payment"
-                                    value={paymentMethodId}
-                                    onChange={setPaymentMethodId}
-                                    options={options.paymentMethods}
-                                    placeholder="Select payment"
-                                    onAddNew={() => setShowAddPayment(true)}
-                                    addNewLabel="Add Payment"
-                                />
                             </div>
                         )}
+
+                        {/* Payment Method / Account - For both Expense and Income */}
+                        <div className="form-group">
+                            <CustomSelect
+                                label={type === 'expense' ? "Payment Method" : "Account"}
+                                value={paymentMethodId}
+                                onChange={setPaymentMethodId}
+                                options={options.paymentMethods}
+                                placeholder={type === 'expense' ? "Paid with" : "Received to"}
+                                onAddNew={() => setShowAddPayment(true)}
+                                addNewLabel="Add Method"
+                            />
+                        </div>
 
                         <div className="form-group">
                             <label className="input-label">Note</label>

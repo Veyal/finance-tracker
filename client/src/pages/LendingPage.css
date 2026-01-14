@@ -1,0 +1,312 @@
+/* Lending Page Styles */
+.lending-page {
+    padding-bottom: 100px;
+}
+
+.lending-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 24px 20px;
+}
+
+.lending-header h1 {
+    font-size: 28px;
+    font-weight: 800;
+    margin: 0;
+    background: linear-gradient(135deg, #fff 0%, #ccc 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.lending-header .subtitle {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin: 4px 0 0 0;
+}
+
+.action-area {
+    padding: 0 20px 24px;
+}
+
+.btn-repayment-hero {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 24px;
+    background: linear-gradient(135deg, var(--bg-elevated) 0%, var(--bg-surface) 100%);
+    border: 1px solid var(--border-subtle);
+    border-radius: 24px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.3s var(--ease-bounce);
+    position: relative;
+    overflow: hidden;
+}
+
+.btn-repayment-hero:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-glow-blue);
+    border-color: var(--accent-primary);
+}
+
+.hero-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 20px;
+    background: var(--accent-primary);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 8px 16px rgba(var(--primary-rgb), 0.3);
+}
+
+.hero-text h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 4px 0;
+    color: var(--text-primary);
+}
+
+.hero-text p {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.hero-arrow {
+    margin-left: auto;
+    color: var(--text-muted);
+    opacity: 0.5;
+}
+
+.sources-section {
+    padding: 0 20px;
+}
+
+.sources-section h3 {
+    font-size: 14px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.05em;
+    margin: 0 0 16px 0;
+}
+
+.add-source-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.lending-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lending-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 20px;
+}
+
+.lending-card-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    font-weight: 700;
+    color: #000;
+}
+
+.lending-name {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Modal & Form Styles */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+.modal-content {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 24px;
+    width: 100%;
+    max-width: 400px;
+    padding: 24px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.repayment-modal {
+    padding: 0;
+    overflow: hidden;
+    height: 80vh;
+}
+
+.repayment-form-step {
+    padding: 24px;
+    overflow-y: auto;
+}
+
+.selected-tx-summary {
+    background: var(--bg-elevated);
+    padding: 16px;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid var(--border-subtle);
+}
+
+.tx-label {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.tx-val {
+    font-weight: 700;
+    color: var(--expense-red);
+}
+
+.amount-input-group {
+    display: flex;
+    align-items: center;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    border-radius: 16px;
+    padding: 0 16px;
+}
+
+.amount-prefix {
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 20px;
+}
+
+.amount-input-field {
+    flex: 1;
+    background: transparent;
+    border: none;
+    font-size: 32px;
+    font-weight: 800;
+    color: var(--text-primary);
+    padding: 16px;
+    outline: none;
+    width: 100%;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+}
+
+.modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+}
+
+.modal-close {
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    padding: 8px;
+    cursor: pointer;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.input {
+    width: 100%;
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-subtle);
+    padding: 14px;
+    border-radius: 12px;
+    color: var(--text-primary);
+    font-size: 16px;
+    outline: none;
+}
+
+.input:focus {
+    border-color: var(--accent-primary);
+}
+
+.modal-submit-btn {
+    width: 100%;
+    padding: 16px;
+    background: var(--gradient-accent);
+    border: none;
+    border-radius: 16px;
+    color: #fff;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    margin-top: 10px;
+}
+
+.modal-submit-btn:disabled {
+    opacity: 0.5;
+}
+
+.color-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.color-option {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid transparent;
+}
+
+.color-option.selected {
+    border-color: #fff;
+    transform: scale(1.1);
+    box-shadow: 0 0 0 2px var(--accent-primary);
+}

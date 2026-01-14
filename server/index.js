@@ -10,6 +10,7 @@ import categoryRoutes from './routes/categories.js';
 import groupRoutes from './routes/groups.js';
 import paymentMethodRoutes from './routes/payment-methods.js';
 import incomeSourceRoutes from './routes/income-sources.js';
+import lendingRoutes from './routes/lending.js';
 import { authMiddleware } from './middleware/auth.js';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -39,6 +40,7 @@ app.use('/categories', authMiddleware, categoryRoutes);
 app.use('/groups', authMiddleware, groupRoutes);
 app.use('/payment-methods', authMiddleware, paymentMethodRoutes);
 app.use('/income-sources', authMiddleware, incomeSourceRoutes);
+app.use('/lending', authMiddleware, lendingRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {
@@ -48,7 +50,7 @@ app.use((err, req, res, next) => {
 
 // Serve static files in production
 const clientDistPath = join(__dirname, '../client/dist');
-if (isProduction || existsSync(clientDistPath)) {
+if (isProduction) {
     app.use(express.static(clientDistPath));
 
     // Handle client-side routing - serve index.html for all non-API routes

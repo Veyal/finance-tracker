@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { transactions } from '../api/api';
+import { usePrivacy } from '../context/PrivacyContext';
 import TransactionCard from '../components/TransactionCard';
 import './CalendarPage.css';
 
 export default function CalendarPage() {
+    const { isPrivacyMode } = usePrivacy();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState(null);
     const [summary, setSummary] = useState([]);
@@ -141,7 +143,7 @@ export default function CalendarPage() {
                                             <span className="day-number">{day}</span>
                                             {daySummary?.expense > 0 && (
                                                 <span className="day-expense">
-                                                    -{formatAmount(daySummary.expense)}
+                                                    {isPrivacyMode ? '***' : `-${formatAmount(daySummary.expense)}`}
                                                 </span>
                                             )}
                                         </>

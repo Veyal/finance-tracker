@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
-import { transactions, categories, groups, paymentMethods, incomeSources } from '../api/api';
+import { transactions, categories, groups, paymentMethods, incomeSources, lendingSources } from '../api/api';
 import TransactionCard from '../components/TransactionCard';
 import TransactionForm from '../components/TransactionForm';
 import QuickAddForm from '../components/QuickAddForm';
@@ -9,7 +9,7 @@ import FilterChips from '../components/FilterChips';
 import PrivacyToggle from '../components/PrivacyToggle';
 import './TodayPage.css';
 
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, KeyboardSensor, TouchSensor, MouseSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -26,7 +26,7 @@ function SortableTransaction({ transaction, onEdit, onDelete }) {
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        touchAction: 'none',
+        touchAction: 'manipulation',
     };
 
     return (
@@ -51,9 +51,15 @@ export default function TodayPage() {
 
     // DnD Sensors
     const sensors = useSensors(
-        useSensor(PointerSensor, {
+        useSensor(MouseSensor, {
             activationConstraint: {
-                distance: 8,
+                distance: 10,
+            },
+        }),
+        useSensor(TouchSensor, {
+            activationConstraint: {
+                delay: 250,
+                tolerance: 5,
             },
         }),
         useSensor(KeyboardSensor, {
@@ -84,13 +90,20 @@ export default function TodayPage() {
 
     async function loadOptions() {
         try {
-            const [cats, grps, pms, sources] = await Promise.all([
+            const [cats, grps, pms, sources, lending] = await Promise.all([
                 categories.list('true'),
                 groups.list('true'),
                 paymentMethods.list('true'),
                 incomeSources.list('true'),
+                lendingSources.list(),
             ]);
-            setOptions({ categories: cats, groups: grps, paymentMethods: pms, incomeSources: sources });
+            setOptions({
+                categories: cats,
+                groups: grps,
+                paymentMethods: pms,
+                incomeSources: sources,
+                lendingSources: lending
+            });
         } catch (error) {
             console.error('Failed to load options:', error);
         }

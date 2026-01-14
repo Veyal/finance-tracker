@@ -3,18 +3,16 @@ import { X, Check, ChevronRight, ChevronLeft, Minus, Plus, Calendar, Loader2 } f
 import { motion, AnimatePresence } from 'framer-motion';
 import { transactions, categories, groups, paymentMethods } from '../api/api';
 import { useHaptics } from '../hooks/useHaptics';
+import NumberPad from './NumberPad';
 import './QuickAddForm.css';
 
-// Local storage keys for smart defaults
+// Local storage keys
 const STORAGE_KEYS = {
     lastCategory: 'ft_last_category',
     lastGroup: 'ft_last_group',
     lastPayment: 'ft_last_payment',
     lastIncomeSource: 'ft_last_income_source',
 };
-
-// Quick amount presets (in thousands)
-const QUICK_AMOUNTS = [10, 20, 50, 100, 200, 500];
 
 export default function QuickAddForm({ options, onSave, onClose, onOptionsChange }) {
     const { triggerImpact, triggerSuccess, triggerError } = useHaptics();
@@ -33,24 +31,22 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState('');
 
-    // Add category inline state
+    // Inline add states
     const [showAddCategory, setShowAddCategory] = useState(false);
     const [newCategoryName, setNewCategoryName] = useState('');
     const [addCategoryLoading, setAddCategoryLoading] = useState(false);
 
-    // Add group inline state
     const [showAddGroup, setShowAddGroup] = useState(false);
     const [newGroupName, setNewGroupName] = useState('');
     const [addGroupLoading, setAddGroupLoading] = useState(false);
 
-    // Add payment inline state
     const [showAddPayment, setShowAddPayment] = useState(false);
     const [newPaymentName, setNewPaymentName] = useState('');
     const [addPaymentLoading, setAddPaymentLoading] = useState(false);
 
     const amountInputRef = useRef(null);
 
-    // Load smart defaults on mount
+    // Initial Load & Smart Defaults
     useEffect(() => {
         const lastCat = localStorage.getItem(STORAGE_KEYS.lastCategory);
         const lastGroup = localStorage.getItem(STORAGE_KEYS.lastGroup);
@@ -59,9 +55,7 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
 
         let defaultCat = lastCat;
 
-        // Time-aware smart defaults
-        // Only if we don't have a specific strong preference or just as a heuristic
-        // Here we try to interpret time if no lastCat is set, or maybe suggest based on time
+        // Time-based smart suggestion if no strong preference
         if (!defaultCat) {
             const hour = new Date().getHours();
             const lowerName = (n) => n.toLowerCase();
@@ -82,99 +76,44 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
             }
         }
 
-        if (defaultCat && options.categories.find(c => c.id === defaultCat)) {
-            setCategoryId(defaultCat);
-        }
-        if (lastGroup && options.groups.find(g => g.id === lastGroup)) {
-            setGroupId(lastGroup);
-        }
-        if (lastPayment && options.paymentMethods.find(p => p.id === lastPayment)) {
-            setPaymentMethodId(lastPayment);
-        }
-        if (lastSource && options.incomeSources?.find(s => s.id === lastSource)) {
-            setIncomeSourceId(lastSource);
-        }
+        if (defaultCat && options.categories.find(c => c.id === defaultCat)) setCategoryId(defaultCat);
+        if (lastGroup && options.groups.find(g => g.id === lastGroup)) setGroupId(lastGroup);
+        if (lastPayment && options.paymentMethods.find(p => p.id === lastPayment)) setPaymentMethodId(lastPayment);
+        if (lastSource && options.incomeSources?.find(s => s.id === lastSource)) setIncomeSourceId(lastSource);
     }, [options]);
 
-    // Focus amount input on mount
+    // Focus input management
     useEffect(() => {
         if (step === 0 && amountInputRef.current) {
-            amountInputRef.current.focus();
+            // Tiny delay to ensure modal animation doesn't conflict with focus
+            setTimeout(() => amountInputRef.current?.focus(), 100);
         }
     }, [step]);
-
-
-    function handleAmountChange(e) {
-        const value = e.target.value.replace(/[^0-9]/g, '');
-        if (value !== amount) triggerImpact('light');
-        setAmount(value);
-    }
-
-    function handleQuickAmount(k) {
-        triggerImpact('medium');
-        const newAmount = (parseInt(amount || '0') + k * 1000).toString();
-        setAmount(newAmount);
-    }
 
     function formatDisplayAmount(amt) {
         if (!amt) return '0';
         return new Intl.NumberFormat('id-ID').format(parseInt(amt));
     }
 
-    async function handleAddCategory() {
-        if (!newCategoryName.trim() || addCategoryLoading) return;
-        setAddCategoryLoading(true);
+    // Helper to add new items
+    async function handleAddItem(
+        type, name, setLoading, setShow, setNewName, api, setIds
+    ) {
+        if (!name.trim() || type.loading) return;
+        setLoading(true);
         triggerImpact('medium');
         try {
-            const newCategory = await categories.create({ name: newCategoryName.trim() });
+            const newItem = await api.create({ name: name.trim() });
             if (onOptionsChange) onOptionsChange();
-            setCategoryId(newCategory.id);
-            setShowAddCategory(false);
-            setNewCategoryName('');
+            setIds(newItem.id);
+            setShow(false);
+            setNewName('');
             triggerSuccess();
         } catch (err) {
-            console.error('Failed to add category:', err);
+            console.error(`Failed to add ${type}:`, err);
             triggerError();
         } finally {
-            setAddCategoryLoading(false);
-        }
-    }
-
-    async function handleAddGroup() {
-        if (!newGroupName.trim() || addGroupLoading) return;
-        setAddGroupLoading(true);
-        triggerImpact('medium');
-        try {
-            const newGroup = await groups.create({ name: newGroupName.trim() });
-            if (onOptionsChange) onOptionsChange();
-            setGroupId(newGroup.id);
-            setShowAddGroup(false);
-            setNewGroupName('');
-            triggerSuccess();
-        } catch (err) {
-            console.error('Failed to add group:', err);
-            triggerError();
-        } finally {
-            setAddGroupLoading(false);
-        }
-    }
-
-    async function handleAddPayment() {
-        if (!newPaymentName.trim() || addPaymentLoading) return;
-        setAddPaymentLoading(true);
-        triggerImpact('medium');
-        try {
-            const newPayment = await paymentMethods.create({ name: newPaymentName.trim() });
-            if (onOptionsChange) onOptionsChange();
-            setPaymentMethodId(newPayment.id);
-            setShowAddPayment(false);
-            setNewPaymentName('');
-            triggerSuccess();
-        } catch (err) {
-            console.error('Failed to add payment:', err);
-            triggerError();
-        } finally {
-            setAddPaymentLoading(false);
+            setLoading(false);
         }
     }
 
@@ -196,7 +135,7 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                 date: new Date(date).toISOString(),
                 category_id: type === 'expense' ? (categoryId || null) : null,
                 group_id: type === 'expense' ? (groupId || null) : null,
-                payment_method_id: type === 'expense' ? (paymentMethodId || null) : null,
+                payment_method_id: paymentMethodId || null,
                 income_source_id: type === 'income' ? (incomeSourceId || null) : null,
                 merchant: name || null,
                 note: note || null,
@@ -204,7 +143,7 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
 
             await transactions.create(data);
 
-            // Save smart defaults
+            // Update Defaults
             if (categoryId) localStorage.setItem(STORAGE_KEYS.lastCategory, categoryId);
             if (groupId) localStorage.setItem(STORAGE_KEYS.lastGroup, groupId);
             if (paymentMethodId) localStorage.setItem(STORAGE_KEYS.lastPayment, paymentMethodId);
@@ -214,7 +153,7 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
             triggerSuccess();
             setTimeout(() => {
                 onSave(data);
-            }, 600);
+            }, 1200); // 1.2s to enjoy the success animation
         } catch (err) {
             triggerError();
             setError('Failed to save');
@@ -223,9 +162,7 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
     }
 
     function handleBackdropClick(e) {
-        if (e.target === e.currentTarget) {
-            onClose();
-        }
+        if (e.target === e.currentTarget) onClose();
     }
 
     function goNext() {
@@ -238,120 +175,122 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
         }
     }
 
-    function goBack() {
-        if (step === 1) {
-            triggerImpact('light');
-            setStep(0);
-        }
-    }
-
     return (
         <div className="quick-add-overlay" onClick={handleBackdropClick}>
             <motion.div
                 className="quick-add-container"
-                initial={{ opacity: 0, scale: 0.9, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                initial={{ opacity: 0, y: 100 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 100 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
             >
                 {/* Header */}
                 <div className="quick-add-header">
-                    {step === 1 && (
-                        <button className="quick-add-back" onClick={goBack}>
+                    {step === 1 ? (
+                        <button className="quick-add-back" onClick={() => setStep(0)}>
                             <ChevronLeft size={24} />
                         </button>
-                    )}
+                    ) : <div style={{ width: 40 }} />}
+
                     <div className="quick-add-title">
-                        {step === 0 && 'Quick Add'}
-                        {step === 1 && 'Details'}
-                        {step === 2 && 'Done!'}
+                        {step === 0 ? 'Quick Add' : step === 1 ? 'Details' : 'Success'}
                     </div>
+
                     <button className="quick-add-close" onClick={onClose}>
                         <X size={24} />
                     </button>
                 </div>
 
                 <AnimatePresence mode="wait">
-                    {/* Step 0: Amount Entry */}
+                    {/* Step 0: Amount */}
                     {step === 0 && (
                         <motion.div
                             key="step0"
                             className="quick-add-step step-amount"
-                            initial={{ opacity: 0, x: -20 }}
+                            initial={{ opacity: 0, x: -50 }}
                             animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: 20 }}
+                            exit={{ opacity: 0, x: -50 }}
                             transition={{ duration: 0.2 }}
                         >
                             {/* Type Toggle */}
                             <div className="type-toggle-pill">
+                                {type === 'expense' && (
+                                    <motion.div layoutId="active-pill" className="type-active-bg expense" />
+                                )}
+                                {type === 'income' && (
+                                    <motion.div layoutId="active-pill" className="type-active-bg income" />
+                                )}
                                 <button
-                                    className={`type-pill ${type === 'expense' ? 'active expense' : ''}`}
+                                    className={`type-pill ${type === 'expense' ? 'active' : ''}`}
                                     onClick={() => { setType('expense'); triggerImpact('light'); }}
                                 >
-                                    <Minus size={18} />
-                                    <span>Expense</span>
+                                    <Minus size={16} /> Expense
                                 </button>
                                 <button
-                                    className={`type-pill ${type === 'income' ? 'active income' : ''}`}
+                                    className={`type-pill ${type === 'income' ? 'active' : ''}`}
                                     onClick={() => { setType('income'); triggerImpact('light'); }}
                                 >
-                                    <Plus size={18} />
-                                    <span>Income</span>
+                                    <Plus size={16} /> Income
                                 </button>
                             </div>
 
                             {/* Amount Display */}
-                            <div className={`amount-display ${type}`}>
+                            <div className="amount-display">
                                 <span className="amount-currency">Rp</span>
                                 <input
                                     ref={amountInputRef}
                                     type="text"
-                                    inputMode="numeric"
-                                    className="amount-value-input"
-                                    value={formatDisplayAmount(amount)}
-                                    onChange={handleAmountChange}
+                                    inputMode="decimal"
+                                    className="quick-add-desktop-input"
+                                    value={amount}
+                                    onChange={(e) => setAmount(e.target.value.replace(/[^0-9.]/g, ''))}
                                     placeholder="0"
+                                    autoFocus
+                                    onKeyDown={(e) => e.key === 'Enter' && amount && goNext()}
+                                />
+                                <div className="quick-add-mobile-display">
+                                    {amount ? new Intl.NumberFormat('id-ID').format(amount) : '0'}
+                                </div>
+                            </div>
+
+                            {/* Numpad */}
+                            <div className="quick-add-numpad">
+                                <NumberPad
+                                    onInput={(val) => {
+                                        if (val === '.' && amount.includes('.')) return;
+                                        setAmount(prev => (prev === '0' && val !== '.' ? val : prev + val));
+                                        triggerImpact('light');
+                                    }}
+                                    onDelete={() => {
+                                        setAmount(prev => prev.slice(0, -1));
+                                        triggerImpact('light');
+                                    }}
                                 />
                             </div>
 
-                            {/* Quick Amount Buttons */}
-                            <div className="quick-amounts">
-                                {QUICK_AMOUNTS.map(k => (
-                                    <button
-                                        key={k}
-                                        className="quick-amount-btn"
-                                        onClick={() => handleQuickAmount(k)}
-                                    >
-                                        +{k}K
-                                    </button>
-                                ))}
-                            </div>
+                            {error && <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="quick-add-error">{error}</motion.div>}
 
-                            {error && <div className="quick-add-error">{error}</div>}
-
-                            {/* Next Button */}
-                            <button
+                            <motion.button
                                 className="quick-add-next"
                                 onClick={goNext}
                                 disabled={!amount}
+                                whileTap={{ scale: 0.95 }}
                             >
-                                <span>Continue</span>
-                                <ChevronRight size={20} />
-                            </button>
+                                Continue <ChevronRight size={20} />
+                            </motion.button>
                         </motion.div>
                     )}
 
-                    {/* Step 1: Category & Details */}
+                    {/* Step 1: Details */}
                     {step === 1 && (
                         <motion.div
                             key="step1"
                             className="quick-add-step step-details"
-                            initial={{ opacity: 0, x: 20 }}
+                            initial={{ opacity: 0, x: 50 }}
                             animate={{ opacity: 1, x: 0 }}
-                            exit={{ opacity: 0, x: -20 }}
+                            exit={{ opacity: 0, x: 50 }}
                             transition={{ duration: 0.2 }}
                         >
-                            {/* Name Input */}
                             <div className="detail-section">
                                 <label className="detail-label">Name</label>
                                 <input
@@ -359,200 +298,151 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                                     className="name-input"
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    placeholder="Transaction name (e.g., Starbucks)"
+                                    placeholder="e.g. Starbucks"
                                     autoFocus
                                 />
                             </div>
 
-                            {/* Category/Source Selection */}
+                            {/* Conditional Categories / Groups for Expense */}
                             {type === 'expense' ? (
                                 <>
                                     <div className="detail-section">
                                         <label className="detail-label">Category</label>
                                         <div className="option-chips">
                                             {options.categories.map(cat => (
-                                                <button
+                                                <motion.button
                                                     key={cat.id}
+                                                    whileTap={{ scale: 0.95 }}
                                                     className={`option-chip ${categoryId === cat.id ? 'selected' : ''}`}
                                                     onClick={() => { setCategoryId(cat.id); triggerImpact('light'); }}
                                                 >
                                                     {cat.name}
-                                                </button>
+                                                </motion.button>
                                             ))}
-                                            {/* Add New Category button */}
-                                            <button
-                                                className="option-chip add-new-chip"
-                                                onClick={() => setShowAddCategory(true)}
-                                            >
-                                                <Plus size={14} />
-                                                Add New
+                                            <button className="option-chip add-new-chip" onClick={() => setShowAddCategory(true)}>
+                                                <Plus size={14} /> Add
                                             </button>
                                         </div>
-                                        {/* Inline Add Category Form */}
-                                        {showAddCategory && (
-                                            <div className="inline-add-form">
-                                                <input
-                                                    type="text"
-                                                    className="inline-add-input"
-                                                    value={newCategoryName}
-                                                    onChange={(e) => setNewCategoryName(e.target.value)}
-                                                    placeholder="Category name"
-                                                    autoFocus
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') handleAddCategory();
-                                                        if (e.key === 'Escape') setShowAddCategory(false);
-                                                    }}
-                                                />
-                                                <button
-                                                    className="inline-add-btn"
-                                                    onClick={handleAddCategory}
-                                                    disabled={addCategoryLoading || !newCategoryName.trim()}
-                                                >
-                                                    {addCategoryLoading ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
-                                                </button>
-                                                <button
-                                                    className="inline-cancel-btn"
-                                                    onClick={() => {
-                                                        setShowAddCategory(false);
-                                                        setNewCategoryName('');
-                                                    }}
-                                                >
-                                                    <X size={16} />
-                                                </button>
-                                            </div>
-                                        )}
+                                        {/* Inline Add Category */}
+                                        <AnimatePresence>
+                                            {showAddCategory && (
+                                                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="inline-add-form">
+                                                    <input
+                                                        className="inline-add-input"
+                                                        value={newCategoryName}
+                                                        onChange={(e) => setNewCategoryName(e.target.value)}
+                                                        placeholder="New Category"
+                                                        autoFocus
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddItem('category', newCategoryName, setAddCategoryLoading, setShowAddCategory, setNewCategoryName, categories, setCategoryId)}
+                                                    />
+                                                    <button className="inline-add-btn" onClick={() => handleAddItem('category', newCategoryName, setAddCategoryLoading, setShowAddCategory, setNewCategoryName, categories, setCategoryId)}>
+                                                        {addCategoryLoading ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
+                                                    </button>
+                                                    <button className="inline-cancel-btn" onClick={() => setShowAddCategory(false)}><X size={16} /></button>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
 
-                                    <div className="detail-section">
-                                        <label className="detail-label">Payment</label>
-                                        <div className="option-chips">
-                                            {options.paymentMethods.map(pm => (
-                                                <button
-                                                    key={pm.id}
-                                                    className={`option-chip ${paymentMethodId === pm.id ? 'selected' : ''}`}
-                                                    onClick={() => { setPaymentMethodId(pm.id); triggerImpact('light'); }}
-                                                >
-                                                    {pm.name}
-                                                </button>
-                                            ))}
-                                            <button
-                                                className="option-chip add-new-chip"
-                                                onClick={() => setShowAddPayment(true)}
-                                            >
-                                                <Plus size={14} />
-                                                Add New
-                                            </button>
-                                        </div>
-                                        {showAddPayment && (
-                                            <div className="inline-add-form">
-                                                <input
-                                                    type="text"
-                                                    className="inline-add-input"
-                                                    value={newPaymentName}
-                                                    onChange={(e) => setNewPaymentName(e.target.value)}
-                                                    placeholder="Payment name"
-                                                    autoFocus
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') handleAddPayment();
-                                                        if (e.key === 'Escape') setShowAddPayment(false);
-                                                    }}
-                                                />
-                                                <button
-                                                    className="inline-add-btn"
-                                                    onClick={handleAddPayment}
-                                                    disabled={addPaymentLoading || !newPaymentName.trim()}
-                                                >
-                                                    {addPaymentLoading ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
-                                                </button>
-                                                <button
-                                                    className="inline-cancel-btn"
-                                                    onClick={() => {
-                                                        setShowAddPayment(false);
-                                                        setNewPaymentName('');
-                                                    }}
-                                                >
-                                                    <X size={16} />
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-
+                                    {/* Groups */}
                                     <div className="detail-section">
                                         <label className="detail-label">Group</label>
                                         <div className="option-chips">
                                             {options.groups.map(grp => (
-                                                <button
+                                                <motion.button
                                                     key={grp.id}
+                                                    whileTap={{ scale: 0.95 }}
                                                     className={`option-chip ${groupId === grp.id ? 'selected' : ''}`}
                                                     onClick={() => { setGroupId(grp.id); triggerImpact('light'); }}
                                                 >
                                                     {grp.name}
-                                                </button>
+                                                </motion.button>
                                             ))}
-                                            <button
-                                                className="option-chip add-new-chip"
-                                                onClick={() => setShowAddGroup(true)}
-                                            >
-                                                <Plus size={14} />
-                                                Add New
+                                            <button className="option-chip add-new-chip" onClick={() => setShowAddGroup(true)}>
+                                                <Plus size={14} /> Add
                                             </button>
                                         </div>
-                                        {showAddGroup && (
-                                            <div className="inline-add-form">
-                                                <input
-                                                    type="text"
-                                                    className="inline-add-input"
-                                                    value={newGroupName}
-                                                    onChange={(e) => setNewGroupName(e.target.value)}
-                                                    placeholder="Group name"
-                                                    autoFocus
-                                                    onKeyDown={(e) => {
-                                                        if (e.key === 'Enter') handleAddGroup();
-                                                        if (e.key === 'Escape') setShowAddGroup(false);
-                                                    }}
-                                                />
-                                                <button
-                                                    className="inline-add-btn"
-                                                    onClick={handleAddGroup}
-                                                    disabled={addGroupLoading || !newGroupName.trim()}
-                                                >
-                                                    {addGroupLoading ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
-                                                </button>
-                                                <button
-                                                    className="inline-cancel-btn"
-                                                    onClick={() => {
-                                                        setShowAddGroup(false);
-                                                        setNewGroupName('');
-                                                    }}
-                                                >
-                                                    <X size={16} />
-                                                </button>
-                                            </div>
-                                        )}
+                                        <AnimatePresence>
+                                            {showAddGroup && (
+                                                <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="inline-add-form">
+                                                    <input
+                                                        className="inline-add-input"
+                                                        value={newGroupName}
+                                                        onChange={(e) => setNewGroupName(e.target.value)}
+                                                        placeholder="New Group"
+                                                        autoFocus
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddItem('group', newGroupName, setAddGroupLoading, setShowAddGroup, setNewGroupName, groups, setGroupId)}
+                                                    />
+                                                    <button className="inline-add-btn" onClick={() => handleAddItem('group', newGroupName, setAddGroupLoading, setShowAddGroup, setNewGroupName, groups, setGroupId)}>
+                                                        {addGroupLoading ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
+                                                    </button>
+                                                    <button className="inline-cancel-btn" onClick={() => setShowAddGroup(false)}><X size={16} /></button>
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
                                     </div>
                                 </>
                             ) : (
+                                // Income Sources
                                 <div className="detail-section">
                                     <label className="detail-label">Source</label>
                                     <div className="option-chips">
-                                        {(options.incomeSources || []).map(src => (
-                                            <button
+                                        {options.incomeSources?.map(src => (
+                                            <motion.button
                                                 key={src.id}
+                                                whileTap={{ scale: 0.95 }}
                                                 className={`option-chip ${incomeSourceId === src.id ? 'selected' : ''}`}
                                                 onClick={() => { setIncomeSourceId(src.id); triggerImpact('light'); }}
                                             >
                                                 {src.name}
-                                            </button>
+                                            </motion.button>
                                         ))}
                                     </div>
                                 </div>
                             )}
 
-                            {/* Date Input */}
+                            {/* Payment Method */}
+                            <div className="detail-section">
+                                <label className="detail-label">{type === 'expense' ? 'Payment Method' : 'Account'}</label>
+                                <div className="option-chips">
+                                    {options.paymentMethods.map(pm => (
+                                        <motion.button
+                                            key={pm.id}
+                                            whileTap={{ scale: 0.95 }}
+                                            className={`option-chip ${paymentMethodId === pm.id ? 'selected' : ''}`}
+                                            onClick={() => { setPaymentMethodId(pm.id); triggerImpact('light'); }}
+                                        >
+                                            {pm.name}
+                                        </motion.button>
+                                    ))}
+                                    <button className="option-chip add-new-chip" onClick={() => setShowAddPayment(true)}>
+                                        <Plus size={14} /> Add
+                                    </button>
+                                </div>
+                                <AnimatePresence>
+                                    {showAddPayment && (
+                                        <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="inline-add-form">
+                                            <input
+                                                className="inline-add-input"
+                                                value={newPaymentName}
+                                                onChange={(e) => setNewPaymentName(e.target.value)}
+                                                placeholder="New Method"
+                                                autoFocus
+                                                onKeyDown={(e) => e.key === 'Enter' && handleAddItem('payment', newPaymentName, setAddPaymentLoading, setShowAddPayment, setNewPaymentName, paymentMethods, setPaymentMethodId)}
+                                            />
+                                            <button className="inline-add-btn" onClick={() => handleAddItem('payment', newPaymentName, setAddPaymentLoading, setShowAddPayment, setNewPaymentName, paymentMethods, setPaymentMethodId)}>
+                                                {addPaymentLoading ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
+                                            </button>
+                                            <button className="inline-cancel-btn" onClick={() => setShowAddPayment(false)}><X size={16} /></button>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
+
                             <div className="detail-section">
                                 <label className="detail-label">Date</label>
                                 <div className="date-input-wrapper">
-                                    <Calendar size={18} className="date-icon" />
+                                    <Calendar size={16} className="date-icon" />
                                     <input
                                         type="date"
                                         className="date-input"
@@ -562,35 +452,18 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                                 </div>
                             </div>
 
-                            {/* Note Input */}
-                            <div className="detail-section">
-                                <label className="detail-label">Note (optional)</label>
-                                <input
-                                    type="text"
-                                    className="note-input"
-                                    value={note}
-                                    onChange={(e) => setNote(e.target.value)}
-                                    placeholder="Add a note..."
-                                />
-                            </div>
-
-                            {error && <div className="quick-add-error">{error}</div>}
-
-                            {/* Save Button */}
-                            <button
+                            <motion.button
                                 className={`quick-add-save ${type}`}
                                 onClick={handleSubmit}
                                 disabled={loading}
+                                whileTap={{ scale: 0.95 }}
                             >
-                                {loading ? (
-                                    <div className="save-loader" />
-                                ) : (
+                                {loading ? <div className="save-loader" /> : (
                                     <>
-                                        <Check size={20} />
-                                        <span>Save {type === 'expense' ? 'Expense' : 'Income'}</span>
+                                        <Check size={20} /> Save {type === 'expense' ? 'Expense' : 'Income'}
                                     </>
                                 )}
-                            </button>
+                            </motion.button>
                         </motion.div>
                     )}
 
@@ -603,13 +476,13 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                             animate={{ scale: 1, opacity: 1 }}
                         >
                             <div className={`success-icon ${type}`}>
-                                <Check size={48} />
+                                <Check size={48} strokeWidth={3} />
                             </div>
                             <div className="success-amount">
                                 Rp {formatDisplayAmount(amount)}
                             </div>
                             <div className="success-text">
-                                {type === 'expense' ? 'Expense' : 'Income'} saved!
+                                Transaction Saved
                             </div>
                         </motion.div>
                     )}

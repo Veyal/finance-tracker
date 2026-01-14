@@ -2,9 +2,11 @@ import { useState, useEffect } from 'react';
 import { TrendingDown, TrendingUp, ArrowUpDown, Calendar, Target, Zap, Activity, TrendingUp as TrendUp } from 'lucide-react';
 import { transactions } from '../api/api';
 import SpendingLineChart from '../components/SpendingLineChart';
+import { usePrivacy } from '../context/PrivacyContext';
 import './InsightsPage.css';
 
 export default function InsightsPage() {
+    const { isPrivacyMode } = usePrivacy();
     const [range, setRange] = useState('month');
     const [viewType, setViewType] = useState('expense');
     const [data, setData] = useState(null);
@@ -71,6 +73,7 @@ export default function InsightsPage() {
     }
 
     function formatAmount(amount) {
+        if (isPrivacyMode) return '****';
         if (amount >= 1000000) {
             return (amount / 1000000).toFixed(1) + 'M';
         } else if (amount >= 1000) {
@@ -80,6 +83,7 @@ export default function InsightsPage() {
     }
 
     function formatFullAmount(amount) {
+        if (isPrivacyMode) return '****';
         return new Intl.NumberFormat('id-ID').format(amount || 0);
     }
 
@@ -472,16 +476,18 @@ function DonutChart({ data, type }) {
             ))}
             <text x="50" y="47" textAnchor="middle" className="donut-total-label">Total</text>
             <text x="50" y="58" textAnchor="middle" className="donut-total-value">
-                {new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(total)}
+                {usePrivacy().isPrivacyMode ? '****' : new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(total)}
             </text>
         </svg>
     );
 }
 
 function BreakdownItem({ item, max, type }) {
+    const { isPrivacyMode } = usePrivacy();
     const percentage = max > 0 ? (item.total / max) * 100 : 0;
 
     function formatAmount(amount) {
+        if (isPrivacyMode) return '****';
         return new Intl.NumberFormat('id-ID').format(amount || 0);
     }
 
