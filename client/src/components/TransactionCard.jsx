@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Edit2, Trash2, AlertCircle } from 'lucide-react';
+import { usePrivacy } from '../context/PrivacyContext';
 import './TransactionCard.css';
 
 function formatAmount(amount) {
@@ -76,14 +77,14 @@ export default function TransactionCard({ transaction, onEdit, onDelete }) {
                         {type === 'income' && income_source_name && merchant && (
                             <span className="transaction-source">{income_source_name}</span>
                         )}
-                        <span className="transaction-time">{formatDateTime(date)}</span>
+                        {/* Time removed per user request */}
                     </div>
                 </div>
 
                 {/* Right: Amount */}
                 <div className="transaction-right">
                     <span className={`transaction-amount amount-${type}`}>
-                        {type === 'expense' ? '-' : '+'}Rp {formatAmount(amount)}
+                        {usePrivacy().isPrivacyMode ? '****' : `${type === 'expense' ? '-' : '+'}Rp ${formatAmount(amount)}`}
                     </span>
                     {group_name && (
                         <span className="transaction-group">{group_name}</span>

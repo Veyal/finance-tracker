@@ -99,7 +99,8 @@ CREATE TABLE IF NOT EXISTS transactions (
     merchant TEXT,
     created_at TEXT DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT (datetime('now')),
-    deleted_at TEXT
+    deleted_at TEXT,
+    sort_order INTEGER DEFAULT 0
 );
 
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);

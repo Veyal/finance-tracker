@@ -1,6 +1,7 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { Home, List, Calendar, PieChart, Settings } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
+import PrivacyToggle from './PrivacyToggle';
 import './Navigation.css';
 
 const navItems = [
@@ -45,6 +46,9 @@ export default function Navigation() {
                         <Icon size={24} />
                     </NavLink>
                 ))}
+                <div className="nav-tablet-footer">
+                    <PrivacyToggle className="nav-privacy-btn" />
+                </div>
             </nav>
 
             {/* Desktop Sidebar */}
@@ -52,6 +56,7 @@ export default function Navigation() {
                 <div className="nav-logo">
                     <span className="nav-logo-icon">💰</span>
                     <span className="nav-logo-text">Finance</span>
+                    <PrivacyToggle className="nav-privacy-btn" style={{ marginLeft: 'auto' }} />
                 </div>
 
                 <div className="nav-links">
@@ -71,3 +76,4 @@ export default function Navigation() {
         </>
     );
 }
+

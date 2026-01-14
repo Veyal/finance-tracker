@@ -61,7 +61,7 @@ router.get('/', (req, res) => {
             params.push(cursor);
         }
 
-        sql += ` ORDER BY t.date DESC, t.created_at DESC LIMIT ?`;
+        sql += ` ORDER BY t.date DESC, t.sort_order ASC, t.created_at DESC LIMIT ?`;
         params.push(parseInt(limit));
 
         const transactions = db.prepare(sql).all(...params);
@@ -102,6 +102,37 @@ router.get('/', (req, res) => {
     }
 });
 
+// POST /transactions/reorder
+router.post('/reorder', (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { updates } = req.body; // Array of { id, sort_order, date (optional) }
+
+        if (!Array.isArray(updates)) {
+            return res.status(400).json({ error: 'invalid_updates' });
+        }
+
+        const stmt = db.prepare(`
+            UPDATE transactions 
+            SET sort_order = ?, date = COALESCE(?, date), updated_at = datetime('now')
+            WHERE id = ? AND user_id = ?
+        `);
+
+        const updateTx = db.transaction((items) => {
+            for (const item of items) {
+                stmt.run(item.sort_order, item.date || null, item.id, userId);
+            }
+        });
+
+        updateTx(updates);
+
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Reorder transactions error:', error);
+        res.status(500).json({ error: 'internal_error' });
+    }
+});
+
 // POST /transactions
 router.post('/', (req, res) => {
     try {
@@ -119,10 +150,14 @@ router.post('/', (req, res) => {
         const id = uuidv4();
         const txDate = date || new Date().toISOString();
 
+        // Get max sort order for this date to append to end
+        const maxOrder = db.prepare('SELECT MAX(sort_order) as max_order FROM transactions WHERE user_id = ? AND date(date) = date(?)').get(userId, txDate);
+        const nextOrder = (maxOrder?.max_order || 0) + 1;
+
         db.prepare(`
-      INSERT INTO transactions (id, user_id, type, amount, date, category_id, group_id, payment_method_id, income_source_id, note, merchant)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, userId, type, amount, txDate, category_id || null, group_id || null, payment_method_id || null, income_source_id || null, note || null, merchant || null);
+      INSERT INTO transactions (id, user_id, type, amount, date, category_id, group_id, payment_method_id, income_source_id, note, merchant, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, userId, type, amount, txDate, category_id || null, group_id || null, payment_method_id || null, income_source_id || null, note || null, merchant || null, nextOrder);
 
         const transaction = db.prepare(`
       SELECT t.*, 
@@ -160,7 +195,7 @@ router.patch('/:id', (req, res) => {
         const updates = [];
         const params = [];
 
-        const fields = ['type', 'amount', 'date', 'category_id', 'group_id', 'payment_method_id', 'income_source_id', 'note', 'merchant'];
+        const fields = ['type', 'amount', 'date', 'category_id', 'group_id', 'payment_method_id', 'income_source_id', 'note', 'merchant', 'sort_order'];
         for (const field of fields) {
             if (req.body[field] !== undefined) {
                 updates.push(`${field} = ?`);

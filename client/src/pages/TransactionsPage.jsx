@@ -4,6 +4,7 @@ import { transactions, categories, groups, paymentMethods } from '../api/api';
 import TransactionCard from '../components/TransactionCard';
 import TransactionForm from '../components/TransactionForm';
 import SummaryCard from '../components/SummaryCard';
+import PrivacyToggle from '../components/PrivacyToggle';
 import './TransactionsPage.css';
 
 // Helper function to group transactions by date
@@ -46,12 +47,55 @@ function formatDateDivider(dateStr) {
     }
 }
 
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// Sortable Transaction Item Wrapper
+function SortableTransaction({ transaction, onEdit, onDelete }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+    } = useSortable({ id: transaction.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        touchAction: 'none', // Required for pointer sensor
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="stagger-item">
+            <TransactionCard
+                transaction={transaction}
+                onEdit={onEdit}
+                onDelete={onDelete}
+            />
+        </div>
+    );
+}
+
 export default function TransactionsPage() {
     const [data, setData] = useState({ transactions: [], totals: { expense: 0, income: 0, net: 0 } });
     const [loading, setLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
     const [editingTx, setEditingTx] = useState(null);
     const [options, setOptions] = useState({ categories: [], groups: [], paymentMethods: [] });
+
+    // DnD Sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8, // Press and drag 8px to start, allows clicking buttons
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
 
     // Filter state
     const [filters, setFilters] = useState({
@@ -63,6 +107,8 @@ export default function TransactionsPage() {
         payment_method_id: '',
         q: '',
     });
+
+    // ... (keep existing state/effects)
 
     // Quick date presets
     const today = new Date().toISOString().split('T')[0];
@@ -77,8 +123,11 @@ export default function TransactionsPage() {
                 return { from: weekAgo.toISOString().split('T')[0], to: today };
             }
             case 'month': {
-                const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-                return { from: monthStart.toISOString().split('T')[0], to: today };
+                const now = new Date();
+                const y = now.getFullYear();
+                const m = String(now.getMonth() + 1).padStart(2, '0');
+                const startOfMonth = `${y}-${m}-01`;
+                return { from: startOfMonth, to: today };
             }
             case 'all':
                 return { from: '', to: '' };
@@ -89,6 +138,9 @@ export default function TransactionsPage() {
 
     useEffect(() => {
         loadData();
+    }, [filters.from, filters.to, filters.type, filters.category_id, filters.group_id, filters.payment_method_id]);
+
+    useEffect(() => {
         loadOptions();
     }, []);
 
@@ -163,6 +215,46 @@ export default function TransactionsPage() {
         loadData();
     }
 
+    function handleDragEnd(event) {
+        const { active, over } = event;
+
+        if (active.id !== over.id) {
+            setData((prev) => {
+                const oldIndex = prev.transactions.findIndex((t) => t.id === active.id);
+                const newIndex = prev.transactions.findIndex((t) => t.id === over.id);
+
+                const newTransactions = arrayMove(prev.transactions, oldIndex, newIndex);
+
+                // Prepare updates for backend
+                // Re-assign sort orders based on new index
+                // Also check if date changed (dragged to different date group visually, though list is linear)
+
+                const activeTx = prev.transactions[oldIndex];
+                const overTx = prev.transactions[newIndex];
+
+                // If dragged to a spot with a different date, update the date
+                let newDate = activeTx.date;
+                if (activeTx.date.split('T')[0] !== overTx.date.split('T')[0]) {
+                    newDate = overTx.date; // Adopt the date of the target
+                }
+
+                const updates = newTransactions.map((tx, index) => ({
+                    id: tx.id,
+                    sort_order: index, // Simple index-based order
+                    date: tx.id === active.id ? newDate : undefined // Only update date for the moved item if needed
+                }));
+
+                // Call API in background
+                transactions.reorder(updates).catch(err => console.error("Reorder failed", err));
+
+                return {
+                    ...prev,
+                    transactions: newTransactions
+                };
+            });
+        }
+    }
+
     const activeFilterCount = [
         filters.from || filters.to,
         filters.type !== 'all',
@@ -174,7 +266,10 @@ export default function TransactionsPage() {
     return (
         <div className="page transactions-page">
             <header className="transactions-header">
-                <h1>All Transactions</h1>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <h1>All Transactions</h1>
+                    <PrivacyToggle style={{ marginTop: '4px' }} />
+                </div>
                 <div className="header-actions">
                     <div className="search-box">
                         <Search size={18} />
@@ -231,17 +326,17 @@ export default function TransactionsPage() {
                 <div className="type-chips">
                     <button
                         type="button"
-                        className={`chip ${filters.type === 'all' ? 'active' : ''}`}
-                        onClick={() => setFilters(prev => ({ ...prev, type: 'all' }))}
-                    >
-                        All
-                    </button>
-                    <button
-                        type="button"
                         className={`chip chip-expense ${filters.type === 'expense' ? 'active' : ''}`}
                         onClick={() => setFilters(prev => ({ ...prev, type: 'expense' }))}
                     >
                         Expenses
+                    </button>
+                    <button
+                        type="button"
+                        className={`chip chip-all ${filters.type === 'all' ? 'active' : ''}`}
+                        onClick={() => setFilters(prev => ({ ...prev, type: 'all' }))}
+                    >
+                        All
                     </button>
                     <button
                         type="button"
@@ -253,16 +348,9 @@ export default function TransactionsPage() {
                 </div>
             </div>
 
-            {/* Summary */}
-            <SummaryCard
-                expense={data.totals.expense}
-                income={data.totals.income}
-                net={data.totals.net}
-            />
-
-            {/* Filter Panel */}
+            {/* Filter Panel - Visual position adjusted by order */}
             {showFilters && (
-                <div className="filter-panel card animate-slide-up">
+                <div className="filter-panel card animate-slide-up" style={{ marginBottom: '16px' }}>
                     <div className="filter-header">
                         <h3>Filters</h3>
                         <button type="button" className="btn btn-ghost" onClick={handleClearFilters}>
@@ -336,6 +424,13 @@ export default function TransactionsPage() {
                 </div>
             )}
 
+            {/* Summary */}
+            <SummaryCard
+                expense={data.totals.expense}
+                income={data.totals.income}
+                net={data.totals.net}
+            />
+
             {/* Transaction List */}
             <div className="transaction-list">
                 {loading ? (
@@ -351,27 +446,35 @@ export default function TransactionsPage() {
                         </div>
                     </div>
                 ) : (
-                    <>
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
                         <div className="results-count">
                             {data.transactions.length} transaction{data.transactions.length !== 1 ? 's' : ''}
                         </div>
-                        {groupTransactionsByDate(data.transactions).map(({ date, transactions: txs }) => (
-                            <div key={date} className="date-group">
-                                <div className="date-divider">
-                                    <span className="date-divider-text">{formatDateDivider(date)}</span>
-                                </div>
-                                {txs.map((tx, index) => (
-                                    <div key={tx.id} className="stagger-item">
-                                        <TransactionCard
+                        <SortableContext
+                            items={data.transactions.map(t => t.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {groupTransactionsByDate(data.transactions).map(({ date, transactions: txs }) => (
+                                <div key={date} className="date-group">
+                                    <div className="date-divider">
+                                        <span className="date-divider-text">{formatDateDivider(date)}</span>
+                                    </div>
+                                    {txs.map((tx) => (
+                                        <SortableTransaction
+                                            key={tx.id}
                                             transaction={tx}
                                             onEdit={() => setEditingTx(tx)}
                                             onDelete={() => handleDelete(tx.id)}
                                         />
-                                    </div>
-                                ))}
-                            </div>
-                        ))}
-                    </>
+                                    ))}
+                                </div>
+                            ))}
+                        </SortableContext>
+                    </DndContext>
                 )}
             </div>
 

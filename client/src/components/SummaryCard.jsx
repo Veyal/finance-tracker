@@ -1,4 +1,5 @@
 import { TrendingDown, TrendingUp, Minus } from 'lucide-react';
+import { usePrivacy } from '../context/PrivacyContext';
 import './SummaryCard.css';
 
 function formatAmount(amount) {
@@ -15,7 +16,7 @@ export default function SummaryCard({ expense = 0, income = 0, net = 0 }) {
                 <div className="summary-content">
                     <span className="summary-label">Expense</span>
                     <span className="summary-amount amount-expense">
-                        Rp {formatAmount(expense)}
+                        {usePrivacy().isPrivacyMode ? '****' : `Rp ${formatAmount(expense)}`}
                     </span>
                 </div>
             </div>
@@ -29,7 +30,7 @@ export default function SummaryCard({ expense = 0, income = 0, net = 0 }) {
                 <div className="summary-content">
                     <span className="summary-label">Income</span>
                     <span className="summary-amount amount-income">
-                        Rp {formatAmount(income)}
+                        {usePrivacy().isPrivacyMode ? '****' : `Rp ${formatAmount(income)}`}
                     </span>
                 </div>
             </div>
@@ -43,7 +44,7 @@ export default function SummaryCard({ expense = 0, income = 0, net = 0 }) {
                 <div className="summary-content">
                     <span className="summary-label">Net</span>
                     <span className={`summary-amount ${net >= 0 ? 'amount-income' : 'amount-expense'}`}>
-                        Rp {formatAmount(net)}
+                        {usePrivacy().isPrivacyMode ? '****' : `Rp ${formatAmount(net)}`}
                     </span>
                 </div>
             </div>

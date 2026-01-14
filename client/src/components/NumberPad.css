@@ -1,0 +1,49 @@
+.number-pad-container {
+    padding: var(--space-sm);
+    background-color: var(--bg-surface);
+    /* border-top: 1px solid var(--border-color); */
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.number-pad-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--space-sm);
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.pad-key {
+    background: transparent;
+    border: none;
+    color: var(--text-primary);
+    font-size: 24px;
+    font-weight: 500;
+    height: 60px;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.pad-key:active {
+    background-color: var(--bg-hover);
+}
+
+.pad-key.number-key {
+    /* font-family: monospace; */
+}
+
+.pad-key.action-key {
+    color: var(--text-muted);
+}
+
+@media (min-width: 768px) {
+    .pad-key {
+        height: 50px;
+        font-size: 20px;
+    }
+}

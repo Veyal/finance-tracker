@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { transactions, categories, groups, paymentMethods } from '../api/api';
 import CustomSelect from './CustomSelect';
+import NumberPad from './NumberPad';
 import './TransactionForm.css';
 
 export default function TransactionForm({ transaction, options, onSave, onClose, onOptionsChange }) {
@@ -197,15 +198,22 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                     {/* Amount Input */}
                     <div className="amount-input-group">
                         <span className="amount-prefix">Rp</span>
-                        <input
-                            type="text"
-                            inputMode="decimal"
-                            className="amount-input"
-                            value={amount}
-                            onChange={handleAmountChange}
-                            onFocus={handleInputFocus}
-                            placeholder="0"
-                            autoFocus
+                        <div className={`amount-display ${!amount ? 'placeholder' : ''}`}>
+                            {amount ? new Intl.NumberFormat('id-ID').format(amount) : '0'}
+                        </div>
+                    </div>
+
+                    {/* Number Pad */}
+                    <div className="form-numpad">
+                        <NumberPad
+                            onInput={(val) => {
+                                if (val === '.' && amount.includes('.')) return;
+                                setAmount(prev => {
+                                    if (prev === '0' && val !== '.') return val;
+                                    return prev + val;
+                                });
+                            }}
+                            onDelete={() => setAmount(prev => prev.slice(0, -1))}
                         />
                     </div>
 

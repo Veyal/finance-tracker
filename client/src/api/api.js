@@ -91,6 +91,11 @@ export const transactions = {
         });
         return request(`/transactions/insights?${query}`);
     },
+
+    reorder: (updates) => request('/transactions/reorder', {
+        method: 'POST',
+        body: { updates },
+    }),
 };
 
 // Categories API

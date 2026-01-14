@@ -105,7 +105,19 @@
     outline: none;
 }
 
-.amount-input::placeholder {
+.amount-display {
+    flex: 1;
+    font-family: var(--font-display);
+    font-size: var(--text-3xl);
+    font-weight: 800;
+    color: var(--text-primary);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    min-width: 0;
+    cursor: default;
+}
+
+.amount-display.placeholder {
     color: var(--text-muted);
 }
 

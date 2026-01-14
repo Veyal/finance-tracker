@@ -6,22 +6,65 @@ import TransactionForm from '../components/TransactionForm';
 import QuickAddForm from '../components/QuickAddForm';
 import SummaryCard from '../components/SummaryCard';
 import FilterChips from '../components/FilterChips';
+import PrivacyToggle from '../components/PrivacyToggle';
 import './TodayPage.css';
+
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+// Sortable Transaction Item Wrapper
+function SortableTransaction({ transaction, onEdit, onDelete }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+    } = useSortable({ id: transaction.id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        touchAction: 'none',
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="stagger-item">
+            <TransactionCard
+                transaction={transaction}
+                onEdit={onEdit}
+                onDelete={onDelete}
+            />
+        </div>
+    );
+}
 
 export default function TodayPage() {
     const [data, setData] = useState({ transactions: [], totals: { expense: 0, income: 0, net: 0 } });
     const [loading, setLoading] = useState(true);
     const [showQuickAdd, setShowQuickAdd] = useState(false);
     const [editingTx, setEditingTx] = useState(null);
-    const [filters, setFilters] = useState({ group_id: null, needs_review: false });
     const [options, setOptions] = useState({ categories: [], groups: [], paymentMethods: [], incomeSources: [] });
 
     const today = new Date().toISOString().split('T')[0];
 
+    // DnD Sensors
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    );
+
     useEffect(() => {
         loadData();
         loadOptions();
-    }, [filters]);
+    }, []);
 
     async function loadData() {
         try {
@@ -29,8 +72,7 @@ export default function TodayPage() {
             const result = await transactions.list({
                 from: today,
                 to: today,
-                group_id: filters.group_id || undefined,
-                needs_review: filters.needs_review || undefined,
+                // Removed filters per request
             });
             setData(result);
         } catch (error) {
@@ -73,6 +115,32 @@ export default function TodayPage() {
         }
     }
 
+    function handleDragEnd(event) {
+        const { active, over } = event;
+
+        if (active.id !== over.id) {
+            setData((prev) => {
+                const oldIndex = prev.transactions.findIndex((t) => t.id === active.id);
+                const newIndex = prev.transactions.findIndex((t) => t.id === over.id);
+
+                const newTransactions = arrayMove(prev.transactions, oldIndex, newIndex);
+
+                const updates = newTransactions.map((tx, index) => ({
+                    id: tx.id,
+                    sort_order: index,
+                    // No date update needed as it's "Today" page, implies same date
+                }));
+
+                transactions.reorder(updates).catch(err => console.error("Reorder failed", err));
+
+                return {
+                    ...prev,
+                    transactions: newTransactions
+                };
+            });
+        }
+    }
+
     function formatDate(date) {
         return new Intl.DateTimeFormat('en-US', {
             weekday: 'long',
@@ -92,9 +160,14 @@ export default function TodayPage() {
         <div className="page today-page">
             <header className="today-header">
                 <div className="today-header-content">
-                    <p className="today-greeting">{getGreeting()}</p>
-                    <h1>Today</h1>
-                    <p className="today-date">{formatDate(new Date())}</p>
+                    <div style={{ flex: 1 }}>
+                        <p className="today-greeting">{getGreeting()}</p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <h1>Today</h1>
+                            <PrivacyToggle style={{ marginTop: '4px' }} />
+                        </div>
+                        <p className="today-date">{formatDate(new Date())}</p>
+                    </div>
                 </div>
             </header>
 
@@ -104,13 +177,7 @@ export default function TodayPage() {
                 net={data.totals.net}
             />
 
-            <FilterChips
-                groups={options.groups}
-                selectedGroupId={filters.group_id}
-                needsReview={filters.needs_review}
-                onGroupChange={(id) => setFilters({ ...filters, group_id: id })}
-                onNeedsReviewChange={(val) => setFilters({ ...filters, needs_review: val })}
-            />
+            {/* FilterChips removed */}
 
             <div className="transaction-list">
                 {loading ? (
@@ -121,24 +188,32 @@ export default function TodayPage() {
                     <div className="empty-state">
                         <div className="empty-state-icon">✨</div>
                         <div className="empty-state-title">
-                            {filters.needs_review ? 'All tidy!' : 'No transactions yet'}
+                            No transactions yet
                         </div>
                         <div className="empty-state-text">
-                            {filters.needs_review
-                                ? 'Everything is tidy. Great job!'
-                                : 'Tap the + button to log your first expense'}
+                            Tap the + button to log your first expense
                         </div>
                     </div>
                 ) : (
-                    data.transactions.map((tx, index) => (
-                        <div key={tx.id} className="stagger-item">
-                            <TransactionCard
-                                transaction={tx}
-                                onEdit={() => setEditingTx(tx)}
-                                onDelete={() => handleDelete(tx.id)}
-                            />
-                        </div>
-                    ))
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={data.transactions.map(t => t.id)}
+                            strategy={verticalListSortingStrategy}
+                        >
+                            {data.transactions.map((tx, index) => (
+                                <SortableTransaction
+                                    key={tx.id}
+                                    transaction={tx}
+                                    onEdit={() => setEditingTx(tx)}
+                                    onDelete={() => handleDelete(tx.id)}
+                                />
+                            ))}
+                        </SortableContext>
+                    </DndContext>
                 )}
             </div>
 
@@ -147,7 +222,7 @@ export default function TodayPage() {
                 <Plus size={28} />
             </button>
 
-            {/* Quick Add Form (new step-based modal) */}
+            {/* Quick Add Form */}
             {showQuickAdd && (
                 <QuickAddForm
                     options={options}
@@ -157,7 +232,7 @@ export default function TodayPage() {
                 />
             )}
 
-            {/* Full Edit Form (for editing existing transactions) */}
+            {/* Full Edit Form */}
             {editingTx && (
                 <TransactionForm
                     transaction={editingTx}

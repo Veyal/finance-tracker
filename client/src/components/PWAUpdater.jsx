@@ -14,12 +14,16 @@ export default function PWAUpdater() {
         },
     });
 
-    // Check for updates periodically (every 5 minutes)
+    // Check for updates periodically (every 5 minutes) and on mount
     useEffect(() => {
-        const interval = setInterval(() => {
+        const check = () => {
             console.log("Checking for PWA updates...");
-            updateServiceWorker(true); // true = force check
-        }, 5 * 60 * 1000);
+            updateServiceWorker(true);
+        };
+
+        check(); // Check immediately on mount
+
+        const interval = setInterval(check, 5 * 60 * 1000);
 
         return () => clearInterval(interval);
     }, [updateServiceWorker]);
