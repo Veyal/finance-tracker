@@ -9,7 +9,7 @@ import FilterChips from '../components/FilterChips';
 import PrivacyToggle from '../components/PrivacyToggle';
 import './TodayPage.css';
 
-import { DndContext, closestCenter, KeyboardSensor, TouchSensor, MouseSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
@@ -51,12 +51,7 @@ export default function TodayPage() {
 
     // DnD Sensors
     const sensors = useSensors(
-        useSensor(MouseSensor, {
-            activationConstraint: {
-                distance: 10,
-            },
-        }),
-        useSensor(TouchSensor, {
+        useSensor(PointerSensor, {
             activationConstraint: {
                 delay: 250,
                 tolerance: 5,

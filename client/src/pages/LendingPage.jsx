@@ -26,6 +26,10 @@ export default function LendingPage() {
     const [newSourceName, setNewSourceName] = useState('');
     const [newSourceColor, setNewSourceColor] = useState('#FF6B6B');
 
+    // Payment Method Management State
+    const [showAddPm, setShowAddPm] = useState(false);
+    const [newPmName, setNewPmName] = useState('');
+
     useEffect(() => {
         loadData();
     }, []);
@@ -56,6 +60,21 @@ export default function LendingPage() {
             loadData();
         } catch (error) {
             console.error('Failed to create source:', error);
+        }
+    }
+
+    async function handleAddPm(e) {
+        e.preventDefault();
+        if (!newPmName.trim()) return;
+        try {
+            const newPm = await paymentMethods.create({ name: newPmName.trim() });
+            setNewPmName('');
+            setShowAddPm(false);
+            loadData();
+            // Auto-select the new PM
+            setRepayPmId(newPm.id);
+        } catch (error) {
+            console.error('Failed to create payment method:', error);
         }
     }
 
@@ -203,6 +222,8 @@ export default function LendingPage() {
                                             onChange={setRepaySourceId}
                                             options={sources}
                                             placeholder="Who paid?"
+                                            onAddNew={() => setShowAddSource(true)}
+                                            addNewLabel="Add Person"
                                         />
                                     </div>
                                     <div className="form-group">
@@ -212,6 +233,8 @@ export default function LendingPage() {
                                             onChange={setRepayPmId}
                                             options={pms}
                                             placeholder="Received to..."
+                                            onAddNew={() => setShowAddPm(true)}
+                                            addNewLabel="Add Account"
                                         />
                                     </div>
                                     <div className="form-group">
@@ -276,6 +299,36 @@ export default function LendingPage() {
                             </div>
                             <button type="submit" className="modal-submit-btn" disabled={!newSourceName.trim()}>
                                 Add Person
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Add Payment Method Modal */}
+            {showAddPm && (
+                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowAddPm(false)}>
+                    <div className="modal-content">
+                        <div className="modal-header">
+                            <h2>Add Account</h2>
+                            <button className="modal-close" onClick={() => setShowAddPm(false)}>
+                                <X size={24} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleAddPm}>
+                            <div className="form-group">
+                                <label>Account Name</label>
+                                <input
+                                    type="text"
+                                    value={newPmName}
+                                    onChange={(e) => setNewPmName(e.target.value)}
+                                    placeholder="e.g. BCA, Wallet"
+                                    autoFocus
+                                    className="modal-input"
+                                />
+                            </div>
+                            <button type="submit" className="modal-submit-btn" disabled={!newPmName.trim()}>
+                                Add Account
                             </button>
                         </form>
                     </div>
