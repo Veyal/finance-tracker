@@ -5,19 +5,63 @@ import { authMiddleware } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Get all lending sources
+// Get all lending sources with total repaid
 router.get('/', authMiddleware, (req, res) => {
     try {
         const sources = db.prepare(`
-            SELECT * FROM lending_sources 
-            WHERE user_id = ? AND is_active = 1 
-            ORDER BY name ASC
+            SELECT ls.*,
+                   COALESCE((
+                     SELECT SUM(t.amount) FROM transactions t 
+                     WHERE t.lending_source_id = ls.id AND t.type = 'repayment' AND t.deleted_at IS NULL
+                   ), 0) as total_repaid,
+                   (
+                     SELECT COUNT(*) FROM transactions t 
+                     WHERE t.lending_source_id = ls.id AND t.type = 'repayment' AND t.deleted_at IS NULL
+                   ) as repayment_count
+            FROM lending_sources ls
+            WHERE ls.user_id = ? AND ls.is_active = 1 
+            ORDER BY ls.name ASC
         `).all(req.user.id);
 
-        // Calculate balance for each source
-        // This is a naive implementation, better done with a JOIN or separate query if needed
-        // For now, let's keep it simple and just return the sources
         res.json(sources);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get repayments by person
+router.get('/:id/repayments', authMiddleware, (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // First verify the source belongs to user
+        const source = db.prepare(`
+            SELECT * FROM lending_sources WHERE id = ? AND user_id = ?
+        `).get(id, req.user.id);
+
+        if (!source) {
+            return res.status(404).json({ error: 'Source not found' });
+        }
+
+        // Get all repayments from this person
+        const repayments = db.prepare(`
+            SELECT r.*,
+                   pm.name as payment_method_name,
+                   orig.merchant as original_merchant,
+                   orig.amount as original_amount,
+                   orig.date as original_date
+            FROM transactions r
+            LEFT JOIN payment_methods pm ON r.payment_method_id = pm.id
+            LEFT JOIN transactions orig ON r.related_transaction_id = orig.id
+            WHERE r.lending_source_id = ? AND r.type = 'repayment' AND r.deleted_at IS NULL
+            ORDER BY r.date DESC
+        `).all(id);
+
+        res.json({
+            source,
+            repayments,
+            total: repayments.reduce((sum, r) => sum + r.amount, 0)
+        });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

@@ -34,3 +34,7 @@ yarn-error.log*
 
 # Deployment
 deploy.sh
+
+# Database
+*.db-shm
+*.db-wal

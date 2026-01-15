@@ -72,6 +72,8 @@ export const transactions = {
 
     delete: (id) => request(`/transactions/${id}`, { method: 'DELETE' }),
 
+    getDetails: (id) => request(`/transactions/${id}/details`),
+
     summary: (params = {}) => {
         const query = new URLSearchParams();
         Object.entries(params).forEach(([key, value]) => {
@@ -136,4 +138,5 @@ export const lendingSources = {
     create: (data) => request('/lending', { method: 'POST', body: data }),
     update: (id, data) => request(`/lending/${id}`, { method: 'PUT', body: data }),
     delete: (id) => request(`/lending/${id}`, { method: 'DELETE' }),
+    getRepayments: (id) => request(`/lending/${id}/repayments`),
 };

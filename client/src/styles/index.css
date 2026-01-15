@@ -136,13 +136,14 @@ body {
 
   /* Native App Feel */
   -webkit-tap-highlight-color: transparent;
-  /* Remove tap highlight */
   user-select: none;
-  /* Disable text selection */
   -webkit-user-select: none;
-  touch-action: manipulation;
-  /* Improve touch response */
+  touch-action: pan-y;
+  /* Only allow vertical pan, prevents horizontal swipe navigation */
   cursor: default;
+
+  /* Prevent browser back/forward gestures */
+  overscroll-behavior-x: none;
 
   /* Enhanced starfield with additional depth */
   background-image:

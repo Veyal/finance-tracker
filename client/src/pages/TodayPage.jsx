@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { transactions, categories, groups, paymentMethods, incomeSources, lendingSources } from '../api/api';
 import TransactionCard from '../components/TransactionCard';
 import TransactionForm from '../components/TransactionForm';
 import QuickAddForm from '../components/QuickAddForm';
 import SummaryCard from '../components/SummaryCard';
-import FilterChips from '../components/FilterChips';
+import TransactionDetailModal from '../components/TransactionDetailModal';
 import PrivacyToggle from '../components/PrivacyToggle';
 import './TodayPage.css';
 
@@ -13,28 +14,32 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-// Sortable Transaction Item Wrapper
-function SortableTransaction({ transaction, onEdit, onDelete }) {
+// Sortable Transaction Item Wrapper with drag handle
+function SortableTransaction({ transaction, onEdit, onDelete, onClick }) {
     const {
         attributes,
         listeners,
         setNodeRef,
         transform,
         transition,
+        isDragging,
     } = useSortable({ id: transaction.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        touchAction: 'manipulation',
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 100 : 'auto',
     };
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="stagger-item">
+        <div ref={setNodeRef} style={style} {...attributes} className="stagger-item">
             <TransactionCard
                 transaction={transaction}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onClick={onClick}
+                dragHandleProps={listeners}
             />
         </div>
     );
@@ -45,6 +50,7 @@ export default function TodayPage() {
     const [loading, setLoading] = useState(true);
     const [showQuickAdd, setShowQuickAdd] = useState(false);
     const [editingTx, setEditingTx] = useState(null);
+    const [viewingTx, setViewingTx] = useState(null);
     const [options, setOptions] = useState({ categories: [], groups: [], paymentMethods: [], incomeSources: [] });
 
     const today = new Date().toISOString().split('T')[0];
@@ -126,7 +132,7 @@ export default function TodayPage() {
     function handleDragEnd(event) {
         const { active, over } = event;
 
-        if (active.id !== over.id) {
+        if (over && active.id !== over.id) {
             setData((prev) => {
                 const oldIndex = prev.transactions.findIndex((t) => t.id === active.id);
                 const newIndex = prev.transactions.findIndex((t) => t.id === over.id);
@@ -218,6 +224,7 @@ export default function TodayPage() {
                                     transaction={tx}
                                     onEdit={() => setEditingTx(tx)}
                                     onDelete={() => handleDelete(tx.id)}
+                                    onClick={(tx) => setViewingTx(tx)}
                                 />
                             ))}
                         </SortableContext>
@@ -250,6 +257,27 @@ export default function TodayPage() {
                     onOptionsChange={loadOptions}
                 />
             )}
+
+            {/* Transaction Detail Modal */}
+            <AnimatePresence>
+                {viewingTx && (
+                    <TransactionDetailModal
+                        transaction={viewingTx}
+                        onClose={() => setViewingTx(null)}
+                        onEdit={(tx) => {
+                            setViewingTx(null);
+                            setEditingTx(tx);
+                        }}
+                        onDelete={(id) => {
+                            handleDelete(id);
+                            setViewingTx(null);
+                        }}
+                        onRepaymentAdded={() => {
+                            loadData();
+                        }}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

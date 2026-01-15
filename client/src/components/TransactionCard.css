@@ -38,6 +38,32 @@
     padding: 16px;
 }
 
+/* Drag Handle */
+.drag-handle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 40px;
+    color: var(--text-muted);
+    opacity: 0.4;
+    cursor: grab;
+    touch-action: none;
+    flex-shrink: 0;
+    margin-left: -8px;
+    margin-right: -4px;
+    transition: opacity 0.2s ease;
+}
+
+.drag-handle:hover {
+    opacity: 0.8;
+}
+
+.drag-handle:active {
+    cursor: grabbing;
+    opacity: 1;
+}
+
 /* Left side - info */
 .transaction-left {
     flex: 1;
@@ -119,6 +145,30 @@
     border-radius: 100px;
     text-transform: uppercase;
     letter-spacing: 0.03em;
+}
+
+/* Repayment indicator */
+.repayment-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    background: rgba(78, 205, 196, 0.2);
+    border-radius: 6px;
+    color: #4ECDC4;
+    flex-shrink: 0;
+}
+
+.transaction-card.has-repayments {
+    border-left-color: #4ECDC4;
+}
+
+.original-amount {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-decoration: line-through;
+    opacity: 0.7;
 }
 
 /* Note */

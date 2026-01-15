@@ -1,11 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Edit2, Archive, LogOut, ChevronRight, X, Loader2, Lock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Plus, Edit2, Archive, LogOut, ChevronRight, X, Loader2, Lock, Users, Calendar } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { categories, groups, paymentMethods, incomeSources, auth } from '../api/api';
 import './SettingsPage.css';
 
 export default function SettingsPage() {
     const { user, logout } = useAuth();
+    const navigate = useNavigate();
     const [activeSection, setActiveSection] = useState(null);
     const [data, setData] = useState({ categories: [], groups: [], paymentMethods: [], incomeSources: [] });
     const [loading, setLoading] = useState(true);
@@ -259,6 +261,20 @@ export default function SettingsPage() {
                             <span className="settings-count">{data.incomeSources.filter(s => s.is_active).length}</span>
                             <ChevronRight size={20} />
                         </div>
+                    </button>
+
+                    <div className="settings-divider" />
+
+                    <button type="button" className="settings-item" onClick={() => navigate('/split')}>
+                        <Users size={20} />
+                        <span>Repayments</span>
+                        <ChevronRight size={20} className="settings-chevron" />
+                    </button>
+
+                    <button type="button" className="settings-item" onClick={() => navigate('/calendar')}>
+                        <Calendar size={20} />
+                        <span>Calendar</span>
+                        <ChevronRight size={20} className="settings-chevron" />
                     </button>
 
                     <div className="settings-divider" />

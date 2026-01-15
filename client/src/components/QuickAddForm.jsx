@@ -46,6 +46,14 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
 
     const amountInputRef = useRef(null);
 
+    // Lock body scroll when modal is open
+    useEffect(() => {
+        document.body.style.overflow = 'hidden';
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, []);
+
     // Initial Load & Smart Defaults
     useEffect(() => {
         const lastCat = localStorage.getItem(STORAGE_KEYS.lastCategory);
@@ -175,6 +183,13 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
         }
     }
 
+    // Handle drag end - close if dragged down enough
+    function handleDragEnd(event, info) {
+        if (info.offset.y > 100) {
+            onClose();
+        }
+    }
+
     return (
         <div className="quick-add-overlay" onClick={handleBackdropClick}>
             <motion.div
@@ -183,7 +198,16 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 100 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                drag="y"
+                dragConstraints={{ top: 0, bottom: 0 }}
+                dragElastic={{ top: 0, bottom: 0.5 }}
+                onDragEnd={handleDragEnd}
             >
+                {/* Drag handle indicator */}
+                <div className="modal-drag-handle">
+                    <div className="drag-indicator" />
+                </div>
+
                 {/* Header */}
                 <div className="quick-add-header">
                     {step === 1 ? (
@@ -450,6 +474,17 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                                         onChange={(e) => setDate(e.target.value)}
                                     />
                                 </div>
+                            </div>
+
+                            <div className="detail-section">
+                                <label className="detail-label">Notes</label>
+                                <input
+                                    type="text"
+                                    className="note-input"
+                                    value={note}
+                                    onChange={(e) => setNote(e.target.value)}
+                                    placeholder="Add a note..."
+                                />
                             </div>
 
                             <motion.button

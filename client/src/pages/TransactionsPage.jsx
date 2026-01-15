@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { transactions, categories, groups, paymentMethods } from '../api/api';
 import TransactionCard from '../components/TransactionCard';
 import TransactionForm from '../components/TransactionForm';
+import TransactionDetailModal from '../components/TransactionDetailModal';
 import SummaryCard from '../components/SummaryCard';
 import PrivacyToggle from '../components/PrivacyToggle';
 import './TransactionsPage.css';
@@ -51,28 +53,32 @@ import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, us
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-// Sortable Transaction Item Wrapper
-function SortableTransaction({ transaction, onEdit, onDelete }) {
+// Sortable Transaction Item Wrapper with drag handle
+function SortableTransaction({ transaction, onEdit, onDelete, onClick }) {
     const {
         attributes,
         listeners,
         setNodeRef,
         transform,
         transition,
+        isDragging,
     } = useSortable({ id: transaction.id });
 
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        touchAction: 'manipulation', // Allow scrolling, wait for delay to drag
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 100 : 'auto',
     };
 
     return (
-        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="stagger-item">
+        <div ref={setNodeRef} style={style} {...attributes} className="stagger-item">
             <TransactionCard
                 transaction={transaction}
                 onEdit={onEdit}
                 onDelete={onDelete}
+                onClick={onClick}
+                dragHandleProps={listeners}
             />
         </div>
     );
@@ -83,6 +89,7 @@ export default function TransactionsPage() {
     const [loading, setLoading] = useState(true);
     const [showFilters, setShowFilters] = useState(false);
     const [editingTx, setEditingTx] = useState(null);
+    const [viewingTx, setViewingTx] = useState(null);
     const [options, setOptions] = useState({ categories: [], groups: [], paymentMethods: [] });
 
     // DnD Sensors
@@ -109,7 +116,8 @@ export default function TransactionsPage() {
         q: '',
     });
 
-    // ... (keep existing state/effects)
+    // Track active preset for highlighting
+    const [activePreset, setActivePreset] = useState('all');
 
     // Quick date presets
     const today = new Date().toISOString().split('T')[0];
@@ -200,6 +208,7 @@ export default function TransactionsPage() {
     function handleQuickDate(preset) {
         const range = getDateRange(preset);
         setFilters(prev => ({ ...prev, ...range }));
+        setActivePreset(preset);
     }
 
     async function handleDelete(id) {
@@ -219,7 +228,7 @@ export default function TransactionsPage() {
     function handleDragEnd(event) {
         const { active, over } = event;
 
-        if (active.id !== over.id) {
+        if (over && active.id !== over.id) {
             setData((prev) => {
                 const oldIndex = prev.transactions.findIndex((t) => t.id === active.id);
                 const newIndex = prev.transactions.findIndex((t) => t.id === over.id);
@@ -297,28 +306,28 @@ export default function TransactionsPage() {
             <div className="quick-filters">
                 <button
                     type="button"
-                    className={`chip ${!filters.from && !filters.to ? 'active' : ''}`}
+                    className={`chip ${activePreset === 'all' ? 'active' : ''}`}
                     onClick={() => handleQuickDate('all')}
                 >
                     All Time
                 </button>
                 <button
                     type="button"
-                    className={`chip ${filters.from === today && filters.to === today ? 'active' : ''}`}
+                    className={`chip ${activePreset === 'today' ? 'active' : ''}`}
                     onClick={() => handleQuickDate('today')}
                 >
                     Today
                 </button>
                 <button
                     type="button"
-                    className={`chip ${filters.from && filters.from !== today && !filters.to?.includes(today.slice(0, 7) + '-01') ? 'active' : ''}`}
+                    className={`chip ${activePreset === 'week' ? 'active' : ''}`}
                     onClick={() => handleQuickDate('week')}
                 >
                     This Week
                 </button>
                 <button
                     type="button"
-                    className={`chip ${filters.from?.endsWith('-01') ? 'active' : ''}`}
+                    className={`chip ${activePreset === 'month' ? 'active' : ''}`}
                     onClick={() => handleQuickDate('month')}
                 >
                     This Month
@@ -470,6 +479,7 @@ export default function TransactionsPage() {
                                             transaction={tx}
                                             onEdit={() => setEditingTx(tx)}
                                             onDelete={() => handleDelete(tx.id)}
+                                            onClick={(tx) => setViewingTx(tx)}
                                         />
                                     ))}
                                 </div>
@@ -488,6 +498,27 @@ export default function TransactionsPage() {
                     onOptionsChange={loadOptions}
                 />
             )}
+
+            {/* Transaction Detail Modal */}
+            <AnimatePresence>
+                {viewingTx && (
+                    <TransactionDetailModal
+                        transaction={viewingTx}
+                        onClose={() => setViewingTx(null)}
+                        onEdit={(tx) => {
+                            setViewingTx(null);
+                            setEditingTx(tx);
+                        }}
+                        onDelete={(id) => {
+                            handleDelete(id);
+                            setViewingTx(null);
+                        }}
+                        onRepaymentAdded={() => {
+                            loadData();
+                        }}
+                    />
+                )}
+            </AnimatePresence>
         </div>
     );
 }

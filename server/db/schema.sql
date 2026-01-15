@@ -100,7 +100,7 @@ CREATE INDEX IF NOT EXISTS idx_lending_sources_user_id ON lending_sources(user_i
 CREATE TABLE IF NOT EXISTS transactions (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id),
-    type TEXT DEFAULT 'expense' CHECK(type IN ('expense', 'income')),
+    type TEXT DEFAULT 'expense' CHECK(type IN ('expense', 'income', 'repayment')),
     amount REAL NOT NULL,
     currency TEXT DEFAULT 'IDR',
     date TEXT DEFAULT (datetime('now')),

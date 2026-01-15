@@ -8,22 +8,37 @@ const router = Router();
 router.get('/', (req, res) => {
     try {
         const userId = req.user.id;
-        const { from, to, type, group_id, category_id, payment_method_id, needs_review, q, limit = 50, cursor } = req.query;
+        const { from, to, type, group_id, category_id, payment_method_id, needs_review, q, limit = 50, cursor, include_repayments } = req.query;
 
         let sql = `
       SELECT t.*, 
              c.name as category_name,
              g.name as group_name,
              pm.name as payment_method_name,
-             isrc.name as income_source_name
+             isrc.name as income_source_name,
+             ls.name as lending_source_name,
+             COALESCE((
+               SELECT SUM(r.amount) FROM transactions r 
+               WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+             ), 0) as repayment_total,
+             (t.amount - COALESCE((
+               SELECT SUM(r.amount) FROM transactions r 
+               WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+             ), 0)) as net_amount
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
       LEFT JOIN groups g ON t.group_id = g.id
       LEFT JOIN payment_methods pm ON t.payment_method_id = pm.id
       LEFT JOIN income_sources isrc ON t.income_source_id = isrc.id
+      LEFT JOIN lending_sources ls ON t.lending_source_id = ls.id
       WHERE t.user_id = ? AND t.deleted_at IS NULL
     `;
         const params = [userId];
+
+        // Exclude repayment type by default unless explicitly requested
+        if (include_repayments !== 'true') {
+            sql += ` AND t.type != 'repayment'`;
+        }
 
         if (from) {
             sql += ` AND date(t.date) >= ?`;
@@ -66,13 +81,13 @@ router.get('/', (req, res) => {
 
         const transactions = db.prepare(sql).all(...params);
 
-        // Get totals for the same filters
+        // Get totals for the same filters (exclude repayment type from income)
         let totalsSql = `
       SELECT 
         COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as expense_total,
         COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as income_total
       FROM transactions
-      WHERE user_id = ? AND deleted_at IS NULL
+      WHERE user_id = ? AND deleted_at IS NULL AND type != 'repayment'
     `;
         const totalsParams = [userId];
 
@@ -133,11 +148,68 @@ router.post('/reorder', (req, res) => {
     }
 });
 
+// GET /transactions/:id/details - Get transaction with full repayments list
+router.get('/:id/details', (req, res) => {
+    try {
+        const userId = req.user.id;
+        const { id } = req.params;
+
+        // Get the transaction with calculated totals
+        const transaction = db.prepare(`
+            SELECT t.*, 
+                   c.name as category_name,
+                   g.name as group_name,
+                   pm.name as payment_method_name,
+                   isrc.name as income_source_name,
+                   ls.name as lending_source_name,
+                   COALESCE((
+                     SELECT SUM(r.amount) FROM transactions r 
+                     WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+                   ), 0) as repayment_total,
+                   (t.amount - COALESCE((
+                     SELECT SUM(r.amount) FROM transactions r 
+                     WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+                   ), 0)) as net_amount
+            FROM transactions t
+            LEFT JOIN categories c ON t.category_id = c.id
+            LEFT JOIN groups g ON t.group_id = g.id
+            LEFT JOIN payment_methods pm ON t.payment_method_id = pm.id
+            LEFT JOIN income_sources isrc ON t.income_source_id = isrc.id
+            LEFT JOIN lending_sources ls ON t.lending_source_id = ls.id
+            WHERE t.id = ? AND t.user_id = ? AND t.deleted_at IS NULL
+        `).get(id, userId);
+
+        if (!transaction) {
+            return res.status(404).json({ error: 'not_found' });
+        }
+
+        // Get all repayments for this transaction
+        const repayments = db.prepare(`
+            SELECT r.*, 
+                   ls.name as lending_source_name,
+                   pm.name as payment_method_name
+            FROM transactions r
+            LEFT JOIN lending_sources ls ON r.lending_source_id = ls.id
+            LEFT JOIN payment_methods pm ON r.payment_method_id = pm.id
+            WHERE r.related_transaction_id = ? AND r.type = 'repayment' AND r.deleted_at IS NULL
+            ORDER BY r.date DESC
+        `).all(id);
+
+        res.json({
+            ...transaction,
+            repayments
+        });
+    } catch (error) {
+        console.error('Get transaction details error:', error);
+        res.status(500).json({ error: 'internal_error' });
+    }
+});
+
 // POST /transactions
 router.post('/', (req, res) => {
     try {
         const userId = req.user.id;
-        const { type = 'expense', amount, date, category_id, group_id, payment_method_id, income_source_id, note, merchant } = req.body;
+        const { type = 'expense', amount, date, category_id, group_id, payment_method_id, income_source_id, lending_source_id, related_transaction_id, note, merchant } = req.body;
 
         if (amount === undefined || amount === null) {
             return res.status(400).json({ error: 'amount_required' });
@@ -155,21 +227,23 @@ router.post('/', (req, res) => {
         const nextOrder = (maxOrder?.max_order || 0) + 1;
 
         db.prepare(`
-      INSERT INTO transactions (id, user_id, type, amount, date, category_id, group_id, payment_method_id, income_source_id, note, merchant, sort_order)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).run(id, userId, type, amount, txDate, category_id || null, group_id || null, payment_method_id || null, income_source_id || null, note || null, merchant || null, nextOrder);
+      INSERT INTO transactions (id, user_id, type, amount, date, category_id, group_id, payment_method_id, income_source_id, lending_source_id, related_transaction_id, note, merchant, sort_order)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(id, userId, type, amount, txDate, category_id || null, group_id || null, payment_method_id || null, income_source_id || null, lending_source_id || null, related_transaction_id || null, note || null, merchant || null, nextOrder);
 
         const transaction = db.prepare(`
       SELECT t.*, 
              c.name as category_name,
              g.name as group_name,
              pm.name as payment_method_name,
-             isrc.name as income_source_name
+             isrc.name as income_source_name,
+             ls.name as lending_source_name
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
       LEFT JOIN groups g ON t.group_id = g.id
       LEFT JOIN payment_methods pm ON t.payment_method_id = pm.id
       LEFT JOIN income_sources isrc ON t.income_source_id = isrc.id
+      LEFT JOIN lending_sources ls ON t.lending_source_id = ls.id
       WHERE t.id = ?
     `).get(id);
 

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Edit2, Trash2, AlertCircle } from 'lucide-react';
+import { Edit2, Trash2, AlertCircle, Users, GripVertical } from 'lucide-react';
 import { usePrivacy } from '../context/PrivacyContext';
 import './TransactionCard.css';
 
@@ -7,21 +7,15 @@ function formatAmount(amount) {
     return new Intl.NumberFormat('id-ID').format(amount);
 }
 
-function formatDateTime(dateString) {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-    });
-}
-
-export default function TransactionCard({ transaction, onEdit, onDelete }) {
+export default function TransactionCard({ transaction, onEdit, onDelete, onClick, dragHandleProps }) {
     const [showActions, setShowActions] = useState(false);
+    const { isPrivacyMode } = usePrivacy();
 
     const {
         type,
         amount,
-        date,
+        net_amount,
+        repayment_total,
         category_name,
         group_name,
         payment_method_name,
@@ -30,10 +24,18 @@ export default function TransactionCard({ transaction, onEdit, onDelete }) {
         note
     } = transaction;
 
+    const hasRepayments = repayment_total > 0;
+    // Use amount as primary, only use net_amount if there are actual repayments
+    const displayAmount = hasRepayments && net_amount !== undefined ? net_amount : amount;
+
     const needsReview = type === 'expense' && (!category_name || !group_name || !payment_method_name);
 
-    function handleCardClick() {
-        setShowActions(!showActions);
+    function handleCardClick(e) {
+        if (onClick) {
+            onClick(transaction);
+        } else {
+            setShowActions(!showActions);
+        }
     }
 
     function handleEdit(e) {
@@ -54,13 +56,32 @@ export default function TransactionCard({ transaction, onEdit, onDelete }) {
     const displayCategory = merchant && category_name ? category_name : null;
 
     return (
-        <div className={`transaction-card ${type} ${showActions ? 'expanded' : ''}`} onClick={handleCardClick}>
+        <div
+            className={`transaction-card ${type} ${showActions ? 'expanded' : ''} ${hasRepayments ? 'has-repayments' : ''}`}
+            onClick={handleCardClick}
+        >
             {/* Main Content */}
             <div className="transaction-content">
+                {/* Drag Handle (if enabled) */}
+                {dragHandleProps && (
+                    <div
+                        className="drag-handle"
+                        onClick={(e) => e.stopPropagation()}
+                        {...dragHandleProps}
+                    >
+                        <GripVertical size={18} />
+                    </div>
+                )}
+
                 {/* Left: Info */}
                 <div className="transaction-left">
                     <div className="transaction-primary">
                         <span className="transaction-name">{displayName}</span>
+                        {hasRepayments && (
+                            <span className="repayment-badge" title="Has repayments">
+                                <Users size={12} />
+                            </span>
+                        )}
                         {needsReview && (
                             <span className="review-dot" title="Needs review">
                                 <AlertCircle size={14} />
@@ -77,16 +98,20 @@ export default function TransactionCard({ transaction, onEdit, onDelete }) {
                         {type === 'income' && income_source_name && merchant && (
                             <span className="transaction-source">{income_source_name}</span>
                         )}
-                        {/* Time removed per user request */}
                     </div>
                 </div>
 
                 {/* Right: Amount */}
                 <div className="transaction-right">
                     <span className={`transaction-amount amount-${type}`}>
-                        {usePrivacy().isPrivacyMode ? '****' : `${type === 'expense' ? '-' : '+'}Rp ${formatAmount(amount)}`}
+                        {isPrivacyMode ? '****' : `${type === 'expense' ? '-' : '+'}Rp ${formatAmount(displayAmount)}`}
                     </span>
-                    {group_name && (
+                    {hasRepayments && !isPrivacyMode && (
+                        <span className="original-amount">
+                            Rp {formatAmount(amount)}
+                        </span>
+                    )}
+                    {!hasRepayments && group_name && (
                         <span className="transaction-group">{group_name}</span>
                     )}
                 </div>
@@ -99,8 +124,8 @@ export default function TransactionCard({ transaction, onEdit, onDelete }) {
                 </div>
             )}
 
-            {/* Actions - shown on tap */}
-            {showActions && (
+            {/* Actions - shown on tap (only if onClick not provided) */}
+            {showActions && !onClick && (
                 <div className="transaction-actions">
                     <button className="action-btn edit" onClick={handleEdit}>
                         <Edit2 size={16} />
