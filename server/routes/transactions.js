@@ -76,7 +76,7 @@ router.get('/', (req, res) => {
             params.push(cursor);
         }
 
-        sql += ` ORDER BY t.date DESC, t.sort_order ASC, t.created_at DESC LIMIT ?`;
+        sql += ` ORDER BY t.date DESC, t.created_at DESC LIMIT ?`;
         params.push(parseInt(limit));
 
         const transactions = db.prepare(sql).all(...params);
@@ -84,10 +84,18 @@ router.get('/', (req, res) => {
         // Get totals for the same filters (exclude repayment type from income)
         let totalsSql = `
       SELECT 
-        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as expense_total,
-        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as income_total
-      FROM transactions
-      WHERE user_id = ? AND deleted_at IS NULL AND type != 'repayment'
+        COALESCE(SUM(CASE 
+          WHEN t.type = 'expense' THEN 
+            t.amount - COALESCE((
+              SELECT SUM(r.amount) 
+              FROM transactions r 
+              WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+            ), 0)
+          ELSE 0 
+        END), 0) as expense_total,
+        COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END), 0) as income_total
+      FROM transactions t
+      WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type != 'repayment'
     `;
         const totalsParams = [userId];
 
@@ -334,11 +342,19 @@ router.get('/summary', (req, res) => {
 
         let sql = `
       SELECT 
-        date(date) as day,
-        SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as expense,
-        SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income
-      FROM transactions
-      WHERE user_id = ? AND deleted_at IS NULL
+        date(t.date) as day,
+        SUM(CASE 
+          WHEN t.type = 'expense' THEN 
+            t.amount - COALESCE((
+              SELECT SUM(r.amount) 
+              FROM transactions r 
+              WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+            ), 0)
+          ELSE 0 
+        END) as expense,
+        SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END) as income
+      FROM transactions t
+      WHERE t.user_id = ? AND t.deleted_at IS NULL
     `;
         const params = [userId];
 
@@ -384,7 +400,13 @@ router.get('/insights', (req, res) => {
         const byCategory = db.prepare(`
       SELECT 
         c.id, c.name, 
-        SUM(t.amount) as total,
+        SUM(
+          t.amount - COALESCE((
+            SELECT SUM(r.amount) 
+            FROM transactions r 
+            WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+          ), 0)
+        ) as total,
         COUNT(*) as count
       FROM transactions t
       LEFT JOIN categories c ON t.category_id = c.id
@@ -397,7 +419,13 @@ router.get('/insights', (req, res) => {
         const byGroup = db.prepare(`
       SELECT 
         g.id, g.name, 
-        SUM(t.amount) as total,
+        SUM(
+          t.amount - COALESCE((
+            SELECT SUM(r.amount) 
+            FROM transactions r 
+            WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+          ), 0)
+        ) as total,
         COUNT(*) as count
       FROM transactions t
       LEFT JOIN groups g ON t.group_id = g.id
@@ -410,7 +438,13 @@ router.get('/insights', (req, res) => {
         const byPaymentMethod = db.prepare(`
       SELECT 
         pm.id, pm.name, 
-        SUM(t.amount) as total,
+        SUM(
+          t.amount - COALESCE((
+            SELECT SUM(r.amount) 
+            FROM transactions r 
+            WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+          ), 0)
+        ) as total,
         COUNT(*) as count
       FROM transactions t
       LEFT JOIN payment_methods pm ON t.payment_method_id = pm.id
@@ -422,10 +456,18 @@ router.get('/insights', (req, res) => {
         // Totals
         const totals = db.prepare(`
       SELECT 
-        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as expense,
-        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as income
-      FROM transactions
-      WHERE user_id = ? AND deleted_at IS NULL ${dateFilter}
+        COALESCE(SUM(CASE 
+          WHEN t.type = 'expense' THEN 
+            t.amount - COALESCE((
+              SELECT SUM(r.amount) 
+              FROM transactions r 
+              WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+            ), 0)
+          ELSE 0 
+        END), 0) as expense,
+        COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END), 0) as income
+      FROM transactions t
+      WHERE t.user_id = ? AND t.deleted_at IS NULL ${dateFilter}
     `).get(userId, ...dateParams);
 
         res.json({

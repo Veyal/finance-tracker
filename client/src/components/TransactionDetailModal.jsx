@@ -18,13 +18,7 @@ function formatDate(dateString) {
     });
 }
 
-function formatTime(dateString) {
-    return new Date(dateString).toLocaleTimeString('en-US', {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-    });
-}
+
 
 export default function TransactionDetailModal({ transaction, onClose, onEdit, onDelete, onRepaymentAdded }) {
     const [loading, setLoading] = useState(true);
@@ -212,7 +206,7 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
                                 </div>
                             )}
                             <div className="tx-detail-date">
-                                {formatDate(details.date)} · {formatTime(details.date)}
+                                {formatDate(details.date)}
                             </div>
                         </div>
 

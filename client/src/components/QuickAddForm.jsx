@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Check, ChevronRight, ChevronLeft, Minus, Plus, Calendar, Loader2 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { transactions, categories, groups, paymentMethods } from '../api/api';
 import { useHaptics } from '../hooks/useHaptics';
 import NumberPad from './NumberPad';
@@ -45,6 +45,7 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
     const [addPaymentLoading, setAddPaymentLoading] = useState(false);
 
     const amountInputRef = useRef(null);
+    const dragControls = useDragControls();
 
     // Lock body scroll when modal is open
     useEffect(() => {
@@ -199,12 +200,18 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                 exit={{ opacity: 0, y: 100 }}
                 transition={{ type: "spring", damping: 25, stiffness: 300 }}
                 drag="y"
+                dragControls={dragControls}
+                dragListener={false}
                 dragConstraints={{ top: 0, bottom: 0 }}
                 dragElastic={{ top: 0, bottom: 0.5 }}
                 onDragEnd={handleDragEnd}
             >
                 {/* Drag handle indicator */}
-                <div className="modal-drag-handle">
+                <div
+                    className="modal-drag-handle"
+                    onPointerDown={(e) => dragControls.start(e)}
+                    style={{ touchAction: 'none' }}
+                >
                     <div className="drag-indicator" />
                 </div>
 

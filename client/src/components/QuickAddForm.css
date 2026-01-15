@@ -31,7 +31,8 @@
     /* Dynamic viewport height */
     display: flex;
     flex-direction: column;
-    touch-action: pan-y;
+    touch-action: pan-y !important;
+    overscroll-behavior: contain;
 }
 
 /* Header */
@@ -45,6 +46,36 @@
     top: 0;
     z-index: 10;
     background: linear-gradient(180deg, rgba(30, 30, 63, 0.95) 0%, rgba(30, 30, 63, 0) 100%);
+    pointer-events: none;
+    /* Let clicks pass through to drag handle if overlapping */
+}
+
+/* Drag Handle */
+.modal-drag-handle {
+    display: flex;
+    justify-content: center;
+    padding: 12px 0 8px;
+    cursor: grab;
+    z-index: 20;
+    position: relative;
+    margin-bottom: -10px;
+}
+
+.modal-drag-handle:active {
+    cursor: grabbing;
+}
+
+.drag-indicator {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.3);
+    border-radius: 2px;
+    transition: background 0.2s ease, width 0.2s ease;
+}
+
+.modal-drag-handle:hover .drag-indicator {
+    background: rgba(255, 255, 255, 0.5);
+    width: 50px;
 }
 
 .quick-add-title {
