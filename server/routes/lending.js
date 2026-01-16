@@ -73,10 +73,16 @@ router.post('/', authMiddleware, (req, res) => {
         const { name, color } = req.body;
         const id = uuidv4();
 
+        // Check for duplicates
+        const existing = db.prepare('SELECT id FROM lending_sources WHERE user_id = ? AND lower(name) = lower(?) AND is_active = 1').get(req.user.id, name.trim());
+        if (existing) {
+            return res.status(400).json({ error: 'Source with this name already exists' });
+        }
+
         db.prepare(`
             INSERT INTO lending_sources (id, user_id, name, color)
             VALUES (?, ?, ?, ?)
-        `).run(id, req.user.id, name, color || null);
+        `).run(id, req.user.id, name.trim(), color || null);
 
         const newSource = db.prepare('SELECT * FROM lending_sources WHERE id = ?').get(id);
         res.status(201).json(newSource);

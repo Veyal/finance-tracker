@@ -265,6 +265,9 @@ export default function LendingPage() {
                     <PersonRepaymentModal
                         person={selectedPerson}
                         onClose={() => setSelectedPerson(null)}
+                        sources={sources}
+                        paymentMethods={pms}
+                        onUpdate={loadData}
                     />
                 )}
             </AnimatePresence>
