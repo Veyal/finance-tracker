@@ -213,3 +213,93 @@
         gap: 16px;
     }
 }
+
+/* Nested Modal - Add Category/Group/Payment */
+.nested-modal {
+    z-index: calc(var(--z-modal) + 10) !important;
+}
+
+.add-category-modal {
+    max-width: 380px !important;
+    background: linear-gradient(180deg, rgba(50, 50, 95, 0.98) 0%, rgba(30, 30, 63, 0.99) 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 28px !important;
+    box-shadow:
+        0 24px 64px rgba(0, 0, 0, 0.6),
+        0 0 50px rgba(255, 126, 179, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    animation: scaleIn 0.25s var(--ease-bounce);
+}
+
+@keyframes scaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.9) translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.add-category-modal .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+    padding: 20px 24px !important;
+}
+
+.add-category-modal .modal-header h2 {
+    font-size: 18px !important;
+    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.add-category-modal .modal-body {
+    padding: 24px !important;
+}
+
+.add-category-modal .form-group {
+    margin-bottom: 0;
+}
+
+.add-category-modal .input-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.add-category-modal .input {
+    width: 100%;
+    padding: 16px 20px !important;
+    background: rgba(0, 0, 0, 0.25) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 16px !important;
+    font-size: 16px !important;
+    font-weight: 500;
+    color: var(--text-primary);
+    transition: all 0.2s ease;
+}
+
+.add-category-modal .input::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.add-category-modal .input:focus {
+    background: rgba(0, 0, 0, 0.35) !important;
+    border-color: var(--accent-primary) !important;
+    box-shadow: 0 0 0 4px var(--accent-glow) !important;
+    outline: none;
+}
+
+.add-category-modal .btn-lg {
+    height: 54px !important;
+    font-size: 16px !important;
+    border-radius: 16px !important;
+    margin-top: 20px !important;
+}

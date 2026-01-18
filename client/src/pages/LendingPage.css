@@ -5,6 +5,13 @@
     min-height: 100vh;
 }
 
+/* Tablet: Extra bottom padding for floating nav */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .lending-page-v2 {
+        padding-bottom: 140px;
+    }
+}
+
 /* Header */
 .lending-header-v2 {
     display: flex;
@@ -562,6 +569,54 @@
 }
 
 /* Responsive */
+/* Tablet-specific adjustments (641px - 900px) */
+@media (min-width: 641px) and (max-width: 900px) {
+    .lending-header-v2 {
+        padding: 20px 16px;
+    }
+
+    .lending-header-v2 h1 {
+        font-size: 26px;
+    }
+
+    .stats-card {
+        margin: 0 16px 20px;
+        padding: 20px;
+    }
+
+    .stats-amount {
+        font-size: 26px;
+    }
+
+    .people-section {
+        padding: 0 16px;
+    }
+
+    .person-card {
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .person-avatar {
+        width: 42px;
+        height: 42px;
+        font-size: 18px;
+    }
+
+    .person-name {
+        font-size: 15px;
+    }
+
+    .repayment-fab {
+        bottom: 80px;
+        right: 16px;
+    }
+
+    .repayment-modal-v2 {
+        max-width: 450px;
+    }
+}
+
 @media (min-width: 641px) {
     .repayment-modal-v2 {
         border-radius: 32px;

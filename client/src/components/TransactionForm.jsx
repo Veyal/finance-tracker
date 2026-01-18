@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { transactions, categories, groups, paymentMethods } from '../api/api';
 import CustomSelect from './CustomSelect';
+import DatePicker from './DatePicker';
 import './TransactionForm.css';
 
 export default function TransactionForm({ transaction, options, onSave, onClose, onOptionsChange }) {
@@ -74,7 +75,7 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
             const data = {
                 type,
                 amount: amountNum,
-                date: new Date(date).toISOString(),
+                date: `${date}T12:00:00`, // Use noon local time to avoid timezone boundary issues
                 category_id: type === 'expense' ? (categoryId || null) : null,
                 group_id: type === 'expense' ? (groupId || null) : null,
                 payment_method_id: paymentMethodId || null,
@@ -227,13 +228,10 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                         {/* Date + Category/Source */}
                         <div className="form-row">
                             <div className="form-group">
-                                <label className="input-label">Date</label>
-                                <input
-                                    type="date"
-                                    className="input"
+                                <DatePicker
+                                    label="Date"
                                     value={date}
-                                    onChange={(e) => setDate(e.target.value)}
-                                    onFocus={handleInputFocus}
+                                    onChange={setDate}
                                 />
                             </div>
                             {/* Category only for expenses */}

@@ -22,42 +22,53 @@
     font-size: 28px;
     font-weight: 600;
     height: 72px;
-    /* Fixed robust height */
     border-radius: 20px;
     cursor: pointer;
-    transition: all 0.1s ease;
+    transition: all 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     position: relative;
     overflow: hidden;
+    -webkit-tap-highlight-color: transparent;
 }
 
-.pad-key::after {
-    content: '';
+/* Ripple effect */
+.ripple {
     position: absolute;
-    inset: 0;
-    background: currentColor;
-    opacity: 0;
-    transition: opacity 0.1s;
+    border-radius: 50%;
+    background: var(--accent-primary);
+    opacity: 0.3;
+    transform: scale(0);
+    animation: ripple-animation 0.4s ease-out forwards;
+    pointer-events: none;
+}
+
+@keyframes ripple-animation {
+    0% {
+        transform: scale(0);
+        opacity: 0.4;
+    }
+
+    100% {
+        transform: scale(2.5);
+        opacity: 0;
+    }
 }
 
 .pad-key:active {
-    transform: scale(0.96);
-}
-
-.pad-key:active::after {
-    opacity: 0.1;
+    transform: scale(0.95);
+    background: rgba(255, 255, 255, 0.08);
 }
 
 .pad-key.number-key {
-    background: rgba(255, 255, 255, 0.03);
-    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
+    background: rgba(255, 255, 255, 0.04);
+    box-shadow: 0 4px 0 rgba(0, 0, 0, 0.15);
 }
 
 .pad-key.number-key:active {
     box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
-    transform: translateY(3px);
+    transform: translateY(3px) scale(0.98);
 }
 
 .pad-key.action-key {
@@ -69,13 +80,31 @@
     box-shadow: none;
 }
 
+.pad-key.action-key:hover {
+    color: var(--text-secondary);
+}
+
 .pad-key.action-key:active {
     background: rgba(255, 255, 255, 0.05);
+    color: var(--accent-primary);
 }
 
 /* Hide custom number pad on desktop */
 @media (min-width: 768px) {
     .number-pad-container {
         display: none;
+    }
+}
+
+/* Smaller keys on very small screens */
+@media (max-width: 360px) {
+    .pad-key {
+        height: 60px;
+        font-size: 24px;
+        border-radius: 16px;
+    }
+
+    .number-pad-grid {
+        gap: 8px;
     }
 }

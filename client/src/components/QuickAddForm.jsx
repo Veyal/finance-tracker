@@ -4,6 +4,7 @@ import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { transactions, categories, groups, paymentMethods } from '../api/api';
 import { useHaptics } from '../hooks/useHaptics';
 import NumberPad from './NumberPad';
+import DatePicker from './DatePicker';
 import './QuickAddForm.css';
 
 // Local storage keys
@@ -141,7 +142,7 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
             const data = {
                 type,
                 amount: amountNum,
-                date: new Date(date).toISOString(),
+                date: `${date}T12:00:00`, // Use noon local time to avoid timezone boundary issues
                 category_id: type === 'expense' ? (categoryId || null) : null,
                 group_id: type === 'expense' ? (groupId || null) : null,
                 payment_method_id: paymentMethodId || null,
@@ -472,15 +473,10 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
 
                             <div className="detail-section">
                                 <label className="detail-label">Date</label>
-                                <div className="date-input-wrapper">
-                                    <Calendar size={16} className="date-icon" />
-                                    <input
-                                        type="date"
-                                        className="date-input"
-                                        value={date}
-                                        onChange={(e) => setDate(e.target.value)}
-                                    />
-                                </div>
+                                <DatePicker
+                                    value={date}
+                                    onChange={setDate}
+                                />
                             </div>
 
                             <div className="detail-section">

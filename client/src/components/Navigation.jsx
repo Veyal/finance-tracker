@@ -32,21 +32,20 @@ export default function Navigation() {
                 ))}
             </nav>
 
-            {/* Tablet Rail */}
+            {/* Tablet Floating Bottom Bar */}
             <nav className="nav-tablet">
-                {navItems.map(({ path, icon: Icon, label }) => (
-                    <NavLink
-                        key={path}
-                        to={path}
-                        className={`nav-item ${location.pathname === path ? 'active' : ''}`}
-                        title={label}
-                        onClick={() => triggerImpact('light')}
-                    >
-                        <Icon size={24} />
-                    </NavLink>
-                ))}
-                <div className="nav-tablet-footer">
-                    <PrivacyToggle className="nav-privacy-btn" />
+                <div className="nav-tablet-container">
+                    {navItems.map(({ path, icon: Icon, label }) => (
+                        <NavLink
+                            key={path}
+                            to={path}
+                            className={`nav-tablet-item ${location.pathname === path ? 'active' : ''}`}
+                            onClick={() => triggerImpact('light')}
+                        >
+                            <Icon size={22} />
+                            <span>{label}</span>
+                        </NavLink>
+                    ))}
                 </div>
             </nav>
 

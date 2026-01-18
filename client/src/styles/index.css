@@ -803,10 +803,43 @@ h3 {
 }
 
 /* === RESPONSIVE === */
-@media (min-width: 641px) {
+/* Tablet (641px - 1024px): Floating bottom nav, no left padding */
+@media (min-width: 641px) and (max-width: 1024px) {
   .page {
+    padding: var(--space-lg);
+    padding-bottom: 100px;
+    /* Space for floating bottom nav */
+    max-width: 100%;
+    overflow-x: hidden;
+    box-sizing: border-box;
+  }
+
+  .fab {
+    bottom: 100px;
+    /* Above the floating nav */
+    right: var(--space-lg);
+  }
+
+  .modal {
+    border-radius: var(--radius-xl);
+    margin: auto;
+    max-width: 500px;
+  }
+
+  .modal-overlay {
+    align-items: center;
+    padding: var(--space-lg);
+  }
+}
+
+/* Desktop (1025px+): Left sidebar */
+@media (min-width: 1025px) {
+  .page {
+    padding-left: 280px;
     padding-bottom: var(--space-lg);
-    padding-left: 100px;
+    max-width: none;
+    overflow-x: hidden;
+    box-sizing: border-box;
   }
 
   .fab {
@@ -823,12 +856,6 @@ h3 {
   .modal-overlay {
     align-items: center;
     padding: var(--space-lg);
-  }
-}
-
-@media (min-width: 1025px) {
-  .page {
-    padding-left: 280px;
   }
 }
 

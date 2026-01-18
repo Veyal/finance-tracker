@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react';
-import { TrendingDown, TrendingUp, ArrowUpDown, Calendar, Target, Zap, Activity, TrendingUp as TrendUp } from 'lucide-react';
+import { TrendingDown, TrendingUp, ArrowUpDown, Calendar, Target, Zap, Activity, TrendingUp as TrendUp, Wallet } from 'lucide-react';
 import { transactions } from '../api/api';
 import SpendingLineChart from '../components/SpendingLineChart';
+import CumulativeNetChart from '../components/CumulativeNetChart';
+import SpendingCalendar from '../components/SpendingCalendar';
 import { usePrivacy } from '../context/PrivacyContext';
 import './InsightsPage.css';
 
@@ -258,26 +260,47 @@ export default function InsightsPage() {
                         </button>
                     </div>
 
-                    {/* Line Chart - NEW! */}
+                    {/* Line Charts - Dual layout on tablet/desktop */}
                     {dailyData.length > 1 && (
-                        <section className="chart-section line-chart-section">
+                        <section className="chart-section line-charts-grid">
                             <div className="section-header">
                                 <h3>
                                     <Activity size={18} />
-                                    <span>Daily Trend</span>
+                                    <span>Daily Trends</span>
                                 </h3>
                             </div>
-                            <SpendingLineChart
-                                data={dailyData}
-                                type={viewType}
-                                height={200}
-                                showAverage={true}
-                                showTooltip={true}
-                            />
+                            <div className="dual-charts-container">
+                                <div className="chart-wrapper expense-chart">
+                                    <div className="chart-label">
+                                        <TrendingDown size={16} />
+                                        <span>Expenses</span>
+                                    </div>
+                                    <SpendingLineChart
+                                        data={dailyData}
+                                        type="expense"
+                                        height={180}
+                                        showAverage={true}
+                                        showTooltip={true}
+                                    />
+                                </div>
+                                <div className="chart-wrapper savings-chart">
+                                    <div className="chart-label savings-label">
+                                        <Wallet size={16} />
+                                        <span>Savings Trend</span>
+                                    </div>
+                                    <CumulativeNetChart
+                                        data={dailyData}
+                                        height={180}
+                                    />
+                                </div>
+                            </div>
                         </section>
                     )}
 
-                    {/* Daily Spending/Income Tracker */}
+                    {/* Spending Calendar Heatmap */}
+                    <SpendingCalendar type={viewType} />
+
+                    {/* Daily Spending/Income - Show ALL days */}
                     {dailyData.length > 0 && (
                         <section className="chart-section daily-tracker">
                             <div className="daily-tracker-header">
@@ -294,10 +317,14 @@ export default function InsightsPage() {
                                     const dayName = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
                                     const dayNum = dateObj.getDate();
                                     const monthName = dateObj.toLocaleDateString('en-US', { month: 'short' });
-                                    const isHighest = highestDay && day.day === highestDay.day;
+                                    const isHighest = highestDay && day.day === highestDay.day && value > 0;
+                                    const isZero = value === 0;
 
                                     return (
-                                        <div key={index} className={`daily-item stagger-item ${isHighest ? 'highest' : ''}`}>
+                                        <div
+                                            key={index}
+                                            className={`daily-item stagger-item ${isHighest ? 'highest' : ''} ${isZero ? 'zero-day' : ''}`}
+                                        >
                                             <div className="daily-date">
                                                 <span className="daily-day">{dayName}</span>
                                                 <span className="daily-num">{dayNum} {monthName}</span>
@@ -305,11 +332,11 @@ export default function InsightsPage() {
                                             <div className="daily-bar-wrapper">
                                                 <div
                                                     className={`daily-bar ${viewType}`}
-                                                    style={{ width: `${Math.max(percentage, 2)}%` }}
+                                                    style={{ width: `${Math.max(percentage, isZero ? 0 : 2)}%` }}
                                                 />
                                             </div>
-                                            <span className={`daily-amount amount-${viewType}`}>
-                                                Rp {formatFullAmount(value)}
+                                            <span className={`daily-amount ${value > 0 ? `amount-${viewType}` : ''}`}>
+                                                {isZero ? '-' : `Rp ${formatFullAmount(value)}`}
                                             </span>
                                         </div>
                                     );

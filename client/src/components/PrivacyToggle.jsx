@@ -1,38 +1,52 @@
+import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff } from 'lucide-react';
 import { usePrivacy } from '../context/PrivacyContext';
-import { useLocation } from 'react-router-dom';
+import { useHaptics } from '../hooks/useHaptics';
+import './PrivacyToggle.css';
 
 export default function PrivacyToggle({ className = '', style = {} }) {
     const { isPrivacyMode, togglePrivacy } = usePrivacy();
-    const location = useLocation();
+    const { triggerImpact } = useHaptics();
 
-    // Determine if we are in the sidebar or a header
-    const isSidebar = className.includes('nav-privacy-btn');
+    const handleToggle = () => {
+        triggerImpact('medium');
+        togglePrivacy();
+    };
 
     return (
-        <button
+        <motion.button
             type="button"
-            className={`privacy-toggle-btn ${className}`}
-            onClick={togglePrivacy}
+            className={`privacy-toggle ${isPrivacyMode ? 'active' : ''} ${className}`}
+            onClick={handleToggle}
             title={isPrivacyMode ? "Show Amounts" : "Hide Amounts"}
-            style={{
-                background: 'none',
-                border: 'none',
-                color: 'var(--text-muted)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                padding: isSidebar ? 8 : '4px',
-                borderRadius: '50%',
-                width: 'auto',
-                height: 'auto',
-                backdropFilter: 'none',
-                transition: 'all 0.2s ease',
-                ...style
-            }}
+            style={style}
+            whileTap={{ scale: 0.9 }}
         >
-            {isPrivacyMode ? <EyeOff size={18} /> : <Eye size={18} />}
-        </button>
+            <AnimatePresence mode="wait" initial={false}>
+                {isPrivacyMode ? (
+                    <motion.div
+                        key="off"
+                        initial={{ scale: 0, rotate: -90 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        exit={{ scale: 0, rotate: 90 }}
+                        transition={{ duration: 0.15 }}
+                        className="privacy-icon"
+                    >
+                        <EyeOff size={18} />
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        key="on"
+                        initial={{ scale: 0, rotate: 90 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        exit={{ scale: 0, rotate: -90 }}
+                        transition={{ duration: 0.15 }}
+                        className="privacy-icon"
+                    >
+                        <Eye size={18} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </motion.button>
     );
 }

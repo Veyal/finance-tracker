@@ -6,6 +6,7 @@
 
 .insights-header {
     margin-bottom: var(--space-xl);
+    padding-top: var(--space-lg);
 }
 
 .insights-header h1 {
@@ -221,6 +222,67 @@
     border-radius: var(--radius-md);
 }
 
+/* Dual Charts Grid */
+.line-charts-grid {
+    margin-bottom: var(--space-xl);
+}
+
+.line-charts-grid .section-header {
+    margin-bottom: var(--space-md);
+}
+
+.dual-charts-container {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+}
+
+.chart-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+}
+
+.chart-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-family: var(--font-display);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    padding-left: var(--space-xs);
+}
+
+.expense-chart .chart-label {
+    color: var(--expense-red);
+}
+
+.income-chart .chart-label {
+    color: var(--income-green);
+}
+
+.savings-chart .chart-label {
+    background: linear-gradient(90deg, var(--income-green), var(--accent-primary));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Tablet: Side by side charts */
+@media (min-width: 641px) {
+    .dual-charts-container {
+        grid-template-columns: 1fr 1fr;
+        gap: var(--space-md);
+    }
+}
+
+/* Desktop: More spacing */
+@media (min-width: 1025px) {
+    .dual-charts-container {
+        gap: var(--space-lg);
+    }
+}
+
 .insights-section {
     margin-bottom: var(--space-2xl);
 }
@@ -267,7 +329,51 @@
     color: var(--text-muted);
 }
 
-@media (min-width: 641px) {
+/* Tablet-specific adjustments */
+@media (min-width: 641px) and (max-width: 900px) {
+    .insights-summary {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-sm);
+    }
+
+    .insights-card {
+        padding: var(--space-md);
+    }
+
+    .quick-stats {
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-xs);
+    }
+
+    .stat-card {
+        padding: var(--space-sm);
+    }
+
+    .stat-value {
+        font-size: var(--text-xs);
+    }
+
+    .daily-item {
+        grid-template-columns: 60px 1fr auto;
+        gap: var(--space-sm);
+    }
+
+    .daily-amount {
+        min-width: 70px;
+        font-size: var(--text-xs);
+    }
+
+    .donut-container {
+        gap: var(--space-md);
+    }
+
+    .donut-chart {
+        width: 120px;
+        height: 120px;
+    }
+}
+
+@media (min-width: 901px) {
     .insights-summary {
         grid-template-columns: repeat(3, 1fr);
     }
@@ -402,10 +508,9 @@
     font-weight: 500;
 }
 
-/* Daily Tracker - List View */
+/* Daily Tracker - Full List View (no scroll) */
 .daily-tracker {
-    max-height: 400px;
-    overflow-y: auto;
+    /* padding-top: 0; Removed to fix header spacing */
 }
 
 .daily-tracker-header {
@@ -413,10 +518,6 @@
     justify-content: space-between;
     align-items: center;
     margin-bottom: var(--space-lg);
-    position: sticky;
-    top: 0;
-    background: var(--bg-card);
-    padding-bottom: var(--space-sm);
 }
 
 .daily-tracker-header h3 {
@@ -451,6 +552,15 @@
 
 .daily-item:hover {
     background: rgba(255, 255, 255, 0.03);
+}
+
+/* Zero amount days */
+.daily-item.zero-day {
+    opacity: 0.5;
+}
+
+.daily-item.zero-day .daily-amount {
+    color: var(--text-muted);
 }
 
 .daily-date {
@@ -597,4 +707,11 @@
 /* Bottom padding for nav */
 .insights-page {
     padding-bottom: calc(var(--space-lg) + 80px);
+}
+
+/* Tablet: Extra bottom padding for floating nav */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .insights-page {
+        padding-bottom: 120px;
+    }
 }

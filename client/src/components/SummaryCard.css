@@ -99,3 +99,24 @@
         background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
     }
 }
+
+/* Tablet-specific adjustments (481px - 800px) */
+@media (min-width: 481px) and (max-width: 800px) {
+    .summary-card {
+        padding: var(--space-md);
+        gap: var(--space-sm);
+    }
+
+    .summary-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .summary-amount {
+        font-size: var(--text-base);
+    }
+
+    .summary-label {
+        font-size: 10px;
+    }
+}

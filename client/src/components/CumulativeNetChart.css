@@ -1,0 +1,217 @@
+/* CumulativeNetChart - Savings Trajectory */
+
+.cumulative-net-chart {
+    position: relative;
+    width: 100%;
+    background: var(--bg-card);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-xl);
+    padding: 16px;
+    padding-bottom: 8px;
+}
+
+/* Summary Badge - Top right */
+.cumulative-badge {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    z-index: 2;
+}
+
+.badge-label {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+}
+
+.badge-value {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.cumulative-badge.positive {
+    color: var(--income-green);
+}
+
+.cumulative-badge.negative {
+    color: var(--expense-red);
+}
+
+/* Chart SVG */
+.cumulative-net-chart .chart-svg {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+/* Zero baseline */
+.zero-line {
+    stroke: rgba(255, 255, 255, 0.15);
+    stroke-width: 1;
+    stroke-dasharray: 3 3;
+}
+
+.zero-label {
+    font-family: var(--font-display);
+    font-size: 2.5px;
+    fill: var(--text-muted);
+    font-weight: 600;
+}
+
+/* Area fill animation */
+.cumulative-net-chart .area-fill {
+    opacity: 0;
+    animation: fadeInArea 0.8s ease-out 0.3s forwards;
+}
+
+@keyframes fadeInArea {
+    to {
+        opacity: 1;
+    }
+}
+
+/* Main line animation */
+.cumulative-net-chart .main-line {
+    stroke-dasharray: 1000;
+    stroke-dashoffset: 1000;
+    animation: drawLine 1.5s ease-out forwards;
+}
+
+@keyframes drawLine {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+/* End point pulse */
+.end-point {
+    animation: endPulse 2s ease-in-out infinite;
+}
+
+@keyframes endPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        filter: drop-shadow(0 0 4px currentColor);
+    }
+
+    50% {
+        opacity: 0.8;
+        filter: drop-shadow(0 0 8px currentColor);
+    }
+}
+
+/* Point dots */
+.cumulative-net-chart .point-dot {
+    transition: all 0.15s var(--ease-bounce);
+}
+
+.cumulative-net-chart .point-dot.active {
+    filter: drop-shadow(0 0 8px currentColor);
+}
+
+/* X-axis labels */
+.cumulative-net-chart .x-label {
+    font-family: var(--font-display);
+    font-size: 2.5px;
+    fill: var(--text-muted);
+    font-weight: 600;
+}
+
+/* Tooltip */
+.cumulative-net-chart .chart-tooltip {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    padding: 10px 14px;
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 10;
+    animation: tooltipPop 0.2s var(--ease-bounce);
+    white-space: nowrap;
+    backdrop-filter: blur(8px);
+}
+
+.cumulative-net-chart .chart-tooltip.positive {
+    background: rgba(107, 255, 184, 0.9);
+    color: #000;
+    box-shadow: 0 4px 20px rgba(107, 255, 184, 0.4);
+}
+
+.cumulative-net-chart .chart-tooltip.negative {
+    background: rgba(255, 107, 138, 0.9);
+    color: #fff;
+    box-shadow: 0 4px 20px rgba(255, 107, 138, 0.4);
+}
+
+.cumulative-net-chart .chart-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+}
+
+.cumulative-net-chart .chart-tooltip.positive::after {
+    border-top-color: rgba(107, 255, 184, 0.9);
+}
+
+.cumulative-net-chart .chart-tooltip.negative::after {
+    border-top-color: rgba(255, 107, 138, 0.9);
+}
+
+.cumulative-net-chart .tooltip-date {
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.8;
+    margin-bottom: 4px;
+}
+
+.cumulative-net-chart .tooltip-net {
+    font-size: 11px;
+    font-weight: 500;
+    opacity: 0.9;
+}
+
+.cumulative-net-chart .tooltip-amount {
+    font-family: var(--font-display);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+@keyframes tooltipPop {
+    from {
+        opacity: 0;
+        transform: translate(-50%, -90%);
+    }
+
+    to {
+        opacity: 1;
+        transform: translate(-50%, -100%);
+    }
+}
+
+/* Responsive */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .cumulative-net-chart .chart-svg {
+        max-height: 200px;
+    }
+
+    .badge-value {
+        font-size: 13px;
+    }
+}
+
+@media (min-width: 1025px) {
+    .cumulative-net-chart .chart-svg {
+        max-height: 220px;
+    }
+}

@@ -76,7 +76,7 @@ router.get('/', (req, res) => {
       params.push(cursor);
     }
 
-    sql += ` ORDER BY t.date DESC, t.created_at DESC LIMIT ?`;
+    sql += ` ORDER BY t.date DESC, t.sort_order ASC, t.created_at DESC LIMIT ?`;
     params.push(parseInt(limit));
 
     const transactions = db.prepare(sql).all(...params);
@@ -230,9 +230,9 @@ router.post('/', (req, res) => {
     const id = uuidv4();
     const txDate = date || new Date().toISOString();
 
-    // Get max sort order for this date to append to end
-    const maxOrder = db.prepare('SELECT MAX(sort_order) as max_order FROM transactions WHERE user_id = ? AND date(date) = date(?)').get(userId, txDate);
-    const nextOrder = (maxOrder?.max_order || 0) + 1;
+    // Get min sort order for this date to prepend to start (negative values allowed)
+    const minOrder = db.prepare('SELECT MIN(sort_order) as min_order FROM transactions WHERE user_id = ? AND date(date) = date(?)').get(userId, txDate);
+    const nextOrder = (minOrder?.min_order || 0) - 1;
 
     db.prepare(`
       INSERT INTO transactions (id, user_id, type, amount, date, category_id, group_id, payment_method_id, income_source_id, lending_source_id, related_transaction_id, note, merchant, sort_order)

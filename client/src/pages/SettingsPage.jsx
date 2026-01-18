@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Archive, LogOut, ChevronRight, X, Loader2, Lock, Users, Calendar } from 'lucide-react';
+import { Plus, Edit2, Archive, LogOut, ChevronRight, X, Loader2, Lock, Users } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { categories, groups, paymentMethods, incomeSources, auth } from '../api/api';
 import './SettingsPage.css';
@@ -268,12 +268,6 @@ export default function SettingsPage() {
                     <button type="button" className="settings-item" onClick={() => navigate('/split')}>
                         <Users size={20} />
                         <span>Repayments</span>
-                        <ChevronRight size={20} className="settings-chevron" />
-                    </button>
-
-                    <button type="button" className="settings-item" onClick={() => navigate('/calendar')}>
-                        <Calendar size={20} />
-                        <span>Calendar</span>
                         <ChevronRight size={20} className="settings-chevron" />
                     </button>
 

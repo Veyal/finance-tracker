@@ -1,0 +1,106 @@
+/* ConfirmDialog - Premium Modal */
+
+.confirm-dialog-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(10, 10, 20, 0.85);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: calc(var(--z-modal) + 10);
+    padding: 20px;
+}
+
+.confirm-dialog {
+    width: 100%;
+    max-width: 360px;
+    background: rgba(30, 30, 63, 0.98);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 28px 24px 24px;
+    text-align: center;
+    box-shadow:
+        0 24px 64px rgba(0, 0, 0, 0.5),
+        0 0 40px rgba(255, 126, 179, 0.1);
+}
+
+.confirm-dialog-icon {
+    width: 56px;
+    height: 56px;
+    margin: 0 auto 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 107, 138, 0.15);
+    border-radius: 16px;
+    color: var(--expense-red);
+}
+
+.confirm-dialog-title {
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 8px;
+}
+
+.confirm-dialog-message {
+    font-size: 15px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0 0 24px;
+}
+
+.confirm-dialog-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.confirm-dialog-btn {
+    flex: 1;
+    padding: 14px 20px;
+    border-radius: 14px;
+    font-family: var(--font-display);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.confirm-dialog-btn.cancel {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-secondary);
+}
+
+.confirm-dialog-btn.cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.confirm-dialog-btn.confirm {
+    background: var(--accent-primary);
+    border: none;
+    color: var(--text-on-pink);
+}
+
+.confirm-dialog-btn.confirm:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 24px var(--accent-glow);
+}
+
+.confirm-dialog-btn.confirm.destructive {
+    background: var(--expense-red);
+    box-shadow: 0 4px 16px rgba(255, 107, 138, 0.3);
+}
+
+.confirm-dialog-btn.confirm.destructive:hover {
+    box-shadow: 0 8px 24px rgba(255, 107, 138, 0.4);
+}
+
+/* Active states for mobile */
+.confirm-dialog-btn:active {
+    transform: scale(0.98);
+}

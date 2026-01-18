@@ -176,3 +176,25 @@
         right: 12px;
     }
 }
+
+/* Tablet: Better chart sizing */
+@media (min-width: 641px) and (max-width: 1024px) {
+    .spending-line-chart {
+        max-width: 100%;
+    }
+
+    .chart-svg {
+        max-height: 200px;
+    }
+}
+
+/* Desktop: Reasonable chart width for readability */
+@media (min-width: 1025px) {
+    .spending-line-chart {
+        max-width: 100%;
+    }
+
+    .chart-svg {
+        max-height: 220px;
+    }
+}

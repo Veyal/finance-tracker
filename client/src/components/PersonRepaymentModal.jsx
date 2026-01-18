@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
-import { X, ArrowDownLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { X, ArrowDownLeft, Edit2, Loader2, Check, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { lendingSources, transactions } from '../api/api';
+import { lendingSources } from '../api/api';
 import { useHaptics } from '../hooks/useHaptics';
+import RepaymentEditModal from './RepaymentEditModal';
 import './PersonRepaymentModal.css';
 
 function formatAmount(amount) {
@@ -22,17 +23,28 @@ export default function PersonRepaymentModal({ person, onClose, sources, payment
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState(null);
 
-    // Edit State
+    // Edit Repayment State
     const [editingRepayment, setEditingRepayment] = useState(null);
-    const [editAmount, setEditAmount] = useState('');
-    const [editDate, setEditDate] = useState('');
-    const [editSourceId, setEditSourceId] = useState('');
-    const [editPmId, setEditPmId] = useState('');
-    const [editNote, setEditNote] = useState('');
-    const [submitting, setSubmitting] = useState(false);
+
+    // Edit Person State
+    const [isEditingPerson, setIsEditingPerson] = useState(false);
+
+    // Local display state for immediate feedback
+    const [displayName, setDisplayName] = useState(person.name);
+    const [displayColor, setDisplayColor] = useState(person.color || '#4ECDC4');
+
+    // Form state
+    const [editName, setEditName] = useState(person.name);
+    const [editColor, setEditColor] = useState(person.color || '#4ECDC4');
+    const [savingPerson, setSavingPerson] = useState(false);
 
     useEffect(() => {
         loadRepayments();
+        // Sync local state if prop changes (e.g. re-opened with different person)
+        setDisplayName(person.name);
+        setDisplayColor(person.color || '#4ECDC4');
+        setEditName(person.name);
+        setEditColor(person.color || '#4ECDC4');
     }, [person.id]);
 
     async function loadRepayments() {
@@ -49,49 +61,43 @@ export default function PersonRepaymentModal({ person, onClose, sources, payment
 
     function startEditing(repayment) {
         setEditingRepayment(repayment);
-        setEditAmount(repayment.amount.toString());
-        setEditDate(new Date(repayment.date).toISOString().split('T')[0]);
-        setEditSourceId(person.id); // Default to current person, but can change
-        setEditPmId(repayment.payment_method_id || '');
-        setEditNote(repayment.note || '');
         triggerImpact('medium');
     }
 
-    async function handleUpdate(e) {
+    async function handleSavePerson(e) {
         e.preventDefault();
-        if (!editingRepayment || !editAmount || !editSourceId) return;
+        if (!editName.trim()) return;
 
-        setSubmitting(true);
+        setSavingPerson(true);
         triggerImpact('medium');
 
         try {
-            await transactions.update(editingRepayment.id, {
-                amount: parseFloat(editAmount),
-                date: new Date(editDate).toISOString(),
-                lending_source_id: editSourceId,
-                payment_method_id: editPmId || null,
-                note: editNote
+            await lendingSources.update(person.id, {
+                name: editName.trim(),
+                color: editColor
             });
 
-            setEditingRepayment(null);
+            // Immediate UI update
+            setDisplayName(editName.trim());
+            setDisplayColor(editColor);
+
             triggerSuccess();
+            setIsEditingPerson(false);
 
-            // If moved to another person, close modal or refresh
-            if (editSourceId !== person.id) {
-                onClose();
-                if (onUpdate) onUpdate(); // Refresh parent
-            } else {
-                loadRepayments(); // Refresh list
-                if (onUpdate) onUpdate(); // Refresh parent stats
-            }
-
+            if (onUpdate) onUpdate(); // Refresh parent list in background
         } catch (error) {
-            console.error('Failed to update repayment:', error);
+            console.error('Failed to update person:', error);
             triggerError();
+            alert(error.error || 'Failed to update person');
         } finally {
-            setSubmitting(false);
+            setSavingPerson(false);
         }
     }
+
+    const colors = [
+        '#4ECDC4', '#FF6B8A', '#FFE66D', '#A78BFA', '#34D399',
+        '#F472B6', '#60A5FA', '#FBBF24', '#ff8e72'
+    ];
 
     return (
         <motion.div
@@ -110,24 +116,113 @@ export default function PersonRepaymentModal({ person, onClose, sources, payment
             >
                 {/* Header with person info */}
                 <div className="person-modal-header">
-                    <div
+                    <motion.div
                         className="person-avatar-large"
-                        style={{ backgroundColor: person.color || '#4ECDC4' }}
+                        layout
+                        style={{ backgroundColor: isEditingPerson ? editColor : displayColor }}
                     >
-                        {person.name.charAt(0).toUpperCase()}
+                        {isEditingPerson ? editName.charAt(0).toUpperCase() : displayName.charAt(0).toUpperCase()}
+                    </motion.div>
+
+                    <div className="person-header-content">
+                        <AnimatePresence mode="wait" initial={false}>
+                            {!isEditingPerson ? (
+                                <motion.div
+                                    key="view-mode"
+                                    className="person-info-view"
+                                    initial={{ opacity: 0, x: -10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: 10 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <div className="person-name-row">
+                                        <h2>{displayName}</h2>
+                                        <button
+                                            className="edit-person-btn"
+                                            onClick={() => {
+                                                setEditName(displayName);
+                                                setEditColor(displayColor);
+                                                setIsEditingPerson(true);
+                                                triggerImpact('light');
+                                            }}
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                    </div>
+                                    {data && (
+                                        <div className="person-total">
+                                            <span className="total-label">Total Repaid</span>
+                                            <span className="total-amount">Rp {formatAmount(data.total)}</span>
+                                        </div>
+                                    )}
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="edit-mode"
+                                    className="person-info-edit"
+                                    initial={{ opacity: 0, x: 10 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                >
+                                    <form className="person-edit-form" onSubmit={handleSavePerson}>
+                                        <div className="edit-input-wrapper">
+                                            <input
+                                                type="text"
+                                                value={editName}
+                                                onChange={e => setEditName(e.target.value)}
+                                                className="edit-name-input-modern"
+                                                placeholder="Enter name..."
+                                                autoFocus
+                                            />
+                                        </div>
+
+                                        <div className="edit-colors-scroll">
+                                            <div className="colors-track">
+                                                {colors.map(c => (
+                                                    <button
+                                                        key={c}
+                                                        type="button"
+                                                        className={`color-dot-modern ${editColor === c ? 'active' : ''}`}
+                                                        style={{ backgroundColor: c }}
+                                                        onClick={() => {
+                                                            setEditColor(c);
+                                                            triggerImpact('light');
+                                                        }}
+                                                    >
+                                                        {editColor === c && <Check size={12} color="rgba(0,0,0,0.4)" strokeWidth={3} />}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="edit-actions-modern">
+                                            <button
+                                                type="button"
+                                                className="cancel-btn-modern"
+                                                onClick={() => setIsEditingPerson(false)}
+                                            >
+                                                Cancel
+                                            </button>
+                                            <button
+                                                type="submit"
+                                                className="save-btn-modern"
+                                                disabled={savingPerson || !editName.trim()}
+                                            >
+                                                {savingPerson ? <Loader2 size={16} className="spin" /> : 'Save Changes'}
+                                            </button>
+                                        </div>
+                                    </form>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
-                    <div className="person-info">
-                        <h2>{person.name}</h2>
-                        {data && (
-                            <div className="person-total">
-                                <span className="total-label">Total Repaid</span>
-                                <span className="total-amount">Rp {formatAmount(data.total)}</span>
-                            </div>
-                        )}
-                    </div>
-                    <button className="close-btn" onClick={onClose}>
-                        <X size={24} />
-                    </button>
+
+                    {!isEditingPerson && (
+                        <button className="close-btn" onClick={onClose}>
+                            <X size={24} />
+                        </button>
+                    )}
                 </div>
 
                 {/* Repayments list */}
@@ -182,7 +277,9 @@ export default function PersonRepaymentModal({ person, onClose, sources, payment
                                         )}
                                     </div>
                                     <div className="repayment-action">
-                                        <div className="edit-icon">✎</div>
+                                        <div className="edit-icon">
+                                            <Edit2 size={14} />
+                                        </div>
                                     </div>
                                 </motion.div>
                             ))}
@@ -190,98 +287,19 @@ export default function PersonRepaymentModal({ person, onClose, sources, payment
                     )}
                 </div>
 
-                {/* Edit Modal (Nested) */}
+                {/* Edit Repayment Modal */}
                 <AnimatePresence>
                     {editingRepayment && (
-                        <motion.div
-                            className="edit-modal-overlay"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            onClick={(e) => e.target === e.currentTarget && setEditingRepayment(null)}
-                        >
-                            <motion.div
-                                className="edit-modal"
-                                initial={{ scale: 0.9, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.9, opacity: 0 }}
-                            >
-                                <div className="modal-header">
-                                    <h3>Edit Repayment</h3>
-                                    <button className="modal-close" onClick={() => setEditingRepayment(null)}>
-                                        <X size={20} />
-                                    </button>
-                                </div>
-
-                                <form onSubmit={handleUpdate} className="edit-form">
-                                    <div className="form-group">
-                                        <label>Amount</label>
-                                        <input
-                                            type="number"
-                                            value={editAmount}
-                                            onChange={e => setEditAmount(e.target.value)}
-                                            className="input"
-                                            autoFocus
-                                        />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label>Date</label>
-                                        <input
-                                            type="date"
-                                            value={editDate}
-                                            onChange={e => setEditDate(e.target.value)}
-                                            className="input"
-                                        />
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label>From Person</label>
-                                        <select
-                                            value={editSourceId}
-                                            onChange={e => setEditSourceId(e.target.value)}
-                                            className="input select"
-                                        >
-                                            {sources?.map(s => (
-                                                <option key={s.id} value={s.id}>{s.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label>To Account</label>
-                                        <select
-                                            value={editPmId}
-                                            onChange={e => setEditPmId(e.target.value)}
-                                            className="input select"
-                                        >
-                                            <option value="">None</option>
-                                            {paymentMethods?.map(pm => (
-                                                <option key={pm.id} value={pm.id}>{pm.name}</option>
-                                            ))}
-                                        </select>
-                                    </div>
-
-                                    <div className="form-group">
-                                        <label>Note</label>
-                                        <input
-                                            type="text"
-                                            value={editNote}
-                                            onChange={e => setEditNote(e.target.value)}
-                                            className="input"
-                                        />
-                                    </div>
-
-                                    <button
-                                        type="submit"
-                                        className="submit-btn"
-                                        disabled={submitting}
-                                    >
-                                        {submitting ? <Loader2 size={18} className="spin" /> : 'Save Changes'}
-                                    </button>
-                                </form>
-                            </motion.div>
-                        </motion.div>
+                        <RepaymentEditModal
+                            repayment={editingRepayment}
+                            onClose={() => setEditingRepayment(null)}
+                            onUpdate={() => {
+                                loadRepayments();
+                                if (onUpdate) onUpdate();
+                            }}
+                            sources={sources}
+                            paymentMethods={paymentMethods}
+                        />
                     )}
                 </AnimatePresence>
             </motion.div>

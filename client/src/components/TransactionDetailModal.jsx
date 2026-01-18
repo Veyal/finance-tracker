@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
-import { X, ArrowDownLeft, Plus, Loader2, Receipt, Users, Check } from 'lucide-react';
+import { X, ArrowDownLeft, Plus, Loader2, Receipt, Users, Check, Edit2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { transactions, lendingSources, paymentMethods } from '../api/api';
 import { usePrivacy } from '../context/PrivacyContext';
+import RepaymentEditModal from './RepaymentEditModal';
+import ConfirmDialog from './ConfirmDialog';
+import CustomSelect from './CustomSelect';
 import './TransactionDetailModal.css';
 
 function formatAmount(amount) {
@@ -17,8 +20,6 @@ function formatDate(dateString) {
         year: 'numeric',
     });
 }
-
-
 
 export default function TransactionDetailModal({ transaction, onClose, onEdit, onDelete, onRepaymentAdded }) {
     const [loading, setLoading] = useState(true);
@@ -41,15 +42,17 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
 
     const [submitting, setSubmitting] = useState(false);
 
-    useEffect(() => {
-        loadDetails();
-    }, [transaction.id]);
+    // Edit Repayment State
+    const [editingRepayment, setEditingRepayment] = useState(null);
+
+    // Delete confirmation state
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     useEffect(() => {
-        if (showRepayForm && people.length === 0) {
-            loadRepayOptions();
-        }
-    }, [showRepayForm]);
+        loadDetails();
+        // Load options proactively in case user wants to edit immediately
+        loadRepayOptions();
+    }, [transaction.id]);
 
     async function loadDetails() {
         try {
@@ -270,25 +273,14 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
                                             <div className="repay-form-row">
                                                 {!showNewPerson ? (
                                                     <div className="select-with-action">
-                                                        <select
-                                                            className="repay-select"
+                                                        <CustomSelect
                                                             value={repayPersonId}
-                                                            onChange={(e) => setRepayPersonId(e.target.value)}
-                                                            required
-                                                        >
-                                                            <option value="">Who paid you?</option>
-                                                            {people.map(p => (
-                                                                <option key={p.id} value={p.id}>{p.name}</option>
-                                                            ))}
-                                                        </select>
-                                                        <button
-                                                            type="button"
-                                                            className="add-new-mini-btn"
-                                                            onClick={() => setShowNewPerson(true)}
-                                                            title="Add new person"
-                                                        >
-                                                            <Plus size={16} />
-                                                        </button>
+                                                            onChange={setRepayPersonId}
+                                                            options={people}
+                                                            placeholder="Who paid you?"
+                                                            onAddNew={() => setShowNewPerson(true)}
+                                                            addNewLabel="Add Person"
+                                                        />
                                                     </div>
                                                 ) : (
                                                     <div className="input-with-action">
@@ -328,24 +320,14 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
                                             <div className="repay-form-row">
                                                 {!showNewMethod ? (
                                                     <div className="select-with-action">
-                                                        <select
-                                                            className="repay-select"
+                                                        <CustomSelect
                                                             value={repayMethodId}
-                                                            onChange={(e) => setRepayMethodId(e.target.value)}
-                                                        >
-                                                            <option value="">Paid via (optional)</option>
-                                                            {methods.map(m => (
-                                                                <option key={m.id} value={m.id}>{m.name}</option>
-                                                            ))}
-                                                        </select>
-                                                        <button
-                                                            type="button"
-                                                            className="add-new-mini-btn"
-                                                            onClick={() => setShowNewMethod(true)}
-                                                            title="Add new method"
-                                                        >
-                                                            <Plus size={16} />
-                                                        </button>
+                                                            onChange={setRepayMethodId}
+                                                            options={methods}
+                                                            placeholder="Paid via (optional)"
+                                                            onAddNew={() => setShowNewMethod(true)}
+                                                            addNewLabel="Add Method"
+                                                        />
                                                     </div>
                                                 ) : (
                                                     <div className="input-with-action">
@@ -399,6 +381,8 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
                                                 initial={{ opacity: 0, x: -20 }}
                                                 animate={{ opacity: 1, x: 0 }}
                                                 transition={{ delay: index * 0.05 }}
+                                                onClick={() => setEditingRepayment(repayment)}
+                                                style={{ cursor: 'pointer' }}
                                             >
                                                 <div className="repayment-card-icon">
                                                     <ArrowDownLeft size={16} />
@@ -411,8 +395,11 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
                                                         {formatDate(repayment.date)}
                                                     </span>
                                                 </div>
-                                                <div className="repayment-card-amount">
-                                                    {isPrivacyMode ? '****' : `Rp ${formatAmount(repayment.amount)}`}
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                    <div className="repayment-card-amount">
+                                                        {isPrivacyMode ? '****' : `Rp ${formatAmount(repayment.amount)}`}
+                                                    </div>
+                                                    <Edit2 size={14} color="rgba(255,255,255,0.3)" />
                                                 </div>
                                             </motion.div>
                                         ))}
@@ -453,18 +440,46 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
                                 </button>
                             )}
                             {onDelete && (
-                                <button className="action-btn delete" onClick={() => {
-                                    if (window.confirm('Delete this transaction?')) {
-                                        onDelete(details.id);
-                                        onClose();
-                                    }
-                                }}>
+                                <button className="action-btn delete" onClick={() => setShowDeleteConfirm(true)}>
                                     Delete
                                 </button>
                             )}
                         </div>
                     </div>
                 )}
+
+                {/* Edit Repayment Modal */}
+                <AnimatePresence>
+                    {editingRepayment && (
+                        <RepaymentEditModal
+                            repayment={editingRepayment}
+                            onClose={() => setEditingRepayment(null)}
+                            onUpdate={() => {
+                                loadDetails(); // Reload details to update totals
+                                if (onRepaymentAdded) onRepaymentAdded(); // Notify parent
+                            }}
+                            sources={people}
+                            paymentMethods={methods}
+                        />
+                    )}
+                </AnimatePresence>
+
+                {/* Delete Confirmation Dialog */}
+                <ConfirmDialog
+                    isOpen={showDeleteConfirm}
+                    title="Delete Transaction"
+                    message="Are you sure you want to delete this transaction? This action cannot be undone."
+                    confirmText="Delete"
+                    cancelText="Cancel"
+                    variant="destructive"
+                    onConfirm={() => {
+                        setShowDeleteConfirm(false);
+                        onDelete(details.id);
+                        onClose();
+                    }}
+                    onCancel={() => setShowDeleteConfirm(false)}
+                />
+
             </motion.div>
         </motion.div>
     );

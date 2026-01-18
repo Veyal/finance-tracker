@@ -342,6 +342,7 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    /* Note: overflow removed to allow DatePicker dropdown to be visible */
 }
 
 .detail-label {
@@ -552,6 +553,119 @@
     }
 }
 
+/* Inline Add Form - Premium Glassmorphism */
+.inline-add-form {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 12px;
+    padding: 12px;
+    background: linear-gradient(135deg, rgba(255, 126, 179, 0.08) 0%, rgba(138, 106, 255, 0.08) 100%);
+    border: 1px solid rgba(255, 126, 179, 0.25);
+    border-radius: 14px;
+    backdrop-filter: blur(12px);
+    box-shadow:
+        0 4px 20px rgba(255, 126, 179, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    animation: slideUp 0.2s ease;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow: hidden;
+}
+
+.inline-add-input {
+    flex: 1;
+    min-width: 0;
+    /* Allow shrinking */
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    font-family: var(--font-body);
+    font-size: 14px;
+    font-weight: 500;
+    color: var(--text-primary);
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.inline-add-input::placeholder {
+    color: var(--text-muted);
+    font-weight: 400;
+}
+
+.inline-add-input:focus {
+    background: rgba(0, 0, 0, 0.4);
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.inline-add-btn,
+.inline-cancel-btn {
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+}
+
+.inline-add-btn {
+    background: var(--accent-primary);
+    border: none;
+    color: var(--text-on-pink);
+    box-shadow: 0 4px 16px var(--accent-glow);
+}
+
+.inline-add-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 24px var(--accent-glow);
+}
+
+.inline-add-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.inline-add-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.inline-cancel-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted);
+}
+
+.inline-cancel-btn:hover {
+    background: rgba(255, 107, 138, 0.15);
+    border-color: rgba(255, 107, 138, 0.3);
+    color: var(--expense-red);
+}
+
+/* Mobile adjustments for inline add form */
+@media (max-width: 400px) {
+    .inline-add-form {
+        gap: 6px;
+        padding: 10px;
+    }
+
+    .inline-add-input {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+
+    .inline-add-btn,
+    .inline-cancel-btn {
+        width: 34px;
+        height: 34px;
+    }
+}
+
 /* Responsive Overrides */
 @media (min-width: 641px) {
     .quick-add-container {
@@ -559,5 +673,40 @@
         margin: auto;
         max-height: 85vh;
         border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+}
+
+/* Tablet-specific adjustments (641px - 900px) */
+@media (min-width: 641px) and (max-width: 900px) {
+    .quick-add-container {
+        max-width: 420px;
+    }
+
+    .quick-add-desktop-input {
+        font-size: 52px;
+    }
+
+    .step-details {
+        padding: 20px;
+        gap: 24px;
+    }
+
+    .option-chips {
+        gap: 8px;
+    }
+
+    .option-chip {
+        padding: 10px 14px;
+        font-size: 13px;
+    }
+
+    .quick-add-next,
+    .quick-add-save {
+        padding: 16px 20px;
+        font-size: 16px;
+    }
+
+    .inline-add-form {
+        padding: 10px;
     }
 }
