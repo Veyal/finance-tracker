@@ -30,7 +30,8 @@ The project includes a Docker setup for both development and production, configu
 ### Prerequisites
 
 - Docker Desktop installed
-- SSL Certificates (for production) in `./certs` (generated automatically for dev testing)
+- **SSL Certificates**:
+  - Run `./generate-cert.sh` to generate self-signed certificates for local development.
 
 ### Development
 
