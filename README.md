@@ -23,6 +23,40 @@ npm run dev
 
 Open http://localhost:5173 in your browser.
 
+## Docker Setup 🐳
+
+The project includes a Docker setup for both development and production, configured to solve cross-origin issues by checking everything through Nginx on a single port.
+
+### Prerequisites
+
+- Docker Desktop installed
+- SSL Certificates (for production) in `./certs` (generated automatically for dev testing)
+
+### Development
+
+Runs the app on **Port 80** locally.
+- Frontend: `http://localhost/`
+- API: `http://localhost/auth`, etc.
+
+```bash
+# Start development environment
+docker compose -f docker-compose.dev.yml up --build
+```
+
+**Note for macOS Users**: The setup includes `.dockerignore` rules to prevent local `node_modules` (specifically native binaries like `bcrypt` or `better-sqlite3`) from being mounted into the Linux container, which prevents `invalid ELF header` errors.
+
+### Production
+
+Runs the app on **Port 443** (HTTPS).
+
+```bash
+# Start production environment
+docker compose up --build -d
+```
+
+You can access the secure site at `https://localhost`.
+
+
 ## Production Deployment
 
 ```bash

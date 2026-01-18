@@ -34,7 +34,12 @@ yarn-error.log*
 
 # Deployment
 deploy.sh
+deploy-docker.sh
 
 # Database
+*.db
 *.db-shm
 *.db-wal
+
+# Certificates
+certs/
