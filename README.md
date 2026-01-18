@@ -80,6 +80,17 @@ This builds the React app and starts the Express server on port 3001, serving bo
 - **Database**: SQLite (better-sqlite3)
 - **Auth**: bcrypt + httpOnly session cookies
 
+## System Requirements
+
+To run this application (especially via Docker), the following minimum specifications are recommended:
+
+- **CPU**: 1 vCPU (2.0 GHz+)
+- **RAM**: 1 GB minimum (2 GB recommended for build processes)
+- **Disk**: 2 GB free space
+- **OS**: Linux (Ubuntu 20.04+), macOS, or Windows using WSL2
+- **Software**: Node.js v20+ (if running locally) or Docker Engine
+
+
 ## Project Structure
 
 ```
