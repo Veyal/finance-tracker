@@ -241,9 +241,9 @@
     color: var(--accent-primary);
     white-space: nowrap;
     padding: var(--space-2xs) var(--space-sm);
-    background: rgba(255, 126, 179, 0.08);
+    background: rgba(255, 126, 179, 0.1);
     border-radius: var(--radius-pill);
-    border: 1px solid rgba(255, 126, 179, 0.15);
+    border: 1px solid var(--border-glow);
 }
 
 .date-group:first-child .date-divider {

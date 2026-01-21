@@ -3,7 +3,8 @@
 .transaction-card {
     position: relative;
     margin-bottom: 10px;
-    background: var(--bg-surface);
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-lg);
     overflow: hidden;
@@ -16,6 +17,8 @@
 
 .transaction-card:hover {
     border-color: var(--border-glow);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-soft);
 }
 
 .transaction-card.expense {

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, Loader2 } from 'lucide-react';
 import { transactions, categories, groups, paymentMethods } from '../api/api';
+import useLockBodyScroll from '../hooks/useLockBodyScroll';
 import CustomSelect from './CustomSelect';
 import DatePicker from './DatePicker';
 import './TransactionForm.css';
@@ -42,13 +43,9 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
 
     const isEditing = !!transaction;
 
+
     // Prevent body scrolling when modal is open
-    useEffect(() => {
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.style.overflow = 'unset';
-        };
-    }, []);
+    useLockBodyScroll();
 
     // Helper to ensure focused input is visible on mobile
     const handleInputFocus = (e) => {

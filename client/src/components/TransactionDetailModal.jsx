@@ -3,6 +3,7 @@ import { X, ArrowDownLeft, Plus, Loader2, Receipt, Users, Check, Edit2 } from 'l
 import { motion, AnimatePresence } from 'framer-motion';
 import { transactions, lendingSources, paymentMethods } from '../api/api';
 import { usePrivacy } from '../context/PrivacyContext';
+import useLockBodyScroll from '../hooks/useLockBodyScroll';
 import RepaymentEditModal from './RepaymentEditModal';
 import ConfirmDialog from './ConfirmDialog';
 import CustomSelect from './CustomSelect';
@@ -22,6 +23,7 @@ function formatDate(dateString) {
 }
 
 export default function TransactionDetailModal({ transaction, onClose, onEdit, onDelete, onRepaymentAdded }) {
+    useLockBodyScroll();
     const [loading, setLoading] = useState(true);
     const [details, setDetails] = useState(null);
     const { isPrivacyMode } = usePrivacy();

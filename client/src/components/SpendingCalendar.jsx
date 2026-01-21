@@ -3,6 +3,7 @@ import { ChevronLeft, ChevronRight, Calendar, X } from 'lucide-react';
 import { transactions } from '../api/api';
 import { usePrivacy } from '../context/PrivacyContext';
 import TransactionCard from './TransactionCard';
+import useLockBodyScroll from '../hooks/useLockBodyScroll';
 import './SpendingCalendar.css';
 
 export default function SpendingCalendar({ type = 'expense' }) {
@@ -12,6 +13,9 @@ export default function SpendingCalendar({ type = 'expense' }) {
     const [loading, setLoading] = useState(true);
     const [selectedDate, setSelectedDate] = useState(null);
     const [dayTransactions, setDayTransactions] = useState([]);
+
+    // Lock scroll when popup is open
+    useLockBodyScroll(!!selectedDate);
     const [loadingTransactions, setLoadingTransactions] = useState(false);
 
     const year = currentDate.getFullYear();

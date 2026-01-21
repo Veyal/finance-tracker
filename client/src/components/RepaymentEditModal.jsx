@@ -3,8 +3,10 @@ import { X, Loader2, Check } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { transactions } from '../api/api';
 import { useHaptics } from '../hooks/useHaptics';
+import useLockBodyScroll from '../hooks/useLockBodyScroll';
 
 export default function RepaymentEditModal({ repayment, onClose, onUpdate, sources, paymentMethods }) {
+    useLockBodyScroll();
     const { triggerImpact, triggerSuccess, triggerError } = useHaptics();
 
     const [amount, setAmount] = useState('');

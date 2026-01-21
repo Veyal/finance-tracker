@@ -3,6 +3,7 @@ import { X, ArrowDownLeft, Edit2, Loader2, Check, Palette } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { lendingSources } from '../api/api';
 import { useHaptics } from '../hooks/useHaptics';
+import useLockBodyScroll from '../hooks/useLockBodyScroll';
 import RepaymentEditModal from './RepaymentEditModal';
 import './PersonRepaymentModal.css';
 
@@ -19,6 +20,7 @@ function formatDate(dateString) {
 }
 
 export default function PersonRepaymentModal({ person, onClose, sources, paymentMethods, onUpdate }) {
+    useLockBodyScroll();
     const { triggerImpact, triggerSuccess, triggerError } = useHaptics();
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState(null);

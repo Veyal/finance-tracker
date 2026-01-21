@@ -3,6 +3,7 @@ import { X, Check, ChevronRight, ChevronLeft, Minus, Plus, Calendar, Loader2 } f
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { transactions, categories, groups, paymentMethods } from '../api/api';
 import { useHaptics } from '../hooks/useHaptics';
+import useLockBodyScroll from '../hooks/useLockBodyScroll';
 import NumberPad from './NumberPad';
 import DatePicker from './DatePicker';
 import './QuickAddForm.css';
@@ -16,6 +17,7 @@ const STORAGE_KEYS = {
 };
 
 export default function QuickAddForm({ options, onSave, onClose, onOptionsChange }) {
+    useLockBodyScroll();
     const { triggerImpact, triggerSuccess, triggerError } = useHaptics();
 
     // Step: 0 = amount, 1 = category/details, 2 = success
@@ -48,13 +50,7 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
     const amountInputRef = useRef(null);
     const dragControls = useDragControls();
 
-    // Lock body scroll when modal is open
-    useEffect(() => {
-        document.body.style.overflow = 'hidden';
-        return () => {
-            document.body.style.overflow = '';
-        };
-    }, []);
+
 
     // Initial Load & Smart Defaults
     useEffect(() => {

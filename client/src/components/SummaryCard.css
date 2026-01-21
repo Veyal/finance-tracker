@@ -5,6 +5,7 @@
     padding: var(--space-lg);
     gap: var(--space-md);
     background: linear-gradient(145deg, rgba(255, 126, 179, 0.08) 0%, rgba(201, 184, 255, 0.05) 100%);
+    backdrop-filter: blur(12px);
     border: 1px solid rgba(255, 126, 179, 0.15);
     animation: card-pop 0.5s var(--ease-bounce);
 }

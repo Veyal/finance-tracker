@@ -18,7 +18,7 @@
     background: rgba(30, 30, 63, 0.85);
     backdrop-filter: blur(30px);
     border-radius: 32px 32px 0 0;
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--border-subtle);
     border-bottom: none;
     box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);

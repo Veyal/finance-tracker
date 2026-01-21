@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle, X } from 'lucide-react';
+import useLockBodyScroll from '../hooks/useLockBodyScroll';
 import './ConfirmDialog.css';
 
 export default function ConfirmDialog({
@@ -26,14 +27,7 @@ export default function ConfirmDialog({
     }, [isOpen, onCancel]);
 
     // Lock body scroll when open
-    useEffect(() => {
-        if (isOpen) {
-            document.body.style.overflow = 'hidden';
-        }
-        return () => {
-            document.body.style.overflow = '';
-        };
-    }, [isOpen]);
+    useLockBodyScroll(isOpen);
 
     return (
         <AnimatePresence>
