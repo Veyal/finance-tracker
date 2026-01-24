@@ -140,3 +140,9 @@ export const lendingSources = {
     delete: (id) => request(`/lending/${id}`, { method: 'DELETE' }),
     getRepayments: (id) => request(`/lending/${id}/repayments`),
 };
+
+// Data API
+export const data = {
+    export: () => request('/data/export'),
+    import: (jsonData) => request('/data/import', { method: 'POST', body: jsonData }),
+};

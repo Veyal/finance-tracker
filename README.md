@@ -23,49 +23,70 @@ npm run dev
 
 Open http://localhost:5173 in your browser.
 
-## Docker Setup 🐳
+## Docker Development 🐳
 
-The project includes a Docker setup for both development and production, configured to solve cross-origin issues by checking everything through Nginx on a single port.
+The project includes a Docker setup for local development.
 
 ### Prerequisites
-
 - Docker Desktop installed
-- **SSL Certificates**:
-  - Run `./generate-cert.sh` to generate self-signed certificates for local development.
+- **SSL Certificates**: Run `./generate-cert.sh` to generate self-signed certificates for local development.
 
-### Development
-
+### Start Dev Server
 Runs the app on **Port 80** locally.
-- Frontend: `http://localhost/`
-- API: `http://localhost/auth`, etc.
-
 ```bash
-# Start development environment
 docker compose -f docker-compose.dev.yml up --build
 ```
+**Note:** The setup includes `.dockerignore` rules to avoid mounting local `node_modules` into the container.
 
-**Note for macOS Users**: The setup includes `.dockerignore` rules to prevent local `node_modules` (specifically native binaries like `bcrypt` or `better-sqlite3`) from being mounted into the Linux container, which prevents `invalid ELF header` errors.
+## Deployment 🚀
 
-### Production
+You can deploy this application using either Docker (recommended) or PM2.
 
-Runs the app on **Port 443** (HTTPS).
+### Option 1: Docker Deployment (Recommended) 🐳
 
-```bash
-# Start production environment
-docker compose up --build -d
-```
+This method runs the application in isolated containers with Nginx handling SSL and reverse proxying.
 
-You can access the secure site at `https://localhost`.
+**Prerequisites:**
+- Docker & Docker Compose installed on the server.
+- SSH access to the server.
 
+**Steps:**
+1. Configure your server details in `deploy-docker.sh`:
+   - `SERVER`: SSH connection string (e.g., `user@ip`).
+   - `HOST`: Domain name (e.g., `tracker.example.com`).
+2. Run the deployment script:
+   ```bash
+   ./deploy-docker.sh
+   ```
 
-## Production Deployment
+**What this does:**
+- Builds the Docker image directly on the remote server.
+- Sets up Nginx to serve the app on port 443 (HTTPS) and port 80 (HTTP redirect).
+- Data is persisted in a Docker volume.
 
-```bash
-# Build and start production server
-npm run deploy
-```
+### Option 2: PM2 Deployment (Traditional) ⚡
 
-This builds the React app and starts the Express server on port 3001, serving both the API and the built frontend.
+This method runs the application directly on the server's Node.js environment.
+
+**Prerequisites:**
+- Node.js (v20+) installed on the server.
+- PM2 installed globally on the server (`npm install -g pm2`).
+- Nginx (or another reverse proxy) configured manually if you want to expose it on port 80/443.
+
+**Steps:**
+1. Configure your server details in `deploy.sh`:
+   - `SERVER`: SSH connection string.
+   - `REMOTE_PATH`: Directory to deploy to.
+2. Run the deployment script:
+   ```bash
+   ./deploy.sh
+   ```
+
+**What this does:**
+- Builds the React client locally.
+- Syncs the built assets and server code to the remote server using `rsync`.
+- Installs production dependencies on the server.
+- Starts/Restarts the application using PM2 on port 3001.
 
 ### Environment Variables
 

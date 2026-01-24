@@ -1,8 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Archive, LogOut, ChevronRight, X, Loader2, Lock, Users } from 'lucide-react';
+import { Plus, Edit2, Archive, LogOut, ChevronRight, X, Loader2, Lock, Users, Database, Download, Upload, AlertTriangle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { categories, groups, paymentMethods, incomeSources, auth } from '../api/api';
+import { categories, groups, paymentMethods, incomeSources, auth, data as dataApi } from '../api/api';
 import './SettingsPage.css';
 
 export default function SettingsPage() {
@@ -26,6 +26,13 @@ export default function SettingsPage() {
     const [pinLoading, setPinLoading] = useState(false);
     const [activePinField, setActivePinField] = useState('current');
     const pinInputRef = useRef(null);
+
+    // Data Export/Import state
+    const [importLoading, setImportLoading] = useState(false);
+    const [exportLoading, setExportLoading] = useState(false);
+    const [showImportConfirm, setShowImportConfirm] = useState(false);
+    const [pendingImportData, setPendingImportData] = useState(null);
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         loadData();
@@ -205,6 +212,71 @@ export default function SettingsPage() {
         );
     }
 
+    async function handleExport() {
+        if (exportLoading) return;
+        setExportLoading(true);
+        try {
+            const exportData = await dataApi.export();
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `finance_backup_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Export failed:', error);
+            alert('Failed to export data');
+        } finally {
+            setExportLoading(false);
+        }
+    }
+
+    function handleImportClick() {
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+            fileInputRef.current.click();
+        }
+    }
+
+    function handleFileChange(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                setPendingImportData(json);
+                setShowImportConfirm(true);
+            } catch (error) {
+                console.error('Invalid JSON:', error);
+                alert('Invalid file format');
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    async function confirmImport() {
+        if (!pendingImportData) return;
+
+        setImportLoading(true);
+        try {
+            await dataApi.import(pendingImportData);
+            setShowImportConfirm(false);
+            setPendingImportData(null);
+            alert('Data imported successfully! The page will now reload.');
+            window.location.reload();
+        } catch (error) {
+            console.error('Import failed:', error);
+            alert('Failed to import data: ' + (error.message || 'Unknown error'));
+        } finally {
+            setImportLoading(false);
+        }
+    }
+
     if (loading) {
         return (
             <div className="page settings-page">
@@ -269,6 +341,28 @@ export default function SettingsPage() {
                         <Users size={20} />
                         <span>Repayments</span>
                         <ChevronRight size={20} className="settings-chevron" />
+                    </button>
+
+                    <div className="settings-divider" />
+
+                    <div className="settings-section-title">Data Management</div>
+
+                    <button type="button" className="settings-item" onClick={handleExport} disabled={exportLoading}>
+                        <Download size={20} />
+                        <span>Export Data</span>
+                        {exportLoading && <Loader2 size={16} className="spin settings-chevron" />}
+                    </button>
+
+                    <button type="button" className="settings-item" onClick={handleImportClick} disabled={importLoading}>
+                        <Upload size={20} />
+                        <span>Import Data</span>
+                        <input
+                            type="file"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            accept=".json"
+                            style={{ display: 'none' }}
+                        />
                     </button>
 
                     <div className="settings-divider" />
@@ -458,6 +552,49 @@ export default function SettingsPage() {
                                     </button>
                                 </>
                             )}
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Import Confirmation Modal */}
+            {showImportConfirm && (
+                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && !importLoading && setShowImportConfirm(false)}>
+                    <div className="modal">
+                        <div className="modal-header">
+                            <h2 className="text-danger flex-align-center">
+                                <AlertTriangle size={24} style={{ marginRight: 8 }} />
+                                Warning
+                            </h2>
+                            <button type="button" className="btn btn-icon btn-ghost" onClick={() => setShowImportConfirm(false)} disabled={importLoading}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <p style={{ marginBottom: 'var(--space-md)', lineHeight: 1.5 }}>
+                                This action will <strong>OVERWRITE ALL</strong> existing data (transactions, categories, users, etc.) with the data from the file.
+                            </p>
+                            <p style={{ marginBottom: 'var(--space-lg)', color: 'var(--text-secondary)' }}>
+                                This action cannot be undone. Are you sure you want to proceed?
+                            </p>
+
+                            <div className="modal-actions" style={{ display: 'flex', gap: 'var(--space-md)' }}>
+                                <button
+                                    className="btn btn-ghost"
+                                    onClick={() => setShowImportConfirm(false)}
+                                    disabled={importLoading}
+                                    style={{ flex: 1 }}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    className="btn btn-primary danger"
+                                    onClick={confirmImport}
+                                    disabled={importLoading}
+                                    style={{ flex: 1 }}
+                                >
+                                    {importLoading ? <Loader2 size={20} className="spin" /> : 'Yes, Overwrite Data'}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>

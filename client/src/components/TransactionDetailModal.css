@@ -522,8 +522,30 @@
     align-items: center;
 }
 
-.select-with-action .repay-select {
+.select-with-action .repay-select,
+.select-with-action .custom-select {
     flex: 1;
+}
+
+/* Override CustomSelect styles to match repayment form */
+.inline-repay-form .custom-select-trigger {
+    background: rgba(0, 0, 0, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+    border-radius: 12px;
+    padding: 12px 16px;
+    height: auto;
+    min-height: unset;
+}
+
+.inline-repay-form .custom-select-trigger:hover {
+    border-color: rgba(107, 255, 184, 0.4);
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.inline-repay-form .custom-select-trigger.open {
+    border-color: rgba(107, 255, 184, 0.6);
+    box-shadow: 0 0 0 2px rgba(107, 255, 184, 0.1);
 }
 
 .input-with-action input {
