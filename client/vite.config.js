@@ -50,6 +50,18 @@ export default defineConfig({
             '/payment-methods': 'http://localhost:3001',
             '/income-sources': 'http://localhost:3001',
             '/lending': 'http://localhost:3001',
+            '/savings': {
+                target: 'http://localhost:3001',
+                bypass: (req) => {
+                    // If it's a browser navigation (Accept: text/html), serve frontend
+                    if (req.headers.accept?.includes('text/html')) {
+                        return req.url;
+                    }
+                    // Otherwise proxy to backend API
+                    return null;
+                }
+            },
+            '/data': 'http://localhost:3001',
             // Proxy /transactions API calls but not the frontend route
             '/transactions': {
                 target: 'http://localhost:3001',

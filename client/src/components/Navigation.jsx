@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, List, PieChart, Settings } from 'lucide-react';
+import { Home, List, PieChart, PiggyBank, Settings } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
 import PrivacyToggle from './PrivacyToggle';
 import './Navigation.css';
@@ -8,6 +8,7 @@ const navItems = [
     { path: '/', icon: Home, label: 'Today' },
     { path: '/transactions', icon: List, label: 'All' },
     { path: '/insights', icon: PieChart, label: 'Insights' },
+    { path: '/savings', icon: PiggyBank, label: 'Savings' },
     { path: '/settings', icon: Settings, label: 'Settings' },
 ];
 

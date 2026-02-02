@@ -11,6 +11,7 @@ import TransactionsPage from './pages/TransactionsPage';
 import CalendarPage from './pages/CalendarPage';
 import InsightsPage from './pages/InsightsPage';
 import LendingPage from './pages/LendingPage';
+import SavingsPage from './pages/SavingsPage';
 import SettingsPage from './pages/SettingsPage';
 
 function ProtectedRoute({ children }) {
@@ -83,6 +84,13 @@ function AppRoutes() {
                         <ProtectedRoute>
                             <PageTransition>
                                 <LendingPage />
+                            </PageTransition>
+                        </ProtectedRoute>
+                    } />
+                    <Route path="/savings" element={
+                        <ProtectedRoute>
+                            <PageTransition>
+                                <SavingsPage />
                             </PageTransition>
                         </ProtectedRoute>
                     } />

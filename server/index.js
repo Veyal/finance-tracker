@@ -11,6 +11,7 @@ import groupRoutes from './routes/groups.js';
 import paymentMethodRoutes from './routes/payment-methods.js';
 import incomeSourceRoutes from './routes/income-sources.js';
 import lendingRoutes from './routes/lending.js';
+import savingsRoutes from './routes/savings.js';
 import dataRoutes from './routes/data.js';
 import { authMiddleware } from './middleware/auth.js';
 
@@ -42,6 +43,7 @@ app.use('/groups', authMiddleware, groupRoutes);
 app.use('/payment-methods', authMiddleware, paymentMethodRoutes);
 app.use('/income-sources', authMiddleware, incomeSourceRoutes);
 app.use('/lending', authMiddleware, lendingRoutes);
+app.use('/savings', authMiddleware, savingsRoutes);
 app.use('/data', authMiddleware, dataRoutes);
 
 // Error handler

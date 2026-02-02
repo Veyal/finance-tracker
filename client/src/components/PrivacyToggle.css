@@ -1,4 +1,4 @@
-/* PrivacyToggle - Animated Button */
+/* PrivacyToggle - Minimal Icon Button */
 
 .privacy-toggle {
     width: 40px;
@@ -6,30 +6,23 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px;
+    background: transparent;
+    border: none;
     color: var(--text-muted);
     cursor: pointer;
     transition: all 0.2s ease;
-    position: relative;
-    overflow: hidden;
 }
 
 .privacy-toggle:hover {
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.15);
     color: var(--text-secondary);
 }
 
 .privacy-toggle.active {
-    background: rgba(255, 126, 179, 0.15);
-    border-color: rgba(255, 126, 179, 0.3);
     color: var(--accent-primary);
 }
 
 .privacy-toggle.active:hover {
-    background: rgba(255, 126, 179, 0.25);
+    color: var(--accent-light);
 }
 
 .privacy-icon {

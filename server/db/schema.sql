@@ -96,11 +96,25 @@ CREATE TABLE IF NOT EXISTS lending_sources (
 
 CREATE INDEX IF NOT EXISTS idx_lending_sources_user_id ON lending_sources(user_id);
 
+-- Savings accounts table
+CREATE TABLE IF NOT EXISTS savings_accounts (
+    id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL REFERENCES users(id),
+    name TEXT NOT NULL,
+    target_amount REAL,
+    color TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_savings_accounts_user_id ON savings_accounts(user_id);
+
 -- Transactions table
 CREATE TABLE IF NOT EXISTS transactions (
     id TEXT PRIMARY KEY,
     user_id TEXT NOT NULL REFERENCES users(id),
-    type TEXT DEFAULT 'expense' CHECK(type IN ('expense', 'income', 'repayment')),
+    type TEXT DEFAULT 'expense' CHECK(type IN ('expense', 'income', 'repayment', 'savings_deposit', 'savings_withdrawal')),
     amount REAL NOT NULL,
     currency TEXT DEFAULT 'IDR',
     date TEXT DEFAULT (datetime('now')),
@@ -109,6 +123,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     payment_method_id TEXT REFERENCES payment_methods(id),
     income_source_id TEXT REFERENCES income_sources(id),
     lending_source_id TEXT REFERENCES lending_sources(id),
+    savings_account_id TEXT REFERENCES savings_accounts(id),
     related_transaction_id TEXT REFERENCES transactions(id),
     note TEXT,
     merchant TEXT,
@@ -121,3 +136,4 @@ CREATE TABLE IF NOT EXISTS transactions (
 CREATE INDEX IF NOT EXISTS idx_transactions_user_id ON transactions(user_id);
 CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
 CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type);
+

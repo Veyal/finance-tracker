@@ -146,3 +146,16 @@ export const data = {
     export: () => request('/data/export'),
     import: (jsonData) => request('/data/import', { method: 'POST', body: jsonData }),
 };
+
+// Savings API
+export const savings = {
+    list: () => request('/savings'),
+    create: (data) => request('/savings', { method: 'POST', body: data }),
+    update: (id, data) => request(`/savings/${id}`, { method: 'PATCH', body: data }),
+    delete: (id) => request(`/savings/${id}`, { method: 'DELETE' }),
+    getTransactions: (id) => request(`/savings/${id}/transactions`),
+    deposit: (id, data) => request(`/savings/${id}/deposit`, { method: 'POST', body: data }),
+    withdraw: (id, data) => request(`/savings/${id}/withdraw`, { method: 'POST', body: data }),
+    updateTransaction: (txId, data) => request(`/savings/transactions/${txId}`, { method: 'PATCH', body: data }),
+    deleteTransaction: (txId) => request(`/savings/transactions/${txId}`, { method: 'DELETE' }),
+};

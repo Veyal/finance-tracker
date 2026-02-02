@@ -100,12 +100,32 @@ router.get('/', (req, res) => {
     const totalsParams = [userId];
 
     if (from) {
-      totalsSql += ` AND date(date) >= ?`;
+      totalsSql += ` AND date(t.date) >= ?`;
       totalsParams.push(from);
     }
     if (to) {
-      totalsSql += ` AND date(date) <= ?`;
+      totalsSql += ` AND date(t.date) <= ?`;
       totalsParams.push(to);
+    }
+    if (type && type !== 'all') {
+      totalsSql += ` AND t.type = ?`;
+      totalsParams.push(type);
+    }
+    if (group_id) {
+      totalsSql += ` AND t.group_id = ?`;
+      totalsParams.push(group_id);
+    }
+    if (category_id) {
+      totalsSql += ` AND t.category_id = ?`;
+      totalsParams.push(category_id);
+    }
+    if (payment_method_id) {
+      totalsSql += ` AND t.payment_method_id = ?`;
+      totalsParams.push(payment_method_id);
+    }
+    if (q) {
+      totalsSql += ` AND (t.note LIKE ? OR t.merchant LIKE ?)`;
+      totalsParams.push(`%${q}%`, `%${q}%`);
     }
 
     const totals = db.prepare(totalsSql).get(...totalsParams);
