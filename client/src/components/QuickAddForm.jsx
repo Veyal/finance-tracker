@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Check, ChevronRight, ChevronLeft, Minus, Plus, Calendar, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
-import { transactions, categories, groups, paymentMethods } from '../api/api';
+import { transactions, categories, groups, paymentMethods, incomeSources } from '../api/api';
 import { useHaptics } from '../hooks/useHaptics';
 import useLockBodyScroll from '../hooks/useLockBodyScroll';
 import NumberPad from './NumberPad';
@@ -46,6 +46,10 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
     const [showAddPayment, setShowAddPayment] = useState(false);
     const [newPaymentName, setNewPaymentName] = useState('');
     const [addPaymentLoading, setAddPaymentLoading] = useState(false);
+
+    const [showAddIncomeSource, setShowAddIncomeSource] = useState(false);
+    const [newIncomeSourceName, setNewIncomeSourceName] = useState('');
+    const [addIncomeSourceLoading, setAddIncomeSourceLoading] = useState(false);
 
     const amountInputRef = useRef(null);
     const dragControls = useDragControls();
@@ -425,7 +429,28 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                                                 {src.name}
                                             </motion.button>
                                         ))}
+                                        <button className="option-chip add-new-chip" onClick={() => setShowAddIncomeSource(true)}>
+                                            <Plus size={14} /> Add
+                                        </button>
                                     </div>
+                                    <AnimatePresence>
+                                        {showAddIncomeSource && (
+                                            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }} className="inline-add-form">
+                                                <input
+                                                    className="inline-add-input"
+                                                    value={newIncomeSourceName}
+                                                    onChange={(e) => setNewIncomeSourceName(e.target.value)}
+                                                    placeholder="New Source"
+                                                    autoFocus
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleAddItem('income source', newIncomeSourceName, setAddIncomeSourceLoading, setShowAddIncomeSource, setNewIncomeSourceName, incomeSources, setIncomeSourceId)}
+                                                />
+                                                <button className="inline-add-btn" onClick={() => handleAddItem('income source', newIncomeSourceName, setAddIncomeSourceLoading, setShowAddIncomeSource, setNewIncomeSourceName, incomeSources, setIncomeSourceId)}>
+                                                    {addIncomeSourceLoading ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
+                                                </button>
+                                                <button className="inline-cancel-btn" onClick={() => setShowAddIncomeSource(false)}><X size={16} /></button>
+                                            </motion.div>
+                                        )}
+                                    </AnimatePresence>
                                 </div>
                             )}
 
