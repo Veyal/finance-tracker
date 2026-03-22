@@ -1,305 +1,200 @@
 /* Transaction Form Styles - Premium Overlay */
 
-/* Modal override for transaction form - ensure scrollability and premium look */
 .transaction-form-modal {
-    max-height: 90vh !important;
-    max-height: 90dvh !important;
+    max-height: 95vh !important;
+    max-height: 95dvh !important;
+    width: 100%;
+    max-width: 500px;
+    background: var(--bg-surface) !important;
+    backdrop-filter: blur(40px);
+    -webkit-backdrop-filter: blur(40px);
+    border: 1px solid var(--border-subtle) !important;
+    box-shadow: var(--shadow-float) !important;
+    border-radius: 28px 28px 0 0 !important;
     display: flex;
     flex-direction: column;
-    background: rgba(30, 30, 63, 0.95) !important;
-    backdrop-filter: blur(30px);
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5) !important;
-    border-radius: 24px 24px 0 0 !important;
 }
 
 .transaction-form-modal .modal-header {
-    flex-shrink: 0;
-    margin-bottom: 0px !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05) !important;
-    background: transparent !important;
+    padding: var(--space-lg);
+    border-bottom: 1px solid var(--border-subtle);
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 100%);
 }
 
 .transaction-form-modal .modal-body {
+    padding: var(--space-lg);
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 24px;
     overflow-y: auto;
-    overflow-x: hidden;
+    overflow-x: visible; /* Ensure absolute dropdowns are visible */
     flex: 1;
-    padding-bottom: 32px;
-    -webkit-overflow-scrolling: touch;
+    padding-bottom: 150px; /* Extra room for dropdowns */
 }
 
-/* Type Toggle - Pill switcher */
+/* Ensure CustomSelect dropdowns are visible and on top */
+.details-section .form-group {
+    position: relative;
+}
+
+.note-textarea {
+    resize: none;
+    min-height: 60px;
+    line-height: 1.4;
+    padding: 12px 16px !important;
+}
+
+/* Type Toggle */
 .type-toggle {
     display: flex;
-    background: rgba(0, 0, 0, 0.3) !important;
-    border-radius: 100px;
+    background: rgba(0, 0, 0, 0.2);
     padding: 4px;
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    flex-shrink: 0;
+    border-radius: 16px;
+    border: 1px solid var(--border-subtle);
 }
 
 .type-btn {
     flex: 1;
-    padding: 10px 16px;
-    background: transparent;
+    padding: 12px;
     border: none;
-    border-radius: 100px;
-    font-family: var(--font-display);
-    font-weight: 700;
-    font-size: 14px;
+    background: transparent;
     color: var(--text-muted);
+    font-weight: 700;
+    border-radius: 12px;
     cursor: pointer;
-    transition: all 0.2s var(--ease-bounce);
-}
-
-.type-btn:hover {
-    color: var(--text-primary);
-    background: rgba(255, 255, 255, 0.05);
+    transition: all 0.25s var(--ease-bounce);
+    font-family: var(--font-display);
 }
 
 .type-btn.active.expense {
     background: var(--expense-red);
-    color: #fff;
-    box-shadow: 0 4px 15px rgba(255, 107, 138, 0.4);
+    color: white;
+    box-shadow: 0 4px 15px var(--expense-red-glow);
 }
 
 .type-btn.active.income {
     background: var(--income-green);
-    color: #000;
-    box-shadow: 0 4px 15px rgba(107, 255, 184, 0.4);
+    color: var(--bg-deep);
+    box-shadow: 0 4px 15px var(--income-green-glow);
 }
 
-/* Amount Input - The star */
+/* Amount Display */
 .amount-input-group {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 24px;
     background: rgba(255, 255, 255, 0.03);
-    border-radius: 20px;
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    transition: all 0.2s ease;
-    flex-shrink: 0;
+    border: 1px solid var(--border-subtle);
+    border-radius: 24px;
+    padding: 24px;
+    display: flex;
+    align-items: baseline;
+    justify-content: center;
+    gap: 8px;
+    transition: border-color 0.2s;
 }
 
 .amount-input-group:focus-within {
     border-color: var(--accent-primary);
-    box-shadow: 0 0 0 3px var(--accent-glow);
-    background: rgba(0, 0, 0, 0.2);
+    background: rgba(255, 255, 255, 0.05);
 }
 
 .amount-prefix {
-    font-family: var(--font-display);
     font-size: 24px;
-    font-weight: 700;
+    font-weight: 600;
     color: var(--text-muted);
+    font-family: var(--font-display);
 }
 
 .amount-input-field {
-    flex: 1;
-    font-family: var(--font-display);
-    font-size: 32px;
-    font-weight: 800;
     background: transparent;
     border: none;
     color: var(--text-primary);
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-    min-width: 0;
+    font-size: 42px;
+    font-weight: 800;
+    font-family: var(--font-display);
+    width: 100%;
+    text-align: center;
     outline: none;
 }
 
-.amount-input-field::placeholder {
-    color: var(--text-muted);
-    opacity: 0.3;
-}
-
-/* Name Input - Clean style */
-.name-input {
-    text-align: center;
-    font-weight: 600;
-    background: rgba(255, 255, 255, 0.05) !important;
-    border-color: rgba(255, 255, 255, 0.05) !important;
-    font-size: 18px !important;
-}
-
-.name-input:focus {
-    background: rgba(0, 0, 0, 0.3) !important;
-}
-
-/* Details Section - Compact layout */
-.details-section {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-/* Form Row - Side by side fields */
+/* Form Layout */
 .form-row {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    gap: 16px;
 }
 
-/* Compact form groups */
-.details-section .form-group {
+.form-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
 }
 
-.details-section .input-label {
-    font-size: 12px;
-    margin-bottom: 0;
-    padding-left: 4px;
-    opacity: 0.8;
-}
-
-.details-section .input,
-.details-section .select {
-    min-height: 48px;
-    padding: 10px 14px;
-    font-size: 15px;
-    border-radius: 14px;
-}
-
-/* Form Error */
-.form-error {
-    color: var(--expense-red);
-    font-family: var(--font-display);
-    font-size: 14px;
-    font-weight: 600;
-    text-align: center;
-    padding: 12px;
-    background: rgba(255, 107, 138, 0.1);
-    border: 1px solid rgba(255, 107, 138, 0.2);
-    border-radius: 12px;
-}
-
-/* Submit Button */
-.transaction-form-modal .btn-lg {
-    width: 100%;
-    margin-top: 8px;
-    flex-shrink: 0;
-    height: 56px;
-    font-size: 18px;
-    border-radius: 28px;
-}
-
-/* Mobile Optimizations */
-@media (max-width: 480px) {
-    .transaction-form-modal .modal-body {
-        padding: 20px;
-        gap: 16px;
-    }
-
-    .amount-input-group {
-        padding: 16px;
-    }
-
-    .amount-prefix {
-        font-size: 20px;
-    }
-
-    .amount-input-field {
-        font-size: 28px;
-    }
-
-    .form-row {
-        grid-template-columns: 1fr;
-        gap: 16px;
-    }
-}
-
-/* Nested Modal - Add Category/Group/Payment */
-.nested-modal {
-    z-index: calc(var(--z-modal) + 10) !important;
-}
-
-.add-category-modal {
-    max-width: 380px !important;
-    background: linear-gradient(180deg, rgba(50, 50, 95, 0.98) 0%, rgba(30, 30, 63, 0.99) 100%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.12) !important;
-    border-radius: 28px !important;
-    box-shadow:
-        0 24px 64px rgba(0, 0, 0, 0.6),
-        0 0 50px rgba(255, 126, 179, 0.15),
-        inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
-    animation: scaleIn 0.25s var(--ease-bounce);
-}
-
-@keyframes scaleIn {
-    from {
-        opacity: 0;
-        transform: scale(0.9) translateY(20px);
-    }
-
-    to {
-        opacity: 1;
-        transform: scale(1) translateY(0);
-    }
-}
-
-.add-category-modal .modal-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
-    padding: 20px 24px !important;
-}
-
-.add-category-modal .modal-header h2 {
-    font-size: 18px !important;
-    background: linear-gradient(135deg, var(--accent-primary) 0%, var(--accent-secondary) 100%);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.add-category-modal .modal-body {
-    padding: 24px !important;
-}
-
-.add-category-modal .form-group {
-    margin-bottom: 0;
-}
-
-.add-category-modal .input-label {
+.input-label {
     font-size: 13px;
     font-weight: 600;
     color: var(--text-secondary);
-    margin-bottom: 8px;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    padding-left: 4px;
 }
 
-.add-category-modal .input {
-    width: 100%;
-    padding: 16px 20px !important;
-    background: rgba(0, 0, 0, 0.25) !important;
-    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+.input {
+    background: rgba(255, 255, 255, 0.05) !important;
+    border: 1px solid var(--border-subtle) !important;
     border-radius: 16px !important;
-    font-size: 16px !important;
-    font-weight: 500;
-    color: var(--text-primary);
-    transition: all 0.2s ease;
+    padding: 12px 16px !important;
+    color: var(--text-primary) !important;
+    font-size: 15px !important;
+    transition: all 0.2s !important;
 }
 
-.add-category-modal .input::placeholder {
-    color: var(--text-muted);
-    font-weight: 400;
-}
-
-.add-category-modal .input:focus {
-    background: rgba(0, 0, 0, 0.35) !important;
+.input:focus {
+    background: rgba(255, 255, 255, 0.08) !important;
     border-color: var(--accent-primary) !important;
     box-shadow: 0 0 0 4px var(--accent-glow) !important;
     outline: none;
 }
 
-.add-category-modal .btn-lg {
-    height: 54px !important;
-    font-size: 16px !important;
-    border-radius: 16px !important;
-    margin-top: 20px !important;
+.name-input {
+    font-size: 18px !important;
+    font-weight: 600 !important;
+    text-align: center;
+}
+
+/* Submit Section */
+.form-error {
+    background: rgba(255, 107, 138, 0.1);
+    color: var(--expense-red);
+    padding: 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    text-align: center;
+    border: 1px solid rgba(255, 107, 138, 0.2);
+}
+
+.transaction-form-modal .btn-lg {
+    height: 60px;
+    border-radius: 30px;
+    font-size: 18px;
+    font-weight: 700;
+    margin-top: 12px;
+    background: var(--gradient-accent);
+    color: var(--text-on-pink);
+    border: none;
+    box-shadow: var(--shadow-glow-pink);
+}
+
+/* Mobile Adjustments */
+@media (max-width: 480px) {
+    .form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Nested Modals */
+.nested-modal {
+    z-index: calc(var(--z-modal) + 10);
+}
+
+.add-category-modal {
+    max-width: 400px;
+    border-radius: 24px;
+    padding: 0;
 }

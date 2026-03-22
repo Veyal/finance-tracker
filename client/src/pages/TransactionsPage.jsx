@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Filter, X, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
-import { transactions, categories, groups, paymentMethods } from '../api/api';
+import { transactions, categories, groups, paymentMethods, incomeSources, savings } from '../api/api';
 import TransactionCard from '../components/TransactionCard';
 import TransactionForm from '../components/TransactionForm';
 import TransactionDetailModal from '../components/TransactionDetailModal';
@@ -90,7 +90,7 @@ export default function TransactionsPage() {
     const [showFilters, setShowFilters] = useState(false);
     const [editingTx, setEditingTx] = useState(null);
     const [viewingTx, setViewingTx] = useState(null);
-    const [options, setOptions] = useState({ categories: [], groups: [], paymentMethods: [] });
+    const [options, setOptions] = useState({ categories: [], groups: [], paymentMethods: [], incomeSources: [], savings: [] });
 
     // DnD Sensors
     const sensors = useSensors(
@@ -147,7 +147,7 @@ export default function TransactionsPage() {
 
     useEffect(() => {
         loadData();
-    }, [filters.from, filters.to, filters.type, filters.category_id, filters.group_id, filters.payment_method_id]);
+    }, [filters.from, filters.to, filters.type, filters.category_id, filters.group_id, filters.payment_method_id, options.savings]);
 
     useEffect(() => {
         loadOptions();
@@ -167,6 +167,25 @@ export default function TransactionsPage() {
             params.limit = 100;
 
             const result = await transactions.list(params);
+
+            // Enrich with saving names if available
+            if (options.savings && options.savings.length > 0) {
+                result.transactions = result.transactions.map(tx => {
+                    if (tx.type === 'savings_deposit' || tx.type === 'savings_withdrawal') {
+                        // Try to find the saving account
+                        // Assuming the ID field might be saving_id, savings_id, or account_id
+                        const savingId = tx.saving_id || tx.savings_id || tx.account_id;
+                        if (savingId) {
+                            const account = options.savings.find(s => s.id === savingId);
+                            if (account) {
+                                return { ...tx, saving_name: account.name };
+                            }
+                        }
+                    }
+                    return tx;
+                });
+            }
+
             setData(result);
         } catch (error) {
             console.error('Failed to load transactions:', error);
@@ -177,12 +196,14 @@ export default function TransactionsPage() {
 
     async function loadOptions() {
         try {
-            const [cats, grps, pms] = await Promise.all([
+            const [cats, grps, pms, sources, svgs] = await Promise.all([
                 categories.list('true'),
                 groups.list('true'),
                 paymentMethods.list('true'),
+                incomeSources.list('true'),
+                savings.list().then(res => res.accounts || []) // savings.list returns { accounts: [], ... }
             ]);
-            setOptions({ categories: cats, groups: grps, paymentMethods: pms });
+            setOptions({ categories: cats, groups: grps, paymentMethods: pms, incomeSources: sources, savings: svgs });
         } catch (error) {
             console.error('Failed to load options:', error);
         }

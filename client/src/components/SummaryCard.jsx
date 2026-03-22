@@ -1,12 +1,11 @@
-import { TrendingDown, TrendingUp, Minus } from 'lucide-react';
+import { TrendingDown, TrendingUp, Minus, ArrowUpRight, ArrowDownRight, Activity } from 'lucide-react';
 import { usePrivacy } from '../context/PrivacyContext';
+import { formatCurrency } from '../utils/format';
 import './SummaryCard.css';
 
-function formatAmount(amount) {
-    return new Intl.NumberFormat('id-ID').format(Math.abs(amount));
-}
-
 export default function SummaryCard({ expense = 0, income = 0, net = 0 }) {
+    const { isPrivacyMode } = usePrivacy();
+
     return (
         <div className="summary-card card-glass animate-slide-up">
             <div className="summary-item summary-expense">
@@ -16,7 +15,7 @@ export default function SummaryCard({ expense = 0, income = 0, net = 0 }) {
                 <div className="summary-content">
                     <span className="summary-label">Expense</span>
                     <span className="summary-amount amount-expense">
-                        {usePrivacy().isPrivacyMode ? '****' : `Rp ${formatAmount(expense)}`}
+                        {isPrivacyMode ? '••••' : formatCurrency(expense)}
                     </span>
                 </div>
             </div>
@@ -30,7 +29,7 @@ export default function SummaryCard({ expense = 0, income = 0, net = 0 }) {
                 <div className="summary-content">
                     <span className="summary-label">Income</span>
                     <span className="summary-amount amount-income">
-                        {usePrivacy().isPrivacyMode ? '****' : `Rp ${formatAmount(income)}`}
+                        {isPrivacyMode ? '••••' : formatCurrency(income)}
                     </span>
                 </div>
             </div>
@@ -39,12 +38,12 @@ export default function SummaryCard({ expense = 0, income = 0, net = 0 }) {
 
             <div className="summary-item summary-net">
                 <div className="summary-icon">
-                    <Minus size={20} />
+                    {net > 0 ? <ArrowUpRight size={20} /> : net < 0 ? <ArrowDownRight size={20} /> : <Activity size={20} />}
                 </div>
                 <div className="summary-content">
                     <span className="summary-label">Net</span>
                     <span className={`summary-amount ${net >= 0 ? 'amount-income' : 'amount-expense'}`}>
-                        {usePrivacy().isPrivacyMode ? '****' : `Rp ${formatAmount(net)}`}
+                        {isPrivacyMode ? '••••' : formatCurrency(net)}
                     </span>
                 </div>
             </div>

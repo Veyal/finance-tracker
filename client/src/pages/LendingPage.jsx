@@ -6,14 +6,18 @@ import TransactionSelector from '../components/TransactionSelector';
 import CustomSelect from '../components/CustomSelect';
 import PersonRepaymentModal from '../components/PersonRepaymentModal';
 import { useHaptics } from '../hooks/useHaptics';
+import { usePrivacy } from '../context/PrivacyContext';
+import { formatCurrency, getCurrencySymbol } from '../utils/format';
 import './LendingPage.css';
 
-function formatAmount(amount) {
-    return new Intl.NumberFormat('id-ID').format(amount);
-}
-
 export default function LendingPage() {
+    const { isPrivacyMode } = usePrivacy();
     const { triggerImpact, triggerSuccess, triggerError } = useHaptics();
+
+    const formatAmount = (amount) => {
+        if (isPrivacyMode) return '••••';
+        return formatCurrency(amount);
+    };
     const [sources, setSources] = useState([]);
     const [pms, setPms] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -184,7 +188,7 @@ export default function LendingPage() {
                     animate={{ opacity: 1, y: 0 }}
                 >
                     <div className="stats-label">Total Collected</div>
-                    <div className="stats-amount">Rp {formatAmount(grandTotal)}</div>
+                    <div className="stats-amount">{formatAmount(grandTotal)}</div>
                 </motion.div>
             )}
 
@@ -236,7 +240,7 @@ export default function LendingPage() {
                                 <div className="person-info">
                                     <span className="person-name">{source.name}</span>
                                     <span className="person-stat">
-                                        {source.repayment_count || 0} repayments · Rp {formatAmount(source.total_repaid || 0)}
+                                        {source.repayment_count || 0} repayments · {formatAmount(source.total_repaid || 0)}
                                     </span>
                                 </div>
                                 <ChevronRight size={18} className="chevron" />
@@ -324,7 +328,7 @@ export default function LendingPage() {
                                         <div className="ref-label">For expense</div>
                                         <div className="ref-merchant">{selectedTx?.merchant || 'Expense'}</div>
                                         <div className="ref-amount">
-                                            Rp {formatAmount(selectedTx?.amount || 0)}
+                                            {formatAmount(selectedTx?.amount || 0)}
                                         </div>
                                     </div>
 
@@ -333,7 +337,7 @@ export default function LendingPage() {
                                         <div className="form-group">
                                             <label>Amount Received</label>
                                             <div className="amount-input-v2">
-                                                <span className="prefix">Rp</span>
+                                                <span className="prefix">{getCurrencySymbol()}</span>
                                                 <input
                                                     type="number"
                                                     value={repayAmount}

@@ -7,14 +7,16 @@ import { useHaptics } from '../hooks/useHaptics';
 import PrivacyToggle from '../components/PrivacyToggle';
 import CustomSelect from '../components/CustomSelect';
 import DatePicker from '../components/DatePicker';
+import { formatCurrency } from '../utils/format';
 import './SavingsPage.css';
-
-function formatAmount(amount) {
-    return new Intl.NumberFormat('id-ID').format(amount || 0);
-}
 
 export default function SavingsPage() {
     const { isPrivacyMode } = usePrivacy();
+
+    const formatAmount = (amount) => {
+        if (isPrivacyMode) return '••••';
+        return formatCurrency(amount);
+    };
     const { triggerImpact, triggerSuccess, triggerError } = useHaptics();
 
     const [data, setData] = useState({ accounts: [], totalBalance: 0 });
@@ -262,7 +264,7 @@ export default function SavingsPage() {
             <div className="savings-total-card">
                 <div className="savings-total-label">Total Savings</div>
                 <div className="savings-total-amount">
-                    Rp {isPrivacyMode ? '••••••' : formatAmount(data.totalBalance)}
+                    {formatAmount(data.totalBalance)}
                 </div>
             </div>
 
@@ -299,7 +301,7 @@ export default function SavingsPage() {
                                 <div className="account-info">
                                     <div className="account-name">{account.name}</div>
                                     <div className="account-balance">
-                                        Rp {isPrivacyMode ? '••••••' : formatAmount(account.balance)}
+                                        {formatAmount(account.balance)}
                                     </div>
                                 </div>
                                 <ChevronRight size={20} className="account-chevron" />
@@ -317,7 +319,7 @@ export default function SavingsPage() {
                                         />
                                     </div>
                                     <div className="progress-text">
-                                        {isPrivacyMode ? '••%' : `${Math.round((account.balance / account.target_amount) * 100)}%`} of Rp {isPrivacyMode ? '••••••' : formatAmount(account.target_amount)}
+                                        {isPrivacyMode ? '••%' : `${Math.round((account.balance / account.target_amount) * 100)}%`} of {formatAmount(account.target_amount)}
                                     </div>
                                 </div>
                             )}
@@ -536,7 +538,7 @@ export default function SavingsPage() {
                                     <div>
                                         <h2>{showAccountDetails.account.name}</h2>
                                         <div className="account-balance-small">
-                                            Balance: Rp {isPrivacyMode ? '••••••' : formatAmount(
+                                            Balance: {formatAmount(
                                                 showAccountDetails.transactions.reduce((sum, tx) =>
                                                     sum + (tx.type === 'savings_deposit' ? tx.amount : -tx.amount), 0)
                                             )}
@@ -594,9 +596,8 @@ export default function SavingsPage() {
                                                             {tx.note && <span className="tx-note"> · {tx.note}</span>}
                                                         </div>
                                                     </div>
-                                                    <div className={`tx-amount ${tx.type === 'savings_deposit' ? 'positive' : 'negative'}`}>
-                                                        {tx.type === 'savings_deposit' ? '+' : '-'}Rp {isPrivacyMode ? '••••' : formatAmount(tx.amount)}
-                                                    </div>
+                                                    <span className={`tx-amount ${tx.type === 'savings_deposit' ? 'amount-income' : 'amount-expense'}`}>                                                        {tx.type === 'savings_deposit' ? '+' : '-'} {formatAmount(tx.amount)}
+                                                    </span>
                                                 </div>
                                                 <div className="tx-actions">
                                                     <button className="btn btn-ghost btn-xs" onClick={() => openEditTx(tx)}>

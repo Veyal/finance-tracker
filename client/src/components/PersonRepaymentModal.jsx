@@ -5,11 +5,9 @@ import { lendingSources } from '../api/api';
 import { useHaptics } from '../hooks/useHaptics';
 import useLockBodyScroll from '../hooks/useLockBodyScroll';
 import RepaymentEditModal from './RepaymentEditModal';
+import { usePrivacy } from '../context/PrivacyContext';
+import { formatCurrency } from '../utils/format';
 import './PersonRepaymentModal.css';
-
-function formatAmount(amount) {
-    return new Intl.NumberFormat('id-ID').format(amount);
-}
 
 function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -22,6 +20,7 @@ function formatDate(dateString) {
 export default function PersonRepaymentModal({ person, onClose, sources, paymentMethods, onUpdate }) {
     useLockBodyScroll();
     const { triggerImpact, triggerSuccess, triggerError } = useHaptics();
+    const { isPrivacyMode } = usePrivacy();
     const [loading, setLoading] = useState(true);
     const [data, setData] = useState(null);
 
@@ -154,9 +153,10 @@ export default function PersonRepaymentModal({ person, onClose, sources, payment
                                     {data && (
                                         <div className="person-total">
                                             <span className="total-label">Total Repaid</span>
-                                            <span className="total-amount">Rp {formatAmount(data.total)}</span>
-                                        </div>
-                                    )}
+                                            <span className="total-amount">
+                                                {isPrivacyMode ? '••••' : formatCurrency(data.total)}
+                                            </span>
+                                        </div>                                    )}
                                 </motion.div>
                             ) : (
                                 <motion.div
@@ -256,13 +256,12 @@ export default function PersonRepaymentModal({ person, onClose, sources, payment
                                     <div className="repayment-details">
                                         <div className="repayment-primary">
                                             <span className="repayment-amount">
-                                                Rp {formatAmount(repayment.amount)}
+                                                {isPrivacyMode ? '••••' : formatCurrency(repayment.amount)}
                                             </span>
                                             <span className="repayment-date">
                                                 {formatDate(repayment.date)}
                                             </span>
-                                        </div>
-                                        {repayment.original_merchant && (
+                                        </div>                                        {repayment.original_merchant && (
                                             <div className="repayment-ref">
                                                 For: {repayment.original_merchant}
                                             </div>

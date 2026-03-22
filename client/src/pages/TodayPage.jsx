@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
 import { AnimatePresence } from 'framer-motion';
-import { transactions, categories, groups, paymentMethods, incomeSources, lendingSources } from '../api/api';
+import { transactions, categories, groups, paymentMethods, incomeSources, lendingSources, savings } from '../api/api';
 import TransactionCard from '../components/TransactionCard';
 import TransactionForm from '../components/TransactionForm';
 import QuickAddForm from '../components/QuickAddForm';
@@ -51,7 +51,7 @@ export default function TodayPage() {
     const [showQuickAdd, setShowQuickAdd] = useState(false);
     const [editingTx, setEditingTx] = useState(null);
     const [viewingTx, setViewingTx] = useState(null);
-    const [options, setOptions] = useState({ categories: [], groups: [], paymentMethods: [], incomeSources: [] });
+    const [options, setOptions] = useState({ categories: [], groups: [], paymentMethods: [], incomeSources: [], lendingSources: [], savings: [] });
 
     const today = new Date().toISOString().split('T')[0];
 
@@ -91,19 +91,21 @@ export default function TodayPage() {
 
     async function loadOptions() {
         try {
-            const [cats, grps, pms, sources, lending] = await Promise.all([
+            const [cats, grps, pms, sources, lending, svgs] = await Promise.all([
                 categories.list('true'),
                 groups.list('true'),
                 paymentMethods.list('true'),
                 incomeSources.list('true'),
                 lendingSources.list(),
+                savings.list().then(res => res.accounts || [])
             ]);
             setOptions({
                 categories: cats,
                 groups: grps,
                 paymentMethods: pms,
                 incomeSources: sources,
-                lendingSources: lending
+                lendingSources: lending,
+                savings: svgs
             });
         } catch (error) {
             console.error('Failed to load options:', error);

@@ -1,5 +1,5 @@
 import { NavLink, useLocation } from 'react-router-dom';
-import { Home, List, PieChart, PiggyBank, Settings } from 'lucide-react';
+import { Home, List, PieChart, PiggyBank, Settings, CreditCard } from 'lucide-react';
 import { useHaptics } from '../hooks/useHaptics';
 import PrivacyToggle from './PrivacyToggle';
 import './Navigation.css';
@@ -7,6 +7,7 @@ import './Navigation.css';
 const navItems = [
     { path: '/', icon: Home, label: 'Today' },
     { path: '/transactions', icon: List, label: 'All' },
+    { path: '/split', icon: CreditCard, label: 'Split' },
     { path: '/insights', icon: PieChart, label: 'Insights' },
     { path: '/savings', icon: PiggyBank, label: 'Savings' },
     { path: '/settings', icon: Settings, label: 'Settings' },
@@ -18,6 +19,15 @@ export default function Navigation() {
 
     return (
         <>
+            {/* Mobile Top Header */}
+            <header className="nav-mobile-top">
+                <div className="nav-logo-mobile">
+                    <span className="nav-logo-icon-sm">💰</span>
+                    <span className="nav-logo-text-sm">Finance</span>
+                </div>
+                <PrivacyToggle className="nav-privacy-btn" />
+            </header>
+
             {/* Mobile Bottom Nav */}
             <nav className="nav-mobile">
                 {navItems.map(({ path, icon: Icon, label }) => (

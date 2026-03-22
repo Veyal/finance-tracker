@@ -15,12 +15,12 @@
 .quick-add-container {
     width: 100%;
     max-width: 480px;
-    background: rgba(30, 30, 63, 0.85);
+    background: var(--bg-card);
     backdrop-filter: blur(30px);
     border-radius: 32px 32px 0 0;
     border: 1px solid var(--border-subtle);
     border-bottom: none;
-    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.3),
+    box-shadow: var(--shadow-float),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
     overflow-y: auto;
     overflow-x: hidden;
@@ -46,7 +46,7 @@
     position: sticky;
     top: 0;
     z-index: 10;
-    background: linear-gradient(180deg, rgba(30, 30, 63, 0.95) 0%, rgba(30, 30, 63, 0) 100%);
+    background: linear-gradient(180deg, var(--bg-surface) 0%, transparent 100%);
     pointer-events: none;
     /* Let clicks pass through to drag handle if overlapping */
 }
@@ -93,13 +93,13 @@
 
 .quick-add-close,
 .quick-add-back {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-glass);
     border: none;
     color: var(--text-secondary);
     cursor: pointer;
@@ -109,9 +109,10 @@
 
 .quick-add-close:hover,
 .quick-add-back:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-card-hover);
     color: var(--text-primary);
-    transform: scale(1.05);
+    transform: none;
+    /* Stable hover */
 }
 
 /* Step 0: Amount - Spacious & Grand */
@@ -393,9 +394,17 @@
 }
 
 .option-chip.add-new-chip {
-    border: 1px dashed rgba(255, 255, 255, 0.3);
+    border: 1px solid var(--border-subtle);
     color: var(--text-muted);
     background: transparent;
+    opacity: 0.8;
+}
+
+.option-chip.add-new-chip:hover {
+    border-color: var(--text-secondary);
+    color: var(--text-primary);
+    background: var(--bg-glass);
+    opacity: 1;
 }
 
 /* Inputs styling */

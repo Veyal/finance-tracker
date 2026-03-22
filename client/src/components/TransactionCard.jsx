@@ -1,10 +1,7 @@
 import { GripVertical, AlertCircle, Users } from 'lucide-react';
 import { usePrivacy } from '../context/PrivacyContext';
+import { formatCurrency } from '../utils/format';
 import './TransactionCard.css';
-
-function formatAmount(amount) {
-    return new Intl.NumberFormat('id-ID').format(amount);
-}
 
 export default function TransactionCard({ transaction, onClick, dragHandleProps }) {
     const { isPrivacyMode } = usePrivacy();
@@ -18,6 +15,7 @@ export default function TransactionCard({ transaction, onClick, dragHandleProps 
         group_name,
         payment_method_name,
         income_source_name,
+        saving_name,
         merchant,
         note
     } = transaction;
@@ -26,7 +24,7 @@ export default function TransactionCard({ transaction, onClick, dragHandleProps 
     const displayAmount = hasRepayments && net_amount !== undefined ? net_amount : amount;
     const needsReview = type === 'expense' && (!category_name || !group_name || !payment_method_name);
 
-    const displayName = merchant || category_name || income_source_name || 'Unlabeled';
+    const displayName = merchant || category_name || income_source_name || saving_name || 'Unlabeled';
     const displayCategory = merchant && category_name ? category_name : null;
 
     return (
@@ -78,11 +76,11 @@ export default function TransactionCard({ transaction, onClick, dragHandleProps 
                 {/* Right: Amount */}
                 <div className="transaction-right">
                     <span className={`transaction-amount amount-${type}`}>
-                        {isPrivacyMode ? '****' : `${type === 'expense' ? '-' : '+'}Rp ${formatAmount(displayAmount)}`}
+                        {isPrivacyMode ? '••••' : `${type === 'expense' ? '-' : '+'} ${formatCurrency(displayAmount)}`}
                     </span>
                     {hasRepayments && !isPrivacyMode && (
                         <span className="original-amount">
-                            Rp {formatAmount(amount)}
+                            {formatCurrency(amount)}
                         </span>
                     )}
                     {!hasRepayments && group_name && (

@@ -5,6 +5,7 @@ import SpendingLineChart from '../components/SpendingLineChart';
 import CumulativeNetChart from '../components/CumulativeNetChart';
 import SpendingCalendar from '../components/SpendingCalendar';
 import { usePrivacy } from '../context/PrivacyContext';
+import { formatCurrency } from '../utils/format';
 import './InsightsPage.css';
 
 export default function InsightsPage() {
@@ -75,18 +76,13 @@ export default function InsightsPage() {
     }
 
     function formatAmount(amount) {
-        if (isPrivacyMode) return '****';
-        if (amount >= 1000000) {
-            return (amount / 1000000).toFixed(1) + 'M';
-        } else if (amount >= 1000) {
-            return (amount / 1000).toFixed(0) + 'K';
-        }
-        return new Intl.NumberFormat('id-ID').format(amount || 0);
+        if (isPrivacyMode) return '••••';
+        return formatCurrency(amount, { compact: true });
     }
 
     function formatFullAmount(amount) {
-        if (isPrivacyMode) return '****';
-        return new Intl.NumberFormat('id-ID').format(amount || 0);
+        if (isPrivacyMode) return '••••';
+        return formatCurrency(amount);
     }
 
     function getMaxAmount(items) {
@@ -162,7 +158,7 @@ export default function InsightsPage() {
                             <div className="insights-card-content">
                                 <span className="insights-card-label">Total Expense</span>
                                 <span className="insights-card-amount amount-expense">
-                                    Rp {formatFullAmount(data?.totals?.expense)}
+                                    {formatFullAmount(data?.totals?.expense)}
                                 </span>
                             </div>
                         </div>
@@ -174,7 +170,7 @@ export default function InsightsPage() {
                             <div className="insights-card-content">
                                 <span className="insights-card-label">Total Income</span>
                                 <span className="insights-card-amount amount-income">
-                                    Rp {formatFullAmount(data?.totals?.income)}
+                                    {formatFullAmount(data?.totals?.income)}
                                 </span>
                             </div>
                         </div>
@@ -186,7 +182,7 @@ export default function InsightsPage() {
                             <div className="insights-card-content">
                                 <span className="insights-card-label">Net</span>
                                 <span className={`insights-card-amount ${(data?.totals?.net || 0) >= 0 ? 'amount-income' : 'amount-expense'}`}>
-                                    Rp {formatFullAmount(data?.totals?.net)}
+                                    {formatFullAmount(data?.totals?.net)}
                                 </span>
                             </div>
                         </div>
@@ -197,7 +193,7 @@ export default function InsightsPage() {
                         <div className="stat-card">
                             <Calendar size={18} />
                             <div className="stat-content">
-                                <span className="stat-value">Rp {formatAmount(avgDaily)}</span>
+                                <span className="stat-value">{formatAmount(avgDaily)}</span>
                                 <span className="stat-label">Daily Avg</span>
                             </div>
                         </div>
@@ -236,7 +232,7 @@ export default function InsightsPage() {
                             <div className="comparison-prev">
                                 <span className="comparison-prev-label">Last {range}</span>
                                 <span className="comparison-prev-amount">
-                                    Rp {formatAmount(prevPeriodTotal)}
+                                    {formatAmount(prevPeriodTotal)}
                                 </span>
                             </div>
                         </div>
@@ -306,7 +302,7 @@ export default function InsightsPage() {
                             <div className="daily-tracker-header">
                                 <h3>Daily {viewType === 'expense' ? 'Spending' : 'Income'}</h3>
                                 <span className="daily-avg">
-                                    Avg: Rp {formatAmount(avgDaily)}/day
+                                    Avg: {formatAmount(avgDaily)}/day
                                 </span>
                             </div>
                             <div className="daily-list">
@@ -336,7 +332,7 @@ export default function InsightsPage() {
                                                 />
                                             </div>
                                             <span className={`daily-amount ${value > 0 ? `amount-${viewType}` : ''}`}>
-                                                {isZero ? '-' : `Rp ${formatFullAmount(value)}`}
+                                                {isZero ? '-' : formatFullAmount(value)}
                                             </span>
                                         </div>
                                     );
@@ -359,7 +355,7 @@ export default function InsightsPage() {
                                                 style={{ background: getColor(i, viewType) }}
                                             />
                                             <span className="legend-name">{item.name || 'Other'}</span>
-                                            <span className="legend-value">Rp {formatAmount(item.total)}</span>
+                                            <span className="legend-value">{formatAmount(item.total)}</span>
                                         </div>
                                     ))}
                                 </div>
@@ -448,6 +444,7 @@ function getColor(index, type) {
 
 // Donut Chart Component
 function DonutChart({ data, type }) {
+    const { isPrivacyMode } = usePrivacy();
     const total = data.reduce((sum, item) => sum + (item.total || 0), 0);
     let currentAngle = 0;
 
@@ -503,7 +500,7 @@ function DonutChart({ data, type }) {
             ))}
             <text x="50" y="47" textAnchor="middle" className="donut-total-label">Total</text>
             <text x="50" y="58" textAnchor="middle" className="donut-total-value">
-                {usePrivacy().isPrivacyMode ? '****' : new Intl.NumberFormat('id-ID', { notation: 'compact' }).format(total)}
+                {isPrivacyMode ? '••••' : formatCurrency(total, { compact: true })}
             </text>
         </svg>
     );
@@ -514,8 +511,8 @@ function BreakdownItem({ item, max, type }) {
     const percentage = max > 0 ? (item.total / max) * 100 : 0;
 
     function formatAmount(amount) {
-        if (isPrivacyMode) return '****';
-        return new Intl.NumberFormat('id-ID').format(amount || 0);
+        if (isPrivacyMode) return '••••';
+        return formatCurrency(amount, { compact: true });
     }
 
     return (
@@ -523,7 +520,7 @@ function BreakdownItem({ item, max, type }) {
             <div className="breakdown-header">
                 <span className="breakdown-name">{item.name || 'Uncategorized'}</span>
                 <span className={`breakdown-amount amount-${type}`}>
-                    Rp {formatAmount(item.total)}
+                    {formatAmount(item.total)}
                 </span>
             </div>
             <div className="progress-bar">

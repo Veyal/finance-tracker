@@ -4,6 +4,7 @@ import { transactions } from '../api/api';
 import { usePrivacy } from '../context/PrivacyContext';
 import TransactionCard from './TransactionCard';
 import useLockBodyScroll from '../hooks/useLockBodyScroll';
+import { formatCurrency } from '../utils/format';
 import './SpendingCalendar.css';
 
 export default function SpendingCalendar({ type = 'expense' }) {
@@ -84,14 +85,9 @@ export default function SpendingCalendar({ type = 'expense' }) {
     }
 
     function formatAmount(amount, short = true) {
-        if (isPrivacyMode) return '***';
-        if (!amount) return short ? '' : 'Rp 0';
-        if (short) {
-            if (amount >= 1000000) return `${(amount / 1000000).toFixed(1)}M`;
-            if (amount >= 1000) return `${(amount / 1000).toFixed(0)}K`;
-            return amount.toString();
-        }
-        return `Rp ${new Intl.NumberFormat('id-ID').format(amount)}`;
+        if (isPrivacyMode) return '••••';
+        if (!amount) return short ? '' : formatCurrency(0);
+        return formatCurrency(amount, { compact: short });
     }
 
     function formatDateDisplay(dateStr) {

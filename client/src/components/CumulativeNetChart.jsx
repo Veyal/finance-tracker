@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { usePrivacy } from '../context/PrivacyContext';
+import { formatCurrency } from '../utils/format';
 import './CumulativeNetChart.css';
 
 export default function CumulativeNetChart({ data, height = 180 }) {
@@ -95,12 +96,9 @@ export default function CumulativeNetChart({ data, height = 180 }) {
         }
     }
 
-    function formatAmount(amount) {
-        if (isPrivacyMode) return '****';
-        const abs = Math.abs(amount);
-        if (abs >= 1000000) return (amount / 1000000).toFixed(1) + 'M';
-        if (abs >= 1000) return Math.round(amount / 1000) + 'K';
-        return new Intl.NumberFormat('id-ID').format(amount);
+    function formatAmount(amount, compact = true) {
+        if (isPrivacyMode) return '••••';
+        return formatCurrency(amount, { compact });
     }
 
     function formatDate(dateStr) {
@@ -117,7 +115,7 @@ export default function CumulativeNetChart({ data, height = 180 }) {
             <div className={`cumulative-badge ${isPositive ? 'positive' : 'negative'}`}>
                 <span className="badge-label">{isPositive ? 'Saved' : 'Spent more'}</span>
                 <span className="badge-value">
-                    {isPositive ? '+' : ''}Rp {formatAmount(finalValue)}
+                    {isPositive ? '+' : ''}{formatAmount(finalValue)}
                 </span>
             </div>
 
@@ -240,10 +238,10 @@ export default function CumulativeNetChart({ data, height = 180 }) {
                 >
                     <div className="tooltip-date">{formatDate(cumulativeData[activeIndex]?.day)}</div>
                     <div className="tooltip-net">
-                        Day: {cumulativeData[activeIndex]?.net >= 0 ? '+' : ''}Rp {formatAmount(cumulativeData[activeIndex]?.net || 0)}
+                        Day: {cumulativeData[activeIndex]?.net >= 0 ? '+' : ''}{formatAmount(cumulativeData[activeIndex]?.net || 0)}
                     </div>
                     <div className="tooltip-amount">
-                        Total: {cumulativeData[activeIndex]?.cumulative >= 0 ? '+' : ''}Rp {formatAmount(cumulativeData[activeIndex]?.cumulative || 0)}
+                        Total: {cumulativeData[activeIndex]?.cumulative >= 0 ? '+' : ''}{formatAmount(cumulativeData[activeIndex]?.cumulative || 0)}
                     </div>
                 </div>
             )}

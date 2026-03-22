@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import { usePrivacy } from '../context/PrivacyContext';
+import { formatCurrency } from '../utils/format';
 import './SpendingLineChart.css';
 
 export default function SpendingLineChart({
@@ -8,6 +10,7 @@ export default function SpendingLineChart({
     showAverage = true,
     showTooltip = true
 }) {
+    const { isPrivacyMode } = usePrivacy();
     const [activeIndex, setActiveIndex] = useState(null);
     const [tooltipPosition, setTooltipPosition] = useState({ x: 0, y: 0 });
     const svgRef = useRef(null);
@@ -95,12 +98,8 @@ export default function SpendingLineChart({
     }
 
     function formatAmount(amount) {
-        if (amount >= 1000000) {
-            return (amount / 1000000).toFixed(1) + 'M';
-        } else if (amount >= 1000) {
-            return Math.round(amount / 1000) + 'K';
-        }
-        return new Intl.NumberFormat('id-ID').format(amount);
+        if (isPrivacyMode) return '••••';
+        return formatCurrency(amount, { compact: true });
     }
 
     function formatDate(dateStr) {
@@ -260,7 +259,7 @@ export default function SpendingLineChart({
                         {formatDate(data[activeIndex]?.day)}
                     </div>
                     <div className="tooltip-amount">
-                        Rp {formatAmount(values[activeIndex])}
+                        {formatAmount(values[activeIndex])}
                     </div>
                 </div>
             )}
@@ -269,7 +268,7 @@ export default function SpendingLineChart({
             {showAverage && avgValue > 0 && (
                 <div className="avg-label">
                     <span className="avg-text">Avg</span>
-                    <span className="avg-value">Rp {formatAmount(avgValue)}</span>
+                    <span className="avg-value">{formatAmount(avgValue)}</span>
                 </div>
             )}
         </div>

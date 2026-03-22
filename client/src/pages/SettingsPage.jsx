@@ -1,8 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Edit2, Archive, LogOut, ChevronRight, X, Loader2, Lock, Users, Database, Download, Upload, AlertTriangle } from 'lucide-react';
+import {
+    Plus, Edit2, Archive, LogOut, ChevronRight, X, Loader2, Lock,
+    Users, Database, Download, Upload, AlertTriangle, Shield, CreditCard,
+    Layers, Wallet, TrendingUp, FileJson, Info, Copy
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { categories, groups, paymentMethods, incomeSources, auth, data as dataApi } from '../api/api';
+import { categories, groups, paymentMethods, incomeSources, auth, transactions as transactionsApi, data as dataApi } from '../api/api';
+import { formatCurrency } from '../utils/format';
 import './SettingsPage.css';
 
 export default function SettingsPage() {
@@ -11,6 +16,12 @@ export default function SettingsPage() {
     const [activeSection, setActiveSection] = useState(null);
     const [data, setData] = useState({ categories: [], groups: [], paymentMethods: [], incomeSources: [] });
     const [loading, setLoading] = useState(true);
+
+    // App Preferences
+    const [locale, setLocale] = useState(localStorage.getItem('ft_locale') || 'id-ID');
+    const [currency, setCurrency] = useState(localStorage.getItem('ft_currency') || 'IDR');
+
+    // Mods & Dialogs
     const [showForm, setShowForm] = useState(false);
     const [editingItem, setEditingItem] = useState(null);
     const [formName, setFormName] = useState('');
@@ -30,9 +41,14 @@ export default function SettingsPage() {
     // Data Export/Import state
     const [importLoading, setImportLoading] = useState(false);
     const [exportLoading, setExportLoading] = useState(false);
+    const [bulkLoading, setBulkLoading] = useState(false);
     const [showImportConfirm, setShowImportConfirm] = useState(false);
     const [pendingImportData, setPendingImportData] = useState(null);
+    const [bulkResults, setBulkResults] = useState(null);
+    const [pendingBulkData, setPendingBulkData] = useState(null);
+    const [showBulkGuide, setShowBulkGuide] = useState(false);
     const fileInputRef = useRef(null);
+    const bulkInputRef = useRef(null);
 
     useEffect(() => {
         loadData();
@@ -134,9 +150,18 @@ export default function SettingsPage() {
             case 'groups': return 'Groups';
             case 'paymentMethods': return 'Payment Methods';
             case 'incomeSources': return 'Income Sources';
+            case 'preferences': return 'App Preferences';
             default: return '';
         }
     }
+
+    const handlePreferenceChange = (key, value) => {
+        localStorage.setItem(key, value);
+        if (key === 'ft_locale') setLocale(value);
+        if (key === 'ft_currency') setCurrency(value);
+        // Page reload to apply formatting everywhere (simplest way without complex context)
+        window.location.reload();
+    };
 
     async function handleLogout() {
         try {
@@ -159,7 +184,28 @@ export default function SettingsPage() {
     function handlePinChange(e, setter) {
         const value = e.target.value.replace(/\D/g, '').slice(0, 6);
         setter(value);
+
+        // Auto-advance to next field if current one is filled
+        if (value.length === 6) {
+            if (activePinField === 'current') {
+                setActivePinField('new');
+            } else if (activePinField === 'new') {
+                setActivePinField('confirm');
+            }
+        }
     }
+
+    // Reset PIN state on modal close
+    useEffect(() => {
+        if (!showChangePin) {
+            setCurrentPin('');
+            setNewPin('');
+            setConfirmPin('');
+            setPinError('');
+            setPinSuccess(false);
+            setActivePinField('current');
+        }
+    }, [showChangePin]);
 
     async function handleChangePin() {
         setPinError('');
@@ -201,14 +247,14 @@ export default function SettingsPage() {
 
     function renderPinDots(value, maxLength = 6) {
         return (
-            <div className="pin-dots-display">
+            <>
                 {[...Array(maxLength)].map((_, i) => (
                     <span
                         key={i}
-                        className={`pin-dot ${value.length > i ? 'filled' : ''}`}
+                        className={`pin-dot ${value.length > i ? 'filled' : ''} ${value.length === i ? 'current' : ''}`}
                     />
                 ))}
-            </div>
+            </>
         );
     }
 
@@ -277,85 +323,178 @@ export default function SettingsPage() {
         }
     }
 
-    if (loading) {
-        return (
-            <div className="page settings-page">
-                <div className="loader">
-                    <div className="loader-spinner"></div>
-                </div>
-            </div>
-        );
+    function handleBulkClick() {
+        setShowBulkGuide(true);
     }
 
-    return (
-        <div className="page settings-page">
-            <header className="settings-header">
-                <h1>Settings</h1>
-            </header>
+    function triggerBulkFileSelect() {
+        setShowBulkGuide(false);
+        if (bulkInputRef.current) {
+            bulkInputRef.current.value = '';
+            bulkInputRef.current.click();
+        }
+    }
 
-            <div className="settings-user">
-                <div className="user-avatar">{user?.username?.[0]?.toUpperCase() || '?'}</div>
-                <div className="user-info">
-                    <span className="user-name">{user?.username}</span>
-                    <span className="user-label">Personal Account</span>
+    function handleBulkFileChange(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = async (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                // The input might be a raw array or a full export. 
+                // If it's a full export, we only want the transactions.
+                const txList = Array.isArray(json) ? json : (json.transactions || []);
+
+                if (!txList.length) {
+                    alert('No transactions found in file');
+                    return;
+                }
+
+                setBulkLoading(true);
+                setPendingBulkData(txList);
+                // First do a dry run to check for duplicates
+                const result = await transactionsApi.bulk(txList, { dryRun: true });
+                setBulkResults(result);
+            } catch (error) {
+                console.error('Bulk preview failed:', error);
+                alert('Failed to process file: ' + (error.message || 'Invalid format'));
+            } finally {
+                setBulkLoading(false);
+            }
+        };
+        reader.readAsText(file);
+    }
+
+    async function handleFinalBulkMerge() {
+        if (!pendingBulkData) return;
+
+        setBulkLoading(true);
+        try {
+            const result = await transactionsApi.bulk(pendingBulkData);
+            setBulkResults(result);
+            setPendingBulkData(null);
+        } catch (error) {
+            console.error('Bulk merge failed:', error);
+            alert('Failed to merge transactions');
+        } finally {
+            setBulkLoading(false);
+        }
+    }
+
+    // --- RENDERERS ---
+
+    const renderMenuGrid = () => (
+        <div className="settings-grid animate-slide-up">
+
+            <section className="settings-section">
+                <h3 className="section-title">App Configuration</h3>
+                <div className="card-grid">
+                    <button className="settings-card" onClick={() => setActiveSection('categories')}>
+                        <div className="card-icon" style={{ background: 'var(--gradient-accent)' }}>
+                            <Layers size={24} color="#fff" />
+                        </div>
+                        <span className="card-label">Categories</span>
+                        <span className="card-meta">{data.categories.filter(c => c.is_active).length} Active</span>
+                    </button>
+
+                    <button className="settings-card" onClick={() => setActiveSection('groups')}>
+                        <div className="card-icon" style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)' }}>
+                            <Users size={24} color="#fff" />
+                        </div>
+                        <span className="card-label">Groups</span>
+                        <span className="card-meta">{data.groups.filter(c => c.is_active).length} Active</span>
+                    </button>
+
+                    <button className="settings-card" onClick={() => setActiveSection('paymentMethods')}>
+                        <div className="card-icon" style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)' }}>
+                            <Wallet size={24} color="#fff" />
+                        </div>
+                        <span className="card-label">Payment Methods</span>
+                        <span className="card-meta">{data.paymentMethods.filter(c => c.is_active).length} Active</span>
+                    </button>
+
+                    <button className="settings-card" onClick={() => setActiveSection('incomeSources')}>
+                        <div className="card-icon" style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' }}>
+                            <TrendingUp size={24} color="#fff" />
+                        </div>
+                        <span className="card-label">Income Sources</span>
+                        <span className="card-meta">{data.incomeSources.filter(c => c.is_active).length} Active</span>
+                    </button>
+
+                    <button className="settings-card" onClick={() => setActiveSection('preferences')}>
+                        <div className="card-icon" style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' }}>
+                            <Database size={24} color="#fff" />
+                        </div>
+                        <span className="card-label">Preferences</span>
+                        <span className="card-meta">{currency} / {locale}</span>
+                    </button>
                 </div>
-            </div>
+            </section>
 
-            {!activeSection ? (
-                <div className="settings-menu">
-                    <button type="button" className="settings-item" onClick={() => setActiveSection('categories')}>
-                        <span>Categories</span>
-                        <div className="settings-item-meta">
-                            <span className="settings-count">{data.categories.filter(c => c.is_active).length}</span>
-                            <ChevronRight size={20} />
+            <section className="settings-section">
+                <h3 className="section-title">Account & Data</h3>
+                <div className="list-group">
+                    <button className="list-group-item" onClick={() => navigate('/split')}>
+                        <div className="list-icon" style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)', color: 'white' }}>
+                            <CreditCard size={20} />
                         </div>
-                    </button>
-
-                    <button type="button" className="settings-item" onClick={() => setActiveSection('groups')}>
-                        <span>Groups</span>
-                        <div className="settings-item-meta">
-                            <span className="settings-count">{data.groups.filter(g => g.is_active).length}</span>
-                            <ChevronRight size={20} />
+                        <div className="list-content">
+                            <span className="list-label">Repayments</span>
+                            <span className="list-desc">Manage shared expenses</span>
                         </div>
+                        <ChevronRight size={18} className="list-arrow" />
                     </button>
 
-                    <button type="button" className="settings-item" onClick={() => setActiveSection('paymentMethods')}>
-                        <span>Payment Methods</span>
-                        <div className="settings-item-meta">
-                            <span className="settings-count">{data.paymentMethods.filter(p => p.is_active).length}</span>
-                            <ChevronRight size={20} />
+                    <button className="list-group-item" onClick={openChangePin}>
+                        <div className="list-icon" style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white' }}>
+                            <Shield size={20} />
                         </div>
-                    </button>
-
-                    <button type="button" className="settings-item" onClick={() => setActiveSection('incomeSources')}>
-                        <span>Income Sources</span>
-                        <div className="settings-item-meta">
-                            <span className="settings-count">{data.incomeSources.filter(s => s.is_active).length}</span>
-                            <ChevronRight size={20} />
+                        <div className="list-content">
+                            <span className="list-label">Security</span>
+                            <span className="list-desc">Change your PIN code</span>
                         </div>
+                        <ChevronRight size={18} className="list-arrow" />
                     </button>
 
-                    <div className="settings-divider" />
-
-                    <button type="button" className="settings-item" onClick={() => navigate('/split')}>
-                        <Users size={20} />
-                        <span>Repayments</span>
-                        <ChevronRight size={20} className="settings-chevron" />
+                    <button className="list-group-item" onClick={handleExport} disabled={exportLoading}>
+                        <div className="list-icon" style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)', color: 'white' }}>
+                            <Download size={20} />
+                        </div>
+                        <div className="list-content">
+                            <span className="list-label">Backup Data</span>
+                            <span className="list-desc">Export as JSON</span>
+                        </div>
+                        {exportLoading ? <Loader2 size={18} className="spin list-arrow" /> : <ChevronRight size={18} className="list-arrow" />}
                     </button>
 
-                    <div className="settings-divider" />
-
-                    <div className="settings-section-title">Data Management</div>
-
-                    <button type="button" className="settings-item" onClick={handleExport} disabled={exportLoading}>
-                        <Download size={20} />
-                        <span>Export Data</span>
-                        {exportLoading && <Loader2 size={16} className="spin settings-chevron" />}
+                    <button className="list-group-item" onClick={handleBulkClick} disabled={bulkLoading}>
+                        <div className="list-icon" style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white' }}>
+                            <Plus size={20} />
+                        </div>
+                        <div className="list-content">
+                            <span className="list-label">Bulk Insert</span>
+                            <span className="list-desc">Merge transactions from JSON</span>
+                        </div>
+                        <input
+                            type="file"
+                            ref={bulkInputRef}
+                            onChange={handleBulkFileChange}
+                            accept=".json"
+                            style={{ display: 'none' }}
+                        />
+                        {bulkLoading ? <Loader2 size={18} className="spin list-arrow" /> : <ChevronRight size={18} className="list-arrow" />}
                     </button>
 
-                    <button type="button" className="settings-item" onClick={handleImportClick} disabled={importLoading}>
-                        <Upload size={20} />
-                        <span>Import Data</span>
+                    <button className="list-group-item" onClick={handleImportClick} disabled={importLoading}>
+                        <div className="list-icon" style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: 'white' }}>
+                            <Upload size={20} />
+                        </div>
+                        <div className="list-content">
+                            <span className="list-label">Restore Data</span>
+                            <span className="list-desc">Import and overwrite ALL data</span>
+                        </div>
                         <input
                             type="file"
                             ref={fileInputRef}
@@ -363,238 +502,425 @@ export default function SettingsPage() {
                             accept=".json"
                             style={{ display: 'none' }}
                         />
-                    </button>
-
-                    <div className="settings-divider" />
-
-                    <button type="button" className="settings-item" onClick={openChangePin}>
-                        <Lock size={20} />
-                        <span>Change PIN</span>
-                        <ChevronRight size={20} className="settings-chevron" />
-                    </button>
-
-                    <button type="button" className="settings-item danger" onClick={handleLogout}>
-                        <LogOut size={20} />
-                        <span>Log Out</span>
+                        {importLoading ? <Loader2 size={18} className="spin list-arrow" /> : <ChevronRight size={18} className="list-arrow" />}
                     </button>
                 </div>
-            ) : (
-                <div className="settings-detail animate-slide-up">
-                    <button type="button" className="back-btn" onClick={() => setActiveSection(null)}>
-                        ← Back
-                    </button>
+            </section>
 
-                    <div className="detail-header">
-                        <h2>{getSectionTitle()}</h2>
-                        <button type="button" className="btn btn-primary" onClick={openAdd}>
-                            <Plus size={18} />
-                            Add
-                        </button>
-                    </div>
+            <button className="btn-logout" onClick={handleLogout}>
+                <LogOut size={18} />
+                Log Out
+            </button>
 
-                    <div className="items-list">
-                        {getSectionData().map(item => (
-                            <div key={item.id} className={`list-item ${!item.is_active ? 'archived' : ''}`}>
-                                <span className="list-item-name">
-                                    {item.name}
-                                    {!item.is_active && <span className="archived-badge">Archived</span>}
-                                </span>
-                                <div className="list-item-actions">
-                                    <button type="button" className="btn btn-icon btn-ghost" onClick={() => openEdit(item)}>
-                                        <Edit2 size={16} />
-                                    </button>
-                                    {item.is_active && (
-                                        <button type="button" className="btn btn-icon btn-ghost" onClick={() => handleArchive(item)}>
-                                            <Archive size={16} />
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
-            {showForm && (
-                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowForm(false)}>
-                    <div className="modal">
+            {/* Bulk Insert Results Modal */}
+            {bulkResults && (
+                <div className="modal-overlay" onClick={() => {
+                    if (bulkResults.summary.isDryRun) {
+                        setBulkResults(null);
+                        setPendingBulkData(null);
+                    } else {
+                        setBulkResults(null);
+                    }
+                }}>
+                    <div className="modal" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
-                            <h2>{editingItem ? 'Edit' : 'Add'} {getSectionTitle().slice(0, -1)}</h2>
-                            <button type="button" className="btn btn-icon btn-ghost" onClick={() => setShowForm(false)}>
+                            <h2>{bulkResults.summary.isDryRun ? 'Review Transactions' : 'Import Results'}</h2>
+                            <button className="btn-icon btn-ghost" onClick={() => {
+                                setBulkResults(null);
+                                setPendingBulkData(null);
+                            }}>
                                 <X size={20} />
                             </button>
                         </div>
                         <div className="modal-body">
-                            <div className="form-group">
-                                <label className="input-label">Name</label>
-                                <input
-                                    type="text"
-                                    className="input"
-                                    value={formName}
-                                    onChange={(e) => setFormName(e.target.value)}
-                                    placeholder="Enter name..."
-                                    autoFocus
-                                />
-                            </div>
-                            <button
-                                className="btn btn-primary btn-lg"
-                                onClick={handleSave}
-                                disabled={formLoading || !formName.trim()}
-                                style={{ width: '100%', marginTop: 'var(--space-md)' }}
-                            >
-                                {formLoading ? <Loader2 size={20} className="spin" /> : 'Save'}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* Change PIN Modal */}
-            {showChangePin && (
-                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowChangePin(false)}>
-                    <div className="modal change-pin-modal">
-                        <div className="modal-header">
-                            <h2>Change PIN</h2>
-                            <button type="button" className="btn btn-icon btn-ghost" onClick={() => setShowChangePin(false)}>
-                                <X size={20} />
-                            </button>
-                        </div>
-                        <div className="modal-body">
-                            {pinSuccess ? (
-                                <div className="pin-success">
-                                    <div className="pin-success-icon">✓</div>
-                                    <p>PIN changed successfully!</p>
+                            {bulkResults.summary.isDryRun && (
+                                <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '14px' }}>
+                                    Found {bulkResults.summary.total} transactions. Review the breakdown below before merging.
+                                </p>
+                            )}
+                            <div className="import-summary-grid">
+                                <div className="summary-stat">
+                                    <span className="stat-label">Total</span>
+                                    <span className="stat-value">{bulkResults.summary.total}</span>
                                 </div>
-                            ) : (
+                                <div className="summary-stat">
+                                    <span className="stat-label">New</span>
+                                    <span className="stat-value text-success">{bulkResults.summary.added}</span>
+                                </div>
+                                <div className="summary-stat">
+                                    <span className="stat-label">Skipped</span>
+                                    <span className="stat-value text-muted">{bulkResults.summary.skipped}</span>
+                                </div>
+                            </div>
+
+                            <div className="results-list">
+                                {bulkResults.results.slice(0, 100).map((res, i) => (
+                                    <div key={i} className={`result-item ${res.status}`}>
+                                        <div className="result-info">
+                                            <div className="result-merchant">{res.merchant || 'Unnamed'}</div>
+                                            <div className="result-meta">
+                                                {res.date.split('T')[0]} · {formatCurrency(res.amount)}
+                                            </div>
+                                        </div>
+                                        <div className="result-status">
+                                            {res.status === 'added' ? (
+                                                <span className="badge success">{bulkResults.summary.isDryRun ? 'Will Add' : 'New'}</span>
+                                            ) : (
+                                                <span className="badge muted">Already in DB</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                ))}
+                                {bulkResults.results.length > 100 && (
+                                    <div className="results-more">...and {bulkResults.results.length - 100} more</div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="modal-actions">
+                            {bulkResults.summary.isDryRun ? (
                                 <>
-                                    <div className="pin-field-group">
-                                        <label className="input-label">Current PIN</label>
-                                        <div
-                                            className={`pin-input-wrapper ${activePinField === 'current' ? 'focused' : ''}`}
-                                            onClick={() => {
-                                                setActivePinField('current');
-                                                pinInputRef.current?.focus();
-                                            }}
-                                        >
-                                            {renderPinDots(currentPin)}
-                                            {activePinField === 'current' && (
-                                                <input
-                                                    ref={pinInputRef}
-                                                    type="password"
-                                                    inputMode="numeric"
-                                                    className="pin-hidden-input"
-                                                    value={currentPin}
-                                                    onChange={(e) => handlePinChange(e, setCurrentPin)}
-                                                    maxLength={6}
-                                                    autoFocus
-                                                />
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="pin-field-group">
-                                        <label className="input-label">New PIN</label>
-                                        <div
-                                            className={`pin-input-wrapper ${activePinField === 'new' ? 'focused' : ''}`}
-                                            onClick={() => {
-                                                setActivePinField('new');
-                                                pinInputRef.current?.focus();
-                                            }}
-                                        >
-                                            {renderPinDots(newPin)}
-                                            {activePinField === 'new' && (
-                                                <input
-                                                    ref={pinInputRef}
-                                                    type="password"
-                                                    inputMode="numeric"
-                                                    className="pin-hidden-input"
-                                                    value={newPin}
-                                                    onChange={(e) => handlePinChange(e, setNewPin)}
-                                                    maxLength={6}
-                                                />
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    <div className="pin-field-group">
-                                        <label className="input-label">Confirm New PIN</label>
-                                        <div
-                                            className={`pin-input-wrapper ${activePinField === 'confirm' ? 'focused' : ''}`}
-                                            onClick={() => {
-                                                setActivePinField('confirm');
-                                                pinInputRef.current?.focus();
-                                            }}
-                                        >
-                                            {renderPinDots(confirmPin)}
-                                            {activePinField === 'confirm' && (
-                                                <input
-                                                    ref={pinInputRef}
-                                                    type="password"
-                                                    inputMode="numeric"
-                                                    className="pin-hidden-input"
-                                                    value={confirmPin}
-                                                    onChange={(e) => handlePinChange(e, setConfirmPin)}
-                                                    maxLength={6}
-                                                />
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {pinError && <div className="pin-error">{pinError}</div>}
-
+                                    <button className="btn btn-ghost" onClick={() => {
+                                        setBulkResults(null);
+                                        setPendingBulkData(null);
+                                    }} style={{ flex: 1 }}>Cancel</button>
                                     <button
-                                        className="btn btn-primary btn-lg"
-                                        onClick={handleChangePin}
-                                        disabled={pinLoading || currentPin.length !== 6 || newPin.length !== 6 || confirmPin.length !== 6}
-                                        style={{ width: '100%', marginTop: 'var(--space-md)' }}
+                                        className="btn btn-primary"
+                                        onClick={handleFinalBulkMerge}
+                                        style={{ flex: 2 }}
+                                        disabled={bulkLoading || bulkResults.summary.added === 0}
                                     >
-                                        {pinLoading ? <Loader2 size={20} className="spin" /> : 'Change PIN'}
+                                        {bulkLoading ? <Loader2 size={18} className="spin" /> : `Merge ${bulkResults.summary.added} Transactions`}
                                     </button>
                                 </>
+                            ) : (
+                                <button className="btn btn-primary" onClick={() => setBulkResults(null)} style={{ width: '100%' }}>Done</button>
                             )}
                         </div>
                     </div>
                 </div>
             )}
-            {/* Import Confirmation Modal */}
-            {showImportConfirm && (
-                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && !importLoading && setShowImportConfirm(false)}>
+        </div>
+    );
+
+    const renderDetailView = () => {
+        let content;
+        if (activeSection === 'preferences') {
+            content = (
+                <div className="preferences-form">
+                    <div className="pref-group">
+                        <label className="input-label">Currency Code</label>
+                        <input
+                            type="text"
+                            className="input"
+                            value={currency}
+                            onChange={(e) => handlePreferenceChange('ft_currency', e.target.value.toUpperCase())}
+                            placeholder="e.g. IDR, USD, EUR"
+                        />
+                        <p className="input-hint">Standard ISO currency code</p>
+                    </div>
+                    <div className="pref-group" style={{ marginTop: '20px' }}>
+                        <label className="input-label">Locale Tag</label>
+                        <input
+                            type="text"
+                            className="input"
+                            value={locale}
+                            onChange={(e) => handlePreferenceChange('ft_locale', e.target.value)}
+                            placeholder="e.g. id-ID, en-US, de-DE"
+                        />
+                        <p className="input-hint">BCP 47 language tag for formatting</p>
+                    </div>
+                    <div className="pref-info-box" style={{ marginTop: '32px', padding: '16px', borderRadius: '12px', background: 'var(--bg-glass)', border: '1px solid var(--border-subtle)' }}>
+                        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+                            <AlertTriangle size={14} style={{ marginRight: '6px', verticalAlign: 'middle', color: 'var(--warning-yellow)' }} />
+                            Changing these will refresh the page to apply new formatting.
+                        </p>
+                    </div>
+                </div>
+            );
+        } else {
+            content = getSectionData().map((item) => (
+                <div key={item.id} className={`detail-item ${!item.is_active ? 'archived' : ''}`}>
+                    <div className="item-info">
+                        <span className="item-name">{item.name}</span>
+                        {!item.is_active && <span className="badge-archived">Archived</span>}
+                    </div>
+                    <div className="item-actions">
+                        <button className="btn-icon-sm" onClick={() => openEdit(item)}>
+                            <Edit2 size={18} />
+                        </button>
+                        {item.is_active && (
+                            <button className="btn-icon-sm danger" onClick={() => handleArchive(item)}>
+                                <Archive size={18} />
+                            </button>
+                        )}
+                    </div>
+                </div>
+            ));
+        }
+
+        return (
+            <div className="settings-detail animate-slide-up">
+                <div className="detail-header-bar">
+                    <button className="btn-back" onClick={() => setActiveSection(null)}>
+                        <ChevronRight size={24} style={{ transform: 'rotate(180deg)' }} />
+                    </button>
+                    <h2>{getSectionTitle()}</h2>
+                    {activeSection !== 'preferences' && (
+                        <button className="btn-add-circle" onClick={openAdd}>
+                            <Plus size={24} />
+                        </button>
+                    )}
+                </div>
+
+                <div className="items-list-container">
+                    {content}
+                </div>
+            </div>
+        );
+    };
+
+    if (loading) {
+        return (
+            <div className="page settings-page centered">
+                <div className="loader-spinner"></div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="page settings-page">
+            {!activeSection && (
+                <header className="settings-header">
+                    <div className="header-greeting">
+                        <div className="user-avatar-lg">{user?.username?.[0]?.toUpperCase() || '?'}</div>
+                        <div>
+                            <h1>Settings</h1>
+                            <p className="text-gradient">Personalize your experience</p>
+                        </div>
+                    </div>
+                </header>
+            )}
+
+            {activeSection ? renderDetailView() : renderMenuGrid()}
+
+            {/* --- MODALS --- */}
+
+            {showForm && (
+                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowForm(false)}>
                     <div className="modal">
                         <div className="modal-header">
-                            <h2 className="text-danger flex-align-center">
-                                <AlertTriangle size={24} style={{ marginRight: 8 }} />
-                                Warning
-                            </h2>
-                            <button type="button" className="btn btn-icon btn-ghost" onClick={() => setShowImportConfirm(false)} disabled={importLoading}>
+                            <h2>{editingItem ? 'Edit' : 'New'} {getSectionTitle().slice(0, -1)}</h2>
+                            <button className="btn-icon btn-ghost" onClick={() => setShowForm(false)}>
                                 <X size={20} />
                             </button>
                         </div>
                         <div className="modal-body">
-                            <p style={{ marginBottom: 'var(--space-md)', lineHeight: 1.5 }}>
-                                This action will <strong>OVERWRITE ALL</strong> existing data (transactions, categories, users, etc.) with the data from the file.
-                            </p>
-                            <p style={{ marginBottom: 'var(--space-lg)', color: 'var(--text-secondary)' }}>
-                                This action cannot be undone. Are you sure you want to proceed?
-                            </p>
+                            <label className="input-label">Name</label>
+                            <input
+                                type="text"
+                                className="input"
+                                value={formName}
+                                onChange={(e) => setFormName(e.target.value)}
+                                placeholder={`Enter ${getSectionTitle().slice(0, -1).toLowerCase()} name...`}
+                                autoFocus
+                            />
+                        </div>
+                        <div className="modal-actions">
+                            <button className="btn btn-ghost" onClick={() => setShowForm(false)}>Cancel</button>
+                            <button
+                                className="btn btn-primary"
+                                onClick={handleSave}
+                                disabled={formLoading || !formName.trim()}
+                            >
+                                {formLoading ? <Loader2 size={18} className="spin" /> : 'Save'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
-                            <div className="modal-actions" style={{ display: 'flex', gap: 'var(--space-md)' }}>
-                                <button
-                                    className="btn btn-ghost"
-                                    onClick={() => setShowImportConfirm(false)}
-                                    disabled={importLoading}
-                                    style={{ flex: 1 }}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    className="btn btn-primary danger"
-                                    onClick={confirmImport}
-                                    disabled={importLoading}
-                                    style={{ flex: 1 }}
-                                >
-                                    {importLoading ? <Loader2 size={20} className="spin" /> : 'Yes, Overwrite Data'}
+            {showChangePin && (
+                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && setShowChangePin(false)}>
+                    <div className="modal">
+                        <div className="modal-header">
+                            <h2>Change PIN</h2>
+                            <button className="btn-icon btn-ghost" onClick={() => setShowChangePin(false)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            {pinSuccess ? (
+                                <div className="success-animate" style={{ textAlign: 'center', padding: 'var(--space-lg)' }}>
+                                    <div style={{ fontSize: '48px', marginBottom: '1rem' }}>✨</div>
+                                    <h3>PIN Updated!</h3>
+                                </div>
+                            ) : (
+                                <div className="pin-form-stack">
+                                    {/* Current PIN */}
+                                    <div className="pin-group">
+                                        <label className="input-label">Current PIN</label>
+                                        <div
+                                            className={`pin-dots-input ${activePinField === 'current' ? 'active' : ''}`}
+                                            onClick={() => { setActivePinField('current'); pinInputRef.current?.focus(); }}
+                                        >
+                                            {renderPinDots(currentPin)}
+                                        </div>
+                                    </div>
+
+                                    {/* New PIN */}
+                                    <div className="pin-group">
+                                        <label className="input-label">New PIN</label>
+                                        <div
+                                            className={`pin-dots-input ${activePinField === 'new' ? 'active' : ''}`}
+                                            onClick={() => { setActivePinField('new'); pinInputRef.current?.focus(); }}
+                                        >
+                                            {renderPinDots(newPin)}
+                                        </div>
+                                    </div>
+
+                                    {/* Confirm PIN */}
+                                    <div className="pin-group">
+                                        <label className="input-label">Confirm New PIN</label>
+                                        <div
+                                            className={`pin-dots-input ${activePinField === 'confirm' ? 'active' : ''}`}
+                                            onClick={() => { setActivePinField('confirm'); pinInputRef.current?.focus(); }}
+                                        >
+                                            {renderPinDots(confirmPin)}
+                                        </div>
+                                    </div>
+
+                                    {/* Hidden Input Controller */}
+                                    <input
+                                        ref={pinInputRef}
+                                        type="password"
+                                        inputMode="numeric"
+                                        className="hidden-controller"
+                                        maxLength={6}
+                                        value={
+                                            activePinField === 'current' ? currentPin :
+                                                activePinField === 'new' ? newPin : confirmPin
+                                        }
+                                        onChange={(e) => {
+                                            if (activePinField === 'current') handlePinChange(e, setCurrentPin);
+                                            else if (activePinField === 'new') handlePinChange(e, setNewPin);
+                                            else handlePinChange(e, setConfirmPin);
+                                        }}
+                                    />
+
+                                    {pinError && <div className="text-danger" style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--expense-red)' }}>{pinError}</div>}
+                                </div>
+                            )}
+                        </div>
+                        {!pinSuccess && (
+                            <div className="modal-actions">
+                                <button className="btn btn-primary" onClick={handleChangePin} style={{ width: '100%' }} disabled={pinLoading}>
+                                    {pinLoading ? <Loader2 size={18} className="spin" /> : 'Update PIN'}
                                 </button>
                             </div>
+                        )}
+                    </div>
+                </div>
+            )}
+
+            {showImportConfirm && (
+                <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && !importLoading && setShowImportConfirm(false)}>
+                    <div className="modal">
+                        <div className="modal-header">
+                            <h2 style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--warning-yellow)' }}>
+                                <AlertTriangle /> Warning
+                            </h2>
+                        </div>
+                        <div className="modal-body">
+                            <p>This will <strong>OVERWRITE</strong> all existing data. This action cannot be undone.</p>
+                        </div>
+                        <div className="modal-actions">
+                            <button className="btn btn-ghost" onClick={() => setShowImportConfirm(false)} disabled={importLoading} style={{ flex: 1 }}>Cancel</button>
+                            <button
+                                className="btn btn-primary"
+                                onClick={confirmImport}
+                                disabled={importLoading}
+                                style={{ flex: 1, background: 'var(--expense-red)', boxShadow: '0 0 20px var(--expense-red-glow)' }}
+                            >
+                                {importLoading ? <Loader2 size={18} className="spin" /> : 'Yes, Overwrite'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Bulk Insert Guide Modal */}
+            {showBulkGuide && (
+                <div className="modal-overlay" onClick={() => setShowBulkGuide(false)}>
+                    <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div className="icon-circle" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}>
+                                    <FileJson size={20} />
+                                </div>
+                                <h2>Bulk Insert Guide</h2>
+                            </div>
+                            <button className="btn-icon btn-ghost" onClick={() => setShowBulkGuide(false)}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="modal-body">
+                            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+                                To merge transactions, upload a JSON file containing an array of objects. 
+                                You can use <strong>internal IDs</strong> or <strong>readable names</strong> for categories and groups.
+                            </p>
+
+                            <div className="format-example-container">
+                                <div className="example-header">
+                                    <span>JSON Format Example</span>
+                                    <button className="btn-copy-example" onClick={() => {
+                                        const example = [
+                                            {
+                                                "type": "expense",
+                                                "amount": 50000,
+                                                "date": new Date().toISOString(),
+                                                "merchant": "Starbucks",
+                                                "category_name": "Food & Drinks",
+                                                "group_name": "Personal",
+                                                "payment_method_name": "Cash",
+                                                "note": "Morning coffee"
+                                            }
+                                        ];
+                                        navigator.clipboard.writeText(JSON.stringify(example, null, 2));
+                                        alert('Copied to clipboard!');
+                                    }}>
+                                        <Copy size={14} /> Copy
+                                    </button>
+                                </div>
+                                <pre className="code-block">
+{`[
+  {
+    "type": "expense",
+    "amount": 50000,
+    "date": "2026-03-22T10:00:00Z",
+    "merchant": "Starbucks",
+    "category_name": "Food & Drinks",
+    "group_name": "Personal",
+    "payment_method_name": "Cash",
+    "note": "Morning coffee"
+  },
+  ...
+]`}
+                                </pre>
+                            </div>
+
+                            <div className="info-box-v2" style={{ marginTop: '20px' }}>
+                                <Info size={18} />
+                                <div>
+                                    <strong>Safe Merge</strong>
+                                    <p>The system automatically skips transactions that already exist in your database to prevent duplicates.</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="modal-actions">
+                            <button className="btn btn-ghost" onClick={() => setShowBulkGuide(false)} style={{ flex: 1 }}>Cancel</button>
+                            <button className="btn btn-primary" onClick={triggerBulkFileSelect} style={{ flex: 2 }}>
+                                Select JSON File
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -602,4 +928,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-

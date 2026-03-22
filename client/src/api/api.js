@@ -98,6 +98,11 @@ export const transactions = {
         method: 'POST',
         body: { updates },
     }),
+
+    bulk: (data, options = {}) => request(`/transactions/bulk${options.dryRun ? '?dryRun=true' : ''}`, {
+        method: 'POST',
+        body: { transactions: data },
+    }),
 };
 
 // Categories API

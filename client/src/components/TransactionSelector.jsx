@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Search, Calendar, ChevronDown, Check } from 'lucide-react';
 import { transactions } from '../api/api';
+import { formatCurrency } from '../utils/format';
 import './TransactionSelector.css';
 
 export default function TransactionSelector({ onSelect, onClose }) {
@@ -85,9 +86,8 @@ export default function TransactionSelector({ onSelect, onClose }) {
                                 <div className="tx-date">{new Date(tx.date).toLocaleDateString()}</div>
                             </div>
                             <div className="tx-amount">
-                                {new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(tx.amount)}
-                            </div>
-                        </div>
+                                {formatCurrency(tx.amount)}
+                            </div>                        </div>
                     ))
                 )}
             </div>

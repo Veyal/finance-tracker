@@ -16,7 +16,8 @@ export default function CustomSelect({
     const [isOpen, setIsOpen] = useState(false);
     const containerRef = useRef(null);
 
-    const selectedOption = options.find(opt => opt[valueKey] === value);
+    const safeOptions = options || [];
+    const selectedOption = safeOptions.find(opt => opt[valueKey] === value);
     const displayLabel = selectedOption ? selectedOption[labelKey] : placeholder;
 
     useEffect(() => {
@@ -78,7 +79,11 @@ export default function CustomSelect({
                         {!value && <Check size={16} className="option-check" />}
                     </button>
 
-                    {options.map((option) => (
+                    {safeOptions.length === 0 && !onAddNew && (
+                        <div className="custom-select-no-options">No options available</div>
+                    )}
+
+                    {safeOptions.map((option) => (
                         <button
                             key={option[valueKey]}
                             type="button"

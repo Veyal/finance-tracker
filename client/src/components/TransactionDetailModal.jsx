@@ -7,11 +7,8 @@ import useLockBodyScroll from '../hooks/useLockBodyScroll';
 import RepaymentEditModal from './RepaymentEditModal';
 import ConfirmDialog from './ConfirmDialog';
 import CustomSelect from './CustomSelect';
+import { formatCurrency, getCurrencySymbol } from '../utils/format';
 import './TransactionDetailModal.css';
-
-function formatAmount(amount) {
-    return new Intl.NumberFormat('id-ID').format(amount);
-}
 
 function formatDate(dateString) {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -193,21 +190,21 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
                                 <Receipt size={28} />
                             </div>
                             <div className="tx-detail-merchant">
-                                {details.merchant || details.category_name || 'Transaction'}
+                                {details.merchant || details.category_name || details.saving_name || 'Transaction'}
                             </div>
                             <div className="tx-detail-amount">
-                                {isPrivacyMode ? '****' : (
+                                {isPrivacyMode ? '••••' : (
                                     <>
-                                        <span className="amount-prefix">{details.type === 'expense' ? '-' : '+'}Rp</span>
+                                        <span className="amount-prefix">{details.type === 'expense' ? '-' : '+'} </span>
                                         <span className="amount-value">
-                                            {hasRepayments ? formatAmount(netAmount) : formatAmount(details.amount)}
+                                            {formatCurrency(hasRepayments ? netAmount : details.amount)}
                                         </span>
                                     </>
                                 )}
                             </div>
                             {hasRepayments && !isPrivacyMode && (
                                 <div className="tx-detail-original">
-                                    Original: Rp {formatAmount(details.amount)}
+                                    Original: {formatCurrency(details.amount)}
                                 </div>
                             )}
                             <div className="tx-detail-date">
@@ -308,7 +305,7 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
 
                                             <div className="repay-form-row">
                                                 <div className="repay-amount-input">
-                                                    <span className="currency">Rp</span>
+                                                    <span className="currency">{getCurrencySymbol()}</span>
                                                     <input
                                                         type="number"
                                                         placeholder="Amount"
@@ -399,7 +396,7 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
                                                 </div>
                                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                     <div className="repayment-card-amount">
-                                                        {isPrivacyMode ? '****' : `Rp ${formatAmount(repayment.amount)}`}
+                                                        {isPrivacyMode ? '****' : formatCurrency(repayment.amount)}
                                                     </div>
                                                     <Edit2 size={14} color="rgba(255,255,255,0.3)" />
                                                 </div>
@@ -411,15 +408,15 @@ export default function TransactionDetailModal({ transaction, onClose, onEdit, o
                                             <div className="repayment-summary">
                                                 <div className="summary-row">
                                                     <span>Original amount</span>
-                                                    <span>Rp {formatAmount(details.amount)}</span>
+                                                    <span>{formatCurrency(details.amount)}</span>
                                                 </div>
                                                 <div className="summary-row">
                                                     <span>Total repaid</span>
-                                                    <span className="repaid">- Rp {formatAmount(details.repayment_total)}</span>
+                                                    <span className="repaid">- {formatCurrency(details.repayment_total)}</span>
                                                 </div>
                                                 <div className="summary-row total">
                                                     <span>You paid</span>
-                                                    <span>Rp {formatAmount(netAmount)}</span>
+                                                    <span>{formatCurrency(netAmount)}</span>
                                                 </div>
                                             </div>
                                         )}

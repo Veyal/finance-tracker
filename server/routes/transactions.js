@@ -354,6 +354,132 @@ router.delete('/:id', (req, res) => {
   }
 });
 
+// POST /transactions/bulk
+router.post('/bulk', (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { transactions: bulkData } = req.body;
+    const isDryRun = req.query.dryRun === 'true';
+
+    if (!Array.isArray(bulkData)) {
+      return res.status(400).json({ error: 'invalid_data_format' });
+    }
+
+    // Cache for name-to-ID mapping
+    const categories = db.prepare('SELECT id, name FROM categories WHERE user_id = ?').all(userId);
+    const groups = db.prepare('SELECT id, name FROM groups WHERE user_id = ?').all(userId);
+    const paymentMethods = db.prepare('SELECT id, name FROM payment_methods WHERE user_id = ?').all(userId);
+    const incomeSources = db.prepare('SELECT id, name FROM income_sources WHERE user_id = ?').all(userId);
+    const lendingSources = db.prepare('SELECT id, name FROM lending_sources WHERE user_id = ?').all(userId);
+    const savingsAccounts = db.prepare('SELECT id, name FROM savings_accounts WHERE user_id = ?').all(userId);
+
+    const findIdByName = (list, name) => {
+      if (!name) return null;
+      const match = list.find(item => item.name.toLowerCase() === name.toLowerCase());
+      return match ? match.id : null;
+    };
+
+    let added = 0;
+    let skipped = 0;
+    const results = [];
+
+    const insertStmt = db.prepare(`
+      INSERT INTO transactions (
+        id, user_id, type, amount, date, category_id, group_id, 
+        payment_method_id, income_source_id, lending_source_id, 
+        savings_account_id, note, merchant, sort_order
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+
+    const checkDuplicateStmt = db.prepare(`
+      SELECT id FROM transactions 
+      WHERE user_id = ? 
+        AND type = ? 
+        AND ABS(amount - ?) < 0.01 
+        AND date(date) = date(?)
+        AND (merchant = ? OR (merchant IS NULL AND ? IS NULL))
+        AND (note = ? OR (note IS NULL AND ? IS NULL))
+        AND (category_id = ? OR (category_id IS NULL AND ? IS NULL))
+        AND (group_id = ? OR (group_id IS NULL AND ? IS NULL))
+        AND (payment_method_id = ? OR (payment_method_id IS NULL AND ? IS NULL))
+        AND (income_source_id = ? OR (income_source_id IS NULL AND ? IS NULL))
+        AND (lending_source_id = ? OR (lending_source_id IS NULL AND ? IS NULL))
+        AND deleted_at IS NULL
+    `);
+
+    const runBulkInsert = db.transaction((data) => {
+      for (const item of data) {
+        const type = item.type || 'expense';
+        const amount = parseFloat(item.amount);
+        const date = item.date || new Date().toISOString();
+        const merchant = item.merchant || null;
+        const note = item.note || null;
+
+        // Resolve IDs
+        const category_id = item.category_id || findIdByName(categories, item.category_name);
+        const group_id = item.group_id || findIdByName(groups, item.group_name);
+        const payment_method_id = item.payment_method_id || findIdByName(paymentMethods, item.payment_method_name);
+        const income_source_id = item.income_source_id || findIdByName(incomeSources, item.income_source_name);
+        const lending_source_id = item.lending_source_id || findIdByName(lendingSources, item.lending_source_name);
+        const savings_account_id = item.savings_account_id || findIdByName(savingsAccounts, item.savings_account_name);
+
+        // Check for duplicate
+        const duplicate = checkDuplicateStmt.get(
+          userId, type, amount, date, 
+          merchant, merchant, 
+          note, note,
+          category_id, category_id,
+          group_id, group_id,
+          payment_method_id, payment_method_id,
+          income_source_id, income_source_id,
+          lending_source_id, lending_source_id
+        );
+
+        if (duplicate) {
+          skipped++;
+          results.push({ ...item, status: 'skipped', reason: 'duplicate' });
+          continue;
+        }
+
+        const id = uuidv4();
+        const sort_order = 0; // Default for bulk
+
+        insertStmt.run(
+          id, userId, type, amount, date, category_id, group_id,
+          payment_method_id, income_source_id, lending_source_id,
+          savings_account_id, note, merchant, sort_order
+        );
+
+        added++;
+        results.push({ ...item, id, status: 'added' });
+      }
+
+      if (isDryRun) {
+        throw new Error('DRY_RUN_ROLLBACK');
+      }
+    });
+
+    try {
+      runBulkInsert(bulkData);
+    } catch (e) {
+      if (e.message !== 'DRY_RUN_ROLLBACK') throw e;
+    }
+
+    res.json({
+      summary: {
+        total: bulkData.length,
+        added,
+        skipped,
+        isDryRun
+      },
+      results
+    });
+  } catch (error) {
+    console.error('Bulk insert transactions error:', error);
+    res.status(500).json({ error: 'internal_error', message: error.message });
+  }
+});
+
 // GET /transactions/summary - daily summary for calendar
 router.get('/summary', (req, res) => {
   try {

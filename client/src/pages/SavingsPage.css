@@ -73,7 +73,7 @@
     cursor: pointer;
     transition: all var(--duration-normal) var(--ease-smooth);
     position: relative;
-    overflow: hidden;
+    overflow: visible;
 }
 
 .savings-account-card::before {

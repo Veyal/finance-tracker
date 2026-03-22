@@ -6,6 +6,7 @@ import { useHaptics } from '../hooks/useHaptics';
 import useLockBodyScroll from '../hooks/useLockBodyScroll';
 import NumberPad from './NumberPad';
 import DatePicker from './DatePicker';
+import { formatNumber, formatCurrency, getCurrencySymbol } from '../utils/format';
 import './QuickAddForm.css';
 
 // Local storage keys
@@ -102,7 +103,7 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
 
     function formatDisplayAmount(amt) {
         if (!amt) return '0';
-        return new Intl.NumberFormat('id-ID').format(parseInt(amt));
+        return formatNumber(parseInt(amt));
     }
 
     // Helper to add new items
@@ -268,7 +269,7 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
 
                             {/* Amount Display */}
                             <div className="amount-display">
-                                <span className="amount-currency">Rp</span>
+                                <span className="amount-currency">{getCurrencySymbol()}</span>
                                 <input
                                     ref={amountInputRef}
                                     type="text"
@@ -281,7 +282,7 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                                     onKeyDown={(e) => e.key === 'Enter' && amount && goNext()}
                                 />
                                 <div className="quick-add-mobile-display">
-                                    {amount ? new Intl.NumberFormat('id-ID').format(amount) : '0'}
+                                    {amount ? formatNumber(amount) : '0'}
                                 </div>
                             </div>
 

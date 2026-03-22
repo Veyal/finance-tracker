@@ -66,7 +66,7 @@
     border: 1px solid var(--border-subtle);
     border-radius: var(--radius-md);
     box-shadow: var(--shadow-float), 0 0 30px rgba(255, 126, 179, 0.1);
-    z-index: var(--z-dropdown);
+    z-index: 1000;
     max-height: 200px;
     overflow-y: auto;
     animation: dropdownSlide var(--duration-fast) var(--ease-bounce);
@@ -127,6 +127,13 @@
 .option-check {
     color: var(--accent-primary);
     flex-shrink: 0;
+}
+
+.custom-select-no-options {
+    padding: var(--space-md);
+    color: var(--text-muted);
+    font-size: var(--text-xs);
+    text-align: center;
 }
 
 /* Scrollbar in dropdown */
