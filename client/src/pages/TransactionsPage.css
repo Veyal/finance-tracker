@@ -92,6 +92,14 @@
     margin-bottom: var(--space-lg);
     padding-bottom: var(--space-md);
     border-bottom: 1px solid var(--border-subtle);
+    align-items: center;
+}
+
+.quick-filters .chip {
+    font-size: 11px;
+    padding: 6px 12px;
+    text-transform: none;
+    letter-spacing: normal;
 }
 
 /* Type Chips - Premium Redesign */
@@ -261,13 +269,24 @@
     }
 
     .quick-filters {
-        flex-direction: column;
+        flex-direction: row;
+        justify-content: center;
+        gap: var(--space-xs);
+    }
+
+    .quick-filters .chip {
+        flex: 1;
+        justify-content: center;
+        min-width: 80px;
+        font-size: 10px;
+        padding: 6px 8px;
     }
 
     .type-chips {
         margin-left: 0;
         width: 100%;
         justify-content: center;
+        margin-top: var(--space-xs);
     }
 
     .filter-grid {
