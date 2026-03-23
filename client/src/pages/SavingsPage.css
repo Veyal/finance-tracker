@@ -248,8 +248,27 @@
     width: 100%;
     max-width: 480px;
     max-height: 90vh;
-    overflow-y: auto;
+    max-height: 90dvh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
     animation: slideUp var(--duration-slow) var(--ease-bounce);
+}
+
+.modal-content form,
+.modal-content .transactions-list {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+}
+
+.modal-content .modal-header {
+    flex-shrink: 0;
+}
+
+.modal-content .btn-full {
+    flex-shrink: 0;
+    margin-top: var(--space-md);
 }
 
 @keyframes slideUp {

@@ -7,7 +7,6 @@ import './Navigation.css';
 const navItems = [
     { path: '/', icon: Home, label: 'Today' },
     { path: '/transactions', icon: List, label: 'All' },
-    { path: '/split', icon: CreditCard, label: 'Split' },
     { path: '/insights', icon: PieChart, label: 'Insights' },
     { path: '/savings', icon: PiggyBank, label: 'Savings' },
     { path: '/settings', icon: Settings, label: 'Settings' },
@@ -19,15 +18,6 @@ export default function Navigation() {
 
     return (
         <>
-            {/* Mobile Top Header */}
-            <header className="nav-mobile-top">
-                <div className="nav-logo-mobile">
-                    <span className="nav-logo-icon-sm">💰</span>
-                    <span className="nav-logo-text-sm">Finance</span>
-                </div>
-                <PrivacyToggle className="nav-privacy-btn" />
-            </header>
-
             {/* Mobile Bottom Nav */}
             <nav className="nav-mobile">
                 {navItems.map(({ path, icon: Icon, label }) => (
@@ -62,12 +52,6 @@ export default function Navigation() {
 
             {/* Desktop Sidebar */}
             <nav className="nav-desktop">
-                <div className="nav-logo">
-                    <span className="nav-logo-icon">💰</span>
-                    <span className="nav-logo-text">Finance</span>
-                    <PrivacyToggle className="nav-privacy-btn" style={{ marginLeft: 'auto' }} />
-                </div>
-
                 <div className="nav-links">
                     {navItems.map(({ path, icon: Icon, label }) => (
                         <NavLink

@@ -24,7 +24,7 @@
     box-shadow:
         0 -15px 80px rgba(0, 0, 0, 0.6),
         inset 0 1px 0 rgba(255, 255, 255, 0.1);
-    touch-action: none;
+    touch-action: pan-y;
     /* Flexbox layout to keep actions at bottom */
     display: flex;
     flex-direction: column;

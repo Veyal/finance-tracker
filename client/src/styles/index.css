@@ -302,6 +302,28 @@ h3 {
   padding: 0;
 }
 
+.btn-close {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-round);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--duration-fast) var(--ease-smooth);
+  cursor: pointer;
+}
+
+.btn-close:hover {
+  background: var(--expense-red);
+  border-color: var(--expense-red);
+  color: white;
+  transform: rotate(90deg);
+  box-shadow: 0 0 15px var(--expense-red-glow);
+}
+
 .btn-lg {
   padding: var(--space-md) var(--space-xl);
   font-size: var(--text-base);
@@ -466,7 +488,7 @@ h3 {
 
 @media (max-width: 640px) {
   .page {
-    padding-top: 76px;
+    padding-top: var(--space-lg);
   }
 }
 
@@ -531,15 +553,19 @@ h3 {
   width: 100%;
   max-width: 480px;
   max-height: 90vh;
+  max-height: 90dvh;
   background: var(--bg-surface);
   border-radius: var(--radius-xl) var(--radius-xl) 0 0;
   border: 1px solid var(--border-subtle);
   border-bottom: none;
-  overflow: visible;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   animation: slideUp var(--duration-slow) var(--ease-bounce);
 }
 
 .modal-header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -557,8 +583,20 @@ h3 {
 }
 
 .modal-body {
+  flex: 1;
   padding: var(--space-lg);
   overflow-y: auto;
+  min-height: 0; /* Important for flex child scrolling */
+}
+
+.modal-actions {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--border-subtle);
 }
 
 /* === ANIMATIONS === */

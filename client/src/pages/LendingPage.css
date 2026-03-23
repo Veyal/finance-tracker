@@ -290,11 +290,12 @@
     width: 100%;
     max-width: 500px;
     max-height: 90vh;
+    max-height: 90dvh;
     background: linear-gradient(180deg, rgba(35, 35, 65, 0.98) 0%, rgba(25, 25, 45, 1) 100%);
     border-radius: 32px 32px 0 0;
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-bottom: none;
-    overflow: visible;
+    overflow: hidden;
     display: flex;
     flex-direction: column;
     box-shadow:
@@ -305,11 +306,13 @@
 .repayment-form-v2 {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    flex: 1;
     overflow-y: auto;
+    min-height: 0;
 }
 
 .repayment-form-v2 .modal-header {
+    flex-shrink: 0;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -366,6 +369,7 @@
 
 /* Reference Card */
 .reference-card {
+    flex-shrink: 0;
     margin: 20px 24px;
     padding: 16px 20px;
     background: rgba(255, 107, 138, 0.08);
@@ -471,6 +475,7 @@
     gap: 10px;
     width: 100%;
     padding: 18px;
+    padding-bottom: calc(18px + env(safe-area-inset-bottom));
     background: linear-gradient(135deg, #4ECDC4 0%, #2AB7A9 100%);
     border: none;
     border-radius: 18px;
@@ -498,11 +503,16 @@
 .add-modal {
     width: 100%;
     max-width: 400px;
+    max-height: 90dvh;
     background: linear-gradient(180deg, rgba(40, 40, 70, 0.98) 0%, rgba(28, 28, 50, 1) 100%);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 28px;
     padding: 24px;
+    padding-bottom: calc(24px + env(safe-area-inset-bottom));
     box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
 }
 
 .add-modal .modal-header {

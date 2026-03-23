@@ -17,13 +17,14 @@
     background: var(--bg-card);
     width: 100%;
     max-width: 600px;
-    height: 85vh;
+    max-height: 85vh;
+    max-height: 85dvh;
     border-radius: 20px 20px 0 0;
     display: flex;
     flex-direction: column;
     box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.2);
     position: relative;
-    overflow: visible;
+    overflow: hidden;
 }
 
 @media (min-width: 600px) {
@@ -32,7 +33,8 @@
     }
 
     .person-modal {
-        height: 70vh;
+        max-height: 80vh;
+        max-height: 80dvh;
         border-radius: 20px;
     }
 }
@@ -113,26 +115,6 @@
     color: var(--accent-success);
     font-weight: 600;
 }
-
-.close-btn {
-    background: rgba(255, 255, 255, 0.1);
-    border: none;
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    color: var(--text-secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: background-color 0.2s;
-}
-
-.close-btn:hover {
-    background: rgba(255, 255, 255, 0.2);
-    color: var(--text-primary);
-}
-
 
 .person-header-content {
     flex: 1;

@@ -99,8 +99,8 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
             <div className="modal transaction-form-modal animate-slide-up">
                 <div className="modal-header">
                     <h2>{isEditing ? 'Edit Transaction' : 'New Transaction'}</h2>
-                    <button className="btn btn-icon btn-ghost" onClick={onClose}>
-                        <X size={24} />
+                    <button className="btn-close" onClick={onClose}>
+                        <X size={18} />
                     </button>
                 </div>
 
@@ -244,8 +244,8 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
                     <div className="modal add-category-modal" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <h2>New Category</h2>
-                            <button className="btn btn-icon btn-ghost" onClick={() => setShowAddCategory(false)}>
-                                <X size={20} />
+                            <button className="btn-close" onClick={() => setShowAddCategory(false)}>
+                                <X size={18} />
                             </button>
                         </div>
                         <div className="modal-body">

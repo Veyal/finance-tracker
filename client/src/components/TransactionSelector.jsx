@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Calendar, ChevronDown, Check } from 'lucide-react';
+import { Search, Calendar, ChevronDown, Check, X } from 'lucide-react';
 import { transactions } from '../api/api';
 import { formatCurrency } from '../utils/format';
 import './TransactionSelector.css';
@@ -52,16 +52,21 @@ export default function TransactionSelector({ onSelect, onClose }) {
     return (
         <div className="tx-selector">
             <div className="tx-selector-header">
-                <div className="search-bar">
-                    <Search size={18} className="search-icon" />
-                    <input
-                        type="text"
-                        placeholder="Search expense (e.g. Lunch)"
-                        value={searchTerm}
-                        onChange={e => setSearchTerm(e.target.value)}
-                        className="search-input"
-                        autoFocus
-                    />
+                <div className="header-top-row">
+                    <div className="search-bar">
+                        <Search size={18} className="search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Search expense..."
+                            value={searchTerm}
+                            onChange={e => setSearchTerm(e.target.value)}
+                            className="search-input"
+                            autoFocus
+                        />
+                    </div>
+                    <button className="btn-close" onClick={onClose}>
+                        <X size={18} />
+                    </button>
                 </div>
                 <div className="date-filter">
                     <input
@@ -91,10 +96,6 @@ export default function TransactionSelector({ onSelect, onClose }) {
                     ))
                 )}
             </div>
-
-            <button className="close-selector-btn" onClick={onClose}>
-                Cancel
-            </button>
         </div>
     );
 }

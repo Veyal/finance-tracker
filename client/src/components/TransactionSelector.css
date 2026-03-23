@@ -9,6 +9,13 @@
     padding: 16px;
     border-bottom: 1px solid var(--border-subtle);
     display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.header-top-row {
+    display: flex;
+    align-items: center;
     gap: 12px;
 }
 
@@ -47,6 +54,7 @@
 }
 
 .date-input {
+    width: 100%;
     padding: 10px;
     background: var(--bg-elevated);
     border: 1px solid var(--border-subtle);
@@ -98,15 +106,4 @@
     padding: 40px;
     text-align: center;
     color: var(--text-muted);
-}
-
-.close-selector-btn {
-    margin: 16px;
-    padding: 14px;
-    background: var(--bg-elevated);
-    border: 1px solid var(--border-subtle);
-    border-radius: 12px;
-    color: var(--text-primary);
-    cursor: pointer;
-    font-weight: 600;
 }

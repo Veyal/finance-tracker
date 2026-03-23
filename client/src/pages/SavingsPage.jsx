@@ -366,8 +366,8 @@ export default function SavingsPage() {
                         >
                             <div className="modal-header">
                                 <h2>New Savings Goal</h2>
-                                <button className="btn btn-ghost" onClick={() => setShowAddAccount(false)}>
-                                    <X size={20} />
+                                <button className="btn-close" onClick={() => setShowAddAccount(false)}>
+                                    <X size={18} />
                                 </button>
                             </div>
                             <form onSubmit={handleCreateAccount}>
@@ -440,8 +440,8 @@ export default function SavingsPage() {
                                 <h2>
                                     {showTransaction.type === 'deposit' ? 'Deposit to' : 'Withdraw from'} {showTransaction.account.name}
                                 </h2>
-                                <button className="btn btn-ghost" onClick={() => setShowTransaction(null)}>
-                                    <X size={20} />
+                                <button className="btn-close" onClick={() => setShowTransaction(null)}>
+                                    <X size={18} />
                                 </button>
                             </div>
                             <form onSubmit={handleSubmitTransaction}>
@@ -545,8 +545,8 @@ export default function SavingsPage() {
                                         </div>
                                     </div>
                                 </div>
-                                <button className="btn btn-ghost" onClick={() => setShowAccountDetails(null)}>
-                                    <X size={20} />
+                                <button className="btn-close" onClick={() => setShowAccountDetails(null)}>
+                                    <X size={18} />
                                 </button>
                             </div>
 
@@ -636,8 +636,8 @@ export default function SavingsPage() {
                         >
                             <div className="modal-header">
                                 <h2>Edit {editingTx.type === 'savings_deposit' ? 'Deposit' : 'Withdrawal'}</h2>
-                                <button className="btn btn-ghost" onClick={() => setEditingTx(null)}>
-                                    <X size={20} />
+                                <button className="btn-close" onClick={() => setEditingTx(null)}>
+                                    <X size={18} />
                                 </button>
                             </div>
                             <form onSubmit={handleUpdateTransaction}>
@@ -710,8 +710,8 @@ export default function SavingsPage() {
                         >
                             <div className="modal-header">
                                 <h2>Add Payment Method</h2>
-                                <button className="btn btn-ghost" onClick={() => setShowAddPaymentMethod(false)}>
-                                    <X size={20} />
+                                <button className="btn-close" onClick={() => setShowAddPaymentMethod(false)}>
+                                    <X size={18} />
                                 </button>
                             </div>
                             <form onSubmit={handleAddPaymentMethod}>

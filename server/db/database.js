@@ -111,6 +111,11 @@ try {
         db.prepare("ALTER TABLE transactions ADD COLUMN related_transaction_id TEXT REFERENCES transactions(id)").run();
     }
 
+    if (!columns.includes('deleted_at')) {
+        console.log('Migrating: Adding deleted_at to transactions table...');
+        db.prepare("ALTER TABLE transactions ADD COLUMN deleted_at TEXT").run();
+    }
+
     // Migrate existing repayment income transactions to proper 'repayment' type
     const repaymentCount = db.prepare("SELECT COUNT(*) as count FROM transactions WHERE type = 'income' AND related_transaction_id IS NOT NULL").get();
     if (repaymentCount.count > 0) {

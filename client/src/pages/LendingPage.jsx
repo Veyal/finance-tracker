@@ -316,10 +316,10 @@ export default function LendingPage() {
                                         </button>
                                         <h2>Repayment Details</h2>
                                         <button
-                                            className="modal-close"
+                                            className="btn-close"
                                             onClick={() => setShowRepayment(false)}
                                         >
-                                            <X size={24} />
+                                            <X size={18} />
                                         </button>
                                     </div>
 
@@ -438,8 +438,8 @@ export default function LendingPage() {
                         >
                             <div className="modal-header">
                                 <h2>Add Person</h2>
-                                <button className="modal-close" onClick={() => setShowAddSource(false)}>
-                                    <X size={24} />
+                                <button className="btn-close" onClick={() => setShowAddSource(false)}>
+                                    <X size={18} />
                                 </button>
                             </div>
                             <form onSubmit={handleAddSource}>
@@ -499,8 +499,8 @@ export default function LendingPage() {
                         >
                             <div className="modal-header">
                                 <h2>Add Account</h2>
-                                <button className="modal-close" onClick={() => setShowAddPm(false)}>
-                                    <X size={24} />
+                                <button className="btn-close" onClick={() => setShowAddPm(false)}>
+                                    <X size={18} />
                                 </button>
                             </div>
                             <form onSubmit={handleAddPm}>

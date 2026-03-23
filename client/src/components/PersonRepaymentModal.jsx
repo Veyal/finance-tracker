@@ -221,8 +221,8 @@ export default function PersonRepaymentModal({ person, onClose, sources, payment
                     </div>
 
                     {!isEditingPerson && (
-                        <button className="close-btn" onClick={onClose}>
-                            <X size={24} />
+                        <button className="btn-close" onClick={onClose}>
+                            <X size={18} />
                         </button>
                     )}
                 </div>

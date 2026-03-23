@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    Plus, Edit2, Archive, LogOut, ChevronRight, X, Loader2, Lock,
-    Users, Database, Download, Upload, AlertTriangle, Shield, CreditCard,
-    Layers, Wallet, TrendingUp, FileJson, Info, Copy
+    Plus, Edit2, Archive, LogOut, ChevronRight, X, Loader2, Shield,
+    Users, Download, Upload, AlertTriangle, CreditCard,
+    Layers, Wallet, TrendingUp, FileJson, Info, Copy,
+    Settings, Database, Trash2, Ghost
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { categories, groups, paymentMethods, incomeSources, auth, transactions as transactionsApi, data as dataApi } from '../api/api';
@@ -47,12 +48,66 @@ export default function SettingsPage() {
     const [bulkResults, setBulkResults] = useState(null);
     const [pendingBulkData, setPendingBulkData] = useState(null);
     const [showBulkGuide, setShowBulkGuide] = useState(false);
+    const [editingReviewItem, setEditingReviewItem] = useState(null);
+    const [editingReviewIndex, setEditingReviewIndex] = useState(null);
     const fileInputRef = useRef(null);
     const bulkInputRef = useRef(null);
 
     useEffect(() => {
         loadData();
     }, []);
+
+    // ... (keep loadData and other existing functions)
+
+    const handleDiscardReviewItem = (index) => {
+        const newResults = [...bulkResults.results];
+        newResults.splice(index, 1);
+        
+        const newAdded = newResults.filter(r => r.status === 'added').length;
+        const newSkipped = newResults.filter(r => r.status === 'skipped').length;
+        
+        setBulkResults({
+            ...bulkResults,
+            results: newResults,
+            summary: {
+                ...bulkResults.summary,
+                total: newResults.length,
+                added: newAdded,
+                skipped: newSkipped
+            }
+        });
+    };
+
+    const handleOpenEditReview = (item, index) => {
+        setEditingReviewItem({ ...item });
+        setEditingReviewIndex(index);
+    };
+
+    const handleSaveReviewEdit = () => {
+        const newResults = [...bulkResults.results];
+        // If it was skipped (duplicate), assume editing it might make it valid
+        const updatedItem = { 
+            ...editingReviewItem, 
+            status: 'added' // Reset to "Will Add"
+        };
+        newResults[editingReviewIndex] = updatedItem;
+        
+        const newAdded = newResults.filter(r => r.status === 'added').length;
+        const newSkipped = newResults.filter(r => r.status === 'skipped').length;
+
+        setBulkResults({
+            ...bulkResults,
+            results: newResults,
+            summary: {
+                ...bulkResults.summary,
+                total: newResults.length,
+                added: newAdded,
+                skipped: newSkipped
+            }
+        });
+        setEditingReviewItem(null);
+        setEditingReviewIndex(null);
+    };
 
     // Focus pin input when modal opens
     useEffect(() => {
@@ -159,7 +214,7 @@ export default function SettingsPage() {
         localStorage.setItem(key, value);
         if (key === 'ft_locale') setLocale(value);
         if (key === 'ft_currency') setCurrency(value);
-        // Page reload to apply formatting everywhere (simplest way without complex context)
+        // Page reload to apply formatting everywhere
         window.location.reload();
     };
 
@@ -185,7 +240,6 @@ export default function SettingsPage() {
         const value = e.target.value.replace(/\D/g, '').slice(0, 6);
         setter(value);
 
-        // Auto-advance to next field if current one is filled
         if (value.length === 6) {
             if (activePinField === 'current') {
                 setActivePinField('new');
@@ -195,35 +249,10 @@ export default function SettingsPage() {
         }
     }
 
-    // Reset PIN state on modal close
-    useEffect(() => {
-        if (!showChangePin) {
-            setCurrentPin('');
-            setNewPin('');
-            setConfirmPin('');
-            setPinError('');
-            setPinSuccess(false);
-            setActivePinField('current');
-        }
-    }, [showChangePin]);
-
     async function handleChangePin() {
         setPinError('');
-
-        if (currentPin.length !== 6) {
-            setPinError('Current PIN must be 6 digits');
-            return;
-        }
-        if (newPin.length !== 6) {
-            setPinError('New PIN must be 6 digits');
-            return;
-        }
-        if (newPin !== confirmPin) {
-            setPinError('New PINs do not match');
-            return;
-        }
-        if (currentPin === newPin) {
-            setPinError('New PIN must be different from current PIN');
+        if (currentPin.length !== 6 || newPin.length !== 6 || newPin !== confirmPin) {
+            setPinError('Invalid PIN entry');
             return;
         }
 
@@ -231,31 +260,12 @@ export default function SettingsPage() {
         try {
             await auth.changePin(currentPin, newPin);
             setPinSuccess(true);
-            setTimeout(() => {
-                setShowChangePin(false);
-            }, 1500);
+            setTimeout(() => { setShowChangePin(false); }, 1500);
         } catch (err) {
-            if (err.error === 'wrong_pin') {
-                setPinError('Current PIN is incorrect');
-            } else {
-                setPinError('Failed to change PIN. Please try again.');
-            }
+            setPinError(err.error === 'wrong_pin' ? 'Current PIN is incorrect' : 'Failed to change PIN');
         } finally {
             setPinLoading(false);
         }
-    }
-
-    function renderPinDots(value, maxLength = 6) {
-        return (
-            <>
-                {[...Array(maxLength)].map((_, i) => (
-                    <span
-                        key={i}
-                        className={`pin-dot ${value.length > i ? 'filled' : ''} ${value.length === i ? 'current' : ''}`}
-                    />
-                ))}
-            </>
-        );
     }
 
     async function handleExport() {
@@ -274,7 +284,6 @@ export default function SettingsPage() {
             document.body.removeChild(a);
         } catch (error) {
             console.error('Export failed:', error);
-            alert('Failed to export data');
         } finally {
             setExportLoading(false);
         }
@@ -290,7 +299,6 @@ export default function SettingsPage() {
     function handleFileChange(event) {
         const file = event.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
@@ -298,7 +306,6 @@ export default function SettingsPage() {
                 setPendingImportData(json);
                 setShowImportConfirm(true);
             } catch (error) {
-                console.error('Invalid JSON:', error);
                 alert('Invalid file format');
             }
         };
@@ -306,25 +313,15 @@ export default function SettingsPage() {
     }
 
     async function confirmImport() {
-        if (!pendingImportData) return;
-
         setImportLoading(true);
         try {
             await dataApi.import(pendingImportData);
-            setShowImportConfirm(false);
-            setPendingImportData(null);
-            alert('Data imported successfully! The page will now reload.');
             window.location.reload();
         } catch (error) {
-            console.error('Import failed:', error);
-            alert('Failed to import data: ' + (error.message || 'Unknown error'));
+            alert('Failed to import data');
         } finally {
             setImportLoading(false);
         }
-    }
-
-    function handleBulkClick() {
-        setShowBulkGuide(true);
     }
 
     function triggerBulkFileSelect() {
@@ -338,28 +335,18 @@ export default function SettingsPage() {
     function handleBulkFileChange(event) {
         const file = event.target.files[0];
         if (!file) return;
-
         const reader = new FileReader();
         reader.onload = async (e) => {
             try {
                 const json = JSON.parse(e.target.result);
-                // The input might be a raw array or a full export. 
-                // If it's a full export, we only want the transactions.
                 const txList = Array.isArray(json) ? json : (json.transactions || []);
-
-                if (!txList.length) {
-                    alert('No transactions found in file');
-                    return;
-                }
-
+                if (!txList.length) return alert('No transactions found');
                 setBulkLoading(true);
                 setPendingBulkData(txList);
-                // First do a dry run to check for duplicates
                 const result = await transactionsApi.bulk(txList, { dryRun: true });
                 setBulkResults(result);
             } catch (error) {
-                console.error('Bulk preview failed:', error);
-                alert('Failed to process file: ' + (error.message || 'Invalid format'));
+                alert('Failed to process file');
             } finally {
                 setBulkLoading(false);
             }
@@ -368,237 +355,159 @@ export default function SettingsPage() {
     }
 
     async function handleFinalBulkMerge() {
-        if (!pendingBulkData) return;
-
         setBulkLoading(true);
         try {
-            const result = await transactionsApi.bulk(pendingBulkData);
+            // Only send items that are NOT skipped (or edited to 'added')
+            const toImport = bulkResults.results.filter(r => r.status === 'added');
+            if (toImport.length === 0) {
+                alert('No new transactions to import');
+                return;
+            }
+            const result = await transactionsApi.bulk(toImport);
             setBulkResults(result);
             setPendingBulkData(null);
         } catch (error) {
-            console.error('Bulk merge failed:', error);
             alert('Failed to merge transactions');
         } finally {
             setBulkLoading(false);
         }
     }
 
-    // --- RENDERERS ---
+    // --- REDESIGNED RENDERERS ---
 
     const renderMenuGrid = () => (
-        <div className="settings-grid animate-slide-up">
+        <div className="settings-grid-v2 animate-slide-up">
+            {/* User Profile Summary */}
+            <div className="settings-user-card">
+                <div className="user-avatar-v2">{user?.username?.[0]?.toUpperCase()}</div>
+                <div className="user-info-v2">
+                    <h3>{user?.username}</h3>
+                    <p>Premium Member</p>
+                </div>
+                <button className="logout-icon-btn" onClick={handleLogout} title="Log Out">
+                    <LogOut size={20} />
+                </button>
+            </div>
 
-            <section className="settings-section">
-                <h3 className="section-title">App Configuration</h3>
-                <div className="card-grid">
-                    <button className="settings-card" onClick={() => setActiveSection('categories')}>
-                        <div className="card-icon" style={{ background: 'var(--gradient-accent)' }}>
-                            <Layers size={24} color="#fff" />
+            {/* Entities Section */}
+            <section className="settings-group-v2">
+                <h4 className="group-label-v2">Entities</h4>
+                <div className="settings-list-v2">
+                    <button className="settings-item-v2" onClick={() => setActiveSection('categories')}>
+                        <div className="item-icon-v2" style={{ color: '#ff7eb3' }}><Layers size={20} /></div>
+                        <div className="item-text-v2">
+                            <span>Categories</span>
+                            <small>{data.categories.filter(c => c.is_active).length} Active</small>
                         </div>
-                        <span className="card-label">Categories</span>
-                        <span className="card-meta">{data.categories.filter(c => c.is_active).length} Active</span>
+                        <ChevronRight size={18} />
                     </button>
-
-                    <button className="settings-card" onClick={() => setActiveSection('groups')}>
-                        <div className="card-icon" style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)' }}>
-                            <Users size={24} color="#fff" />
+                    <button className="settings-item-v2" onClick={() => setActiveSection('groups')}>
+                        <div className="item-icon-v2" style={{ color: '#F59E0B' }}><Users size={20} /></div>
+                        <div className="item-text-v2">
+                            <span>Groups</span>
+                            <small>{data.groups.filter(c => c.is_active).length} Active</small>
                         </div>
-                        <span className="card-label">Groups</span>
-                        <span className="card-meta">{data.groups.filter(c => c.is_active).length} Active</span>
+                        <ChevronRight size={18} />
                     </button>
-
-                    <button className="settings-card" onClick={() => setActiveSection('paymentMethods')}>
-                        <div className="card-icon" style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)' }}>
-                            <Wallet size={24} color="#fff" />
+                    <button className="settings-item-v2" onClick={() => setActiveSection('paymentMethods')}>
+                        <div className="item-icon-v2" style={{ color: '#10B981' }}><Wallet size={20} /></div>
+                        <div className="item-text-v2">
+                            <span>Payment Methods</span>
+                            <small>{data.paymentMethods.filter(c => c.is_active).length} Active</small>
                         </div>
-                        <span className="card-label">Payment Methods</span>
-                        <span className="card-meta">{data.paymentMethods.filter(c => c.is_active).length} Active</span>
+                        <ChevronRight size={18} />
                     </button>
-
-                    <button className="settings-card" onClick={() => setActiveSection('incomeSources')}>
-                        <div className="card-icon" style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)' }}>
-                            <TrendingUp size={24} color="#fff" />
+                    <button className="settings-item-v2" onClick={() => setActiveSection('incomeSources')}>
+                        <div className="item-icon-v2" style={{ color: '#3B82F6' }}><TrendingUp size={20} /></div>
+                        <div className="item-text-v2">
+                            <span>Income Sources</span>
+                            <small>{data.incomeSources.filter(c => c.is_active).length} Active</small>
                         </div>
-                        <span className="card-label">Income Sources</span>
-                        <span className="card-meta">{data.incomeSources.filter(c => c.is_active).length} Active</span>
-                    </button>
-
-                    <button className="settings-card" onClick={() => setActiveSection('preferences')}>
-                        <div className="card-icon" style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)' }}>
-                            <Database size={24} color="#fff" />
-                        </div>
-                        <span className="card-label">Preferences</span>
-                        <span className="card-meta">{currency} / {locale}</span>
+                        <ChevronRight size={18} />
                     </button>
                 </div>
             </section>
 
-            <section className="settings-section">
-                <h3 className="section-title">Account & Data</h3>
-                <div className="list-group">
-                    <button className="list-group-item" onClick={() => navigate('/split')}>
-                        <div className="list-icon" style={{ background: 'linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%)', color: 'white' }}>
-                            <CreditCard size={20} />
+            {/* Preferences & Security */}
+            <section className="settings-group-v2">
+                <h4 className="group-label-v2">App & Security</h4>
+                <div className="settings-list-v2">
+                    <button className="settings-item-v2" onClick={() => setActiveSection('preferences')}>
+                        <div className="item-icon-v2" style={{ color: '#8B5CF6' }}><Settings size={20} /></div>
+                        <div className="item-text-v2">
+                            <span>Preferences</span>
+                            <small>{currency} · {locale}</small>
                         </div>
-                        <div className="list-content">
-                            <span className="list-label">Repayments</span>
-                            <span className="list-desc">Manage shared expenses</span>
-                        </div>
-                        <ChevronRight size={18} className="list-arrow" />
+                        <ChevronRight size={18} />
                     </button>
-
-                    <button className="list-group-item" onClick={openChangePin}>
-                        <div className="list-icon" style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white' }}>
-                            <Shield size={20} />
+                    <button className="settings-item-v2" onClick={openChangePin}>
+                        <div className="item-icon-v2" style={{ color: '#10B981' }}><Shield size={20} /></div>
+                        <div className="item-text-v2">
+                            <span>Security</span>
+                            <small>Change your 6-digit PIN</small>
                         </div>
-                        <div className="list-content">
-                            <span className="list-label">Security</span>
-                            <span className="list-desc">Change your PIN code</span>
-                        </div>
-                        <ChevronRight size={18} className="list-arrow" />
-                    </button>
-
-                    <button className="list-group-item" onClick={handleExport} disabled={exportLoading}>
-                        <div className="list-icon" style={{ background: 'linear-gradient(135deg, #3B82F6 0%, #2563EB 100%)', color: 'white' }}>
-                            <Download size={20} />
-                        </div>
-                        <div className="list-content">
-                            <span className="list-label">Backup Data</span>
-                            <span className="list-desc">Export as JSON</span>
-                        </div>
-                        {exportLoading ? <Loader2 size={18} className="spin list-arrow" /> : <ChevronRight size={18} className="list-arrow" />}
-                    </button>
-
-                    <button className="list-group-item" onClick={handleBulkClick} disabled={bulkLoading}>
-                        <div className="list-icon" style={{ background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: 'white' }}>
-                            <Plus size={20} />
-                        </div>
-                        <div className="list-content">
-                            <span className="list-label">Bulk Insert</span>
-                            <span className="list-desc">Merge transactions from JSON</span>
-                        </div>
-                        <input
-                            type="file"
-                            ref={bulkInputRef}
-                            onChange={handleBulkFileChange}
-                            accept=".json"
-                            style={{ display: 'none' }}
-                        />
-                        {bulkLoading ? <Loader2 size={18} className="spin list-arrow" /> : <ChevronRight size={18} className="list-arrow" />}
-                    </button>
-
-                    <button className="list-group-item" onClick={handleImportClick} disabled={importLoading}>
-                        <div className="list-icon" style={{ background: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', color: 'white' }}>
-                            <Upload size={20} />
-                        </div>
-                        <div className="list-content">
-                            <span className="list-label">Restore Data</span>
-                            <span className="list-desc">Import and overwrite ALL data</span>
-                        </div>
-                        <input
-                            type="file"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            accept=".json"
-                            style={{ display: 'none' }}
-                        />
-                        {importLoading ? <Loader2 size={18} className="spin list-arrow" /> : <ChevronRight size={18} className="list-arrow" />}
+                        <ChevronRight size={18} />
                     </button>
                 </div>
             </section>
 
-            <button className="btn-logout" onClick={handleLogout}>
-                <LogOut size={18} />
-                Log Out
-            </button>
-
-            {/* Bulk Insert Results Modal */}
-            {bulkResults && (
-                <div className="modal-overlay" onClick={() => {
-                    if (bulkResults.summary.isDryRun) {
-                        setBulkResults(null);
-                        setPendingBulkData(null);
-                    } else {
-                        setBulkResults(null);
-                    }
-                }}>
-                    <div className="modal" onClick={e => e.stopPropagation()}>
-                        <div className="modal-header">
-                            <h2>{bulkResults.summary.isDryRun ? 'Review Transactions' : 'Import Results'}</h2>
-                            <button className="btn-icon btn-ghost" onClick={() => {
-                                setBulkResults(null);
-                                setPendingBulkData(null);
-                            }}>
-                                <X size={20} />
-                            </button>
+            {/* Data Management */}
+            <section className="settings-group-v2">
+                <h4 className="group-label-v2">Data Management</h4>
+                <div className="settings-list-v2">
+                    <button className="settings-item-v2" onClick={handleExport} disabled={exportLoading}>
+                        <div className="item-icon-v2" style={{ color: '#3B82F6' }}><Download size={20} /></div>
+                        <div className="item-text-v2">
+                            <span>Backup Data</span>
+                            <small>Export all your data to JSON</small>
                         </div>
-                        <div className="modal-body">
-                            {bulkResults.summary.isDryRun && (
-                                <p style={{ color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '14px' }}>
-                                    Found {bulkResults.summary.total} transactions. Review the breakdown below before merging.
-                                </p>
-                            )}
-                            <div className="import-summary-grid">
-                                <div className="summary-stat">
-                                    <span className="stat-label">Total</span>
-                                    <span className="stat-value">{bulkResults.summary.total}</span>
-                                </div>
-                                <div className="summary-stat">
-                                    <span className="stat-label">New</span>
-                                    <span className="stat-value text-success">{bulkResults.summary.added}</span>
-                                </div>
-                                <div className="summary-stat">
-                                    <span className="stat-label">Skipped</span>
-                                    <span className="stat-value text-muted">{bulkResults.summary.skipped}</span>
-                                </div>
-                            </div>
-
-                            <div className="results-list">
-                                {bulkResults.results.slice(0, 100).map((res, i) => (
-                                    <div key={i} className={`result-item ${res.status}`}>
-                                        <div className="result-info">
-                                            <div className="result-merchant">{res.merchant || 'Unnamed'}</div>
-                                            <div className="result-meta">
-                                                {res.date.split('T')[0]} · {formatCurrency(res.amount)}
-                                            </div>
-                                        </div>
-                                        <div className="result-status">
-                                            {res.status === 'added' ? (
-                                                <span className="badge success">{bulkResults.summary.isDryRun ? 'Will Add' : 'New'}</span>
-                                            ) : (
-                                                <span className="badge muted">Already in DB</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                ))}
-                                {bulkResults.results.length > 100 && (
-                                    <div className="results-more">...and {bulkResults.results.length - 100} more</div>
-                                )}
-                            </div>
+                        {exportLoading ? <Loader2 size={18} className="spin" /> : <ChevronRight size={18} />}
+                    </button>
+                    <button className="settings-item-v2" onClick={() => setShowBulkGuide(true)} disabled={bulkLoading}>
+                        <div className="item-icon-v2" style={{ color: '#10B981' }}><FileJson size={20} /></div>
+                        <div className="item-text-v2">
+                            <span>Bulk Insert</span>
+                            <small>Merge transactions from JSON</small>
                         </div>
-                        <div className="modal-actions">
-                            {bulkResults.summary.isDryRun ? (
-                                <>
-                                    <button className="btn btn-ghost" onClick={() => {
-                                        setBulkResults(null);
-                                        setPendingBulkData(null);
-                                    }} style={{ flex: 1 }}>Cancel</button>
-                                    <button
-                                        className="btn btn-primary"
-                                        onClick={handleFinalBulkMerge}
-                                        style={{ flex: 2 }}
-                                        disabled={bulkLoading || bulkResults.summary.added === 0}
-                                    >
-                                        {bulkLoading ? <Loader2 size={18} className="spin" /> : `Merge ${bulkResults.summary.added} Transactions`}
-                                    </button>
-                                </>
-                            ) : (
-                                <button className="btn btn-primary" onClick={() => setBulkResults(null)} style={{ width: '100%' }}>Done</button>
-                            )}
+                        {bulkLoading ? <Loader2 size={18} className="spin" /> : <ChevronRight size={18} />}
+                    </button>
+                    <button className="settings-item-v2" onClick={handleImportClick} disabled={importLoading}>
+                        <div className="item-icon-v2" style={{ color: '#F59E0B' }}><Upload size={20} /></div>
+                        <div className="item-text-v2">
+                            <span>Restore Data</span>
+                            <small>Overwrite current database</small>
                         </div>
-                    </div>
+                        {importLoading ? <Loader2 size={18} className="spin" /> : <ChevronRight size={18} />}
+                    </button>
                 </div>
-            )}
+            </section>
+
+            {/* Useless Section (As requested) */}
+            <section className="settings-group-v2">
+                <h4 className="group-label-v2">Useless Stuff</h4>
+                <div className="settings-list-v2">
+                    <button className="settings-item-v2" onClick={() => navigate('/split')}>
+                        <div className="item-icon-v2" style={{ color: '#ff7eb3' }}><CreditCard size={20} /></div>
+                        <div className="item-text-v2">
+                            <span>Repayments (Split)</span>
+                            <small>Because tracking debt is boring</small>
+                        </div>
+                        <ChevronRight size={18} />
+                    </button>
+                    <button className="settings-item-v2" onClick={() => alert("Boo! Just a ghost.")}>
+                        <div className="item-icon-v2" style={{ color: 'var(--text-muted)' }}><Ghost size={20} /></div>
+                        <div className="item-text-v2">
+                            <span>The Void</span>
+                            <small>Does absolutely nothing</small>
+                        </div>
+                        <ChevronRight size={18} />
+                    </button>
+                </div>
+            </section>
+
+            {/* Hidden Inputs */}
+            <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".json" style={{ display: 'none' }} />
+            <input type="file" ref={bulkInputRef} onChange={handleBulkFileChange} accept=".json" style={{ display: 'none' }} />
         </div>
     );
 
@@ -629,28 +538,22 @@ export default function SettingsPage() {
                         />
                         <p className="input-hint">BCP 47 language tag for formatting</p>
                     </div>
-                    <div className="pref-info-box" style={{ marginTop: '32px', padding: '16px', borderRadius: '12px', background: 'var(--bg-glass)', border: '1px solid var(--border-subtle)' }}>
-                        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
-                            <AlertTriangle size={14} style={{ marginRight: '6px', verticalAlign: 'middle', color: 'var(--warning-yellow)' }} />
-                            Changing these will refresh the page to apply new formatting.
-                        </p>
-                    </div>
                 </div>
             );
         } else {
             content = getSectionData().map((item) => (
-                <div key={item.id} className={`detail-item ${!item.is_active ? 'archived' : ''}`}>
+                <div key={item.id} className={`detail-item-v2 ${!item.is_active ? 'archived' : ''}`}>
                     <div className="item-info">
                         <span className="item-name">{item.name}</span>
                         {!item.is_active && <span className="badge-archived">Archived</span>}
                     </div>
                     <div className="item-actions">
                         <button className="btn-icon-sm" onClick={() => openEdit(item)}>
-                            <Edit2 size={18} />
+                            <Edit2 size={16} />
                         </button>
                         {item.is_active && (
                             <button className="btn-icon-sm danger" onClick={() => handleArchive(item)}>
-                                <Archive size={18} />
+                                <Archive size={16} />
                             </button>
                         )}
                     </div>
@@ -660,19 +563,19 @@ export default function SettingsPage() {
 
         return (
             <div className="settings-detail animate-slide-up">
-                <div className="detail-header-bar">
-                    <button className="btn-back" onClick={() => setActiveSection(null)}>
+                <div className="detail-header-v2">
+                    <button className="btn-back-v2" onClick={() => setActiveSection(null)}>
                         <ChevronRight size={24} style={{ transform: 'rotate(180deg)' }} />
                     </button>
                     <h2>{getSectionTitle()}</h2>
                     {activeSection !== 'preferences' && (
-                        <button className="btn-add-circle" onClick={openAdd}>
-                            <Plus size={24} />
+                        <button className="btn-add-v2" onClick={openAdd}>
+                            <Plus size={20} />
                         </button>
                     )}
                 </div>
 
-                <div className="items-list-container">
+                <div className="items-list-v2">
                     {content}
                 </div>
             </div>
@@ -680,24 +583,14 @@ export default function SettingsPage() {
     };
 
     if (loading) {
-        return (
-            <div className="page settings-page centered">
-                <div className="loader-spinner"></div>
-            </div>
-        );
+        return <div className="page settings-page centered"><div className="loader-spinner"></div></div>;
     }
 
     return (
         <div className="page settings-page">
             {!activeSection && (
-                <header className="settings-header">
-                    <div className="header-greeting">
-                        <div className="user-avatar-lg">{user?.username?.[0]?.toUpperCase() || '?'}</div>
-                        <div>
-                            <h1>Settings</h1>
-                            <p className="text-gradient">Personalize your experience</p>
-                        </div>
-                    </div>
+                <header className="settings-header-v2">
+                    <h1>Settings</h1>
                 </header>
             )}
 
@@ -710,8 +603,8 @@ export default function SettingsPage() {
                     <div className="modal">
                         <div className="modal-header">
                             <h2>{editingItem ? 'Edit' : 'New'} {getSectionTitle().slice(0, -1)}</h2>
-                            <button className="btn-icon btn-ghost" onClick={() => setShowForm(false)}>
-                                <X size={20} />
+                            <button className="btn-close" onClick={() => setShowForm(false)}>
+                                <X size={18} />
                             </button>
                         </div>
                         <div className="modal-body">
@@ -721,7 +614,7 @@ export default function SettingsPage() {
                                 className="input"
                                 value={formName}
                                 onChange={(e) => setFormName(e.target.value)}
-                                placeholder={`Enter ${getSectionTitle().slice(0, -1).toLowerCase()} name...`}
+                                placeholder={`Enter name...`}
                                 autoFocus
                             />
                         </div>
@@ -744,8 +637,8 @@ export default function SettingsPage() {
                     <div className="modal">
                         <div className="modal-header">
                             <h2>Change PIN</h2>
-                            <button className="btn-icon btn-ghost" onClick={() => setShowChangePin(false)}>
-                                <X size={20} />
+                            <button className="btn-close" onClick={() => setShowChangePin(false)}>
+                                <X size={18} />
                             </button>
                         </div>
                         <div className="modal-body">
@@ -756,57 +649,39 @@ export default function SettingsPage() {
                                 </div>
                             ) : (
                                 <div className="pin-form-stack">
-                                    {/* Current PIN */}
                                     <div className="pin-group">
                                         <label className="input-label">Current PIN</label>
-                                        <div
-                                            className={`pin-dots-input ${activePinField === 'current' ? 'active' : ''}`}
-                                            onClick={() => { setActivePinField('current'); pinInputRef.current?.focus(); }}
-                                        >
-                                            {renderPinDots(currentPin)}
+                                        <div className={`pin-dots-input ${activePinField === 'current' ? 'active' : ''}`} onClick={() => { setActivePinField('current'); setTimeout(() => pinInputRef.current?.focus(), 10); }}>
+                                            {[...Array(6)].map((_, i) => (<span key={i} className={`pin-dot ${activePinField === 'current' && currentPin.length === i ? 'current' : ''} ${currentPin.length > i ? 'filled' : ''}`} />))}
                                         </div>
                                     </div>
-
-                                    {/* New PIN */}
                                     <div className="pin-group">
                                         <label className="input-label">New PIN</label>
-                                        <div
-                                            className={`pin-dots-input ${activePinField === 'new' ? 'active' : ''}`}
-                                            onClick={() => { setActivePinField('new'); pinInputRef.current?.focus(); }}
-                                        >
-                                            {renderPinDots(newPin)}
+                                        <div className={`pin-dots-input ${activePinField === 'new' ? 'active' : ''}`} onClick={() => { setActivePinField('new'); setTimeout(() => pinInputRef.current?.focus(), 10); }}>
+                                            {[...Array(6)].map((_, i) => (<span key={i} className={`pin-dot ${activePinField === 'new' && newPin.length === i ? 'current' : ''} ${newPin.length > i ? 'filled' : ''}`} />))}
                                         </div>
                                     </div>
-
-                                    {/* Confirm PIN */}
                                     <div className="pin-group">
                                         <label className="input-label">Confirm New PIN</label>
-                                        <div
-                                            className={`pin-dots-input ${activePinField === 'confirm' ? 'active' : ''}`}
-                                            onClick={() => { setActivePinField('confirm'); pinInputRef.current?.focus(); }}
-                                        >
-                                            {renderPinDots(confirmPin)}
+                                        <div className={`pin-dots-input ${activePinField === 'confirm' ? 'active' : ''}`} onClick={() => { setActivePinField('confirm'); setTimeout(() => pinInputRef.current?.focus(), 10); }}>
+                                            {[...Array(6)].map((_, i) => (<span key={i} className={`pin-dot ${activePinField === 'confirm' && confirmPin.length === i ? 'current' : ''} ${confirmPin.length > i ? 'filled' : ''}`} />))}
                                         </div>
                                     </div>
-
-                                    {/* Hidden Input Controller */}
-                                    <input
-                                        ref={pinInputRef}
-                                        type="password"
-                                        inputMode="numeric"
-                                        className="hidden-controller"
-                                        maxLength={6}
-                                        value={
-                                            activePinField === 'current' ? currentPin :
-                                                activePinField === 'new' ? newPin : confirmPin
-                                        }
-                                        onChange={(e) => {
-                                            if (activePinField === 'current') handlePinChange(e, setCurrentPin);
-                                            else if (activePinField === 'new') handlePinChange(e, setNewPin);
-                                            else handlePinChange(e, setConfirmPin);
-                                        }}
+                                    <input 
+                                        ref={pinInputRef} 
+                                        type="tel" 
+                                        pattern="[0-9]*"
+                                        inputMode="numeric" 
+                                        className="hidden-controller" 
+                                        maxLength={6} 
+                                        autoComplete="one-time-code"
+                                        value={activePinField === 'current' ? currentPin : activePinField === 'new' ? newPin : confirmPin} 
+                                        onChange={(e) => { 
+                                            if (activePinField === 'current') handlePinChange(e, setCurrentPin); 
+                                            else if (activePinField === 'new') handlePinChange(e, setNewPin); 
+                                            else handlePinChange(e, setConfirmPin); 
+                                        }} 
                                     />
-
                                     {pinError && <div className="text-danger" style={{ textAlign: 'center', marginTop: '1rem', color: 'var(--expense-red)' }}>{pinError}</div>}
                                 </div>
                             )}
@@ -835,12 +710,7 @@ export default function SettingsPage() {
                         </div>
                         <div className="modal-actions">
                             <button className="btn btn-ghost" onClick={() => setShowImportConfirm(false)} disabled={importLoading} style={{ flex: 1 }}>Cancel</button>
-                            <button
-                                className="btn btn-primary"
-                                onClick={confirmImport}
-                                disabled={importLoading}
-                                style={{ flex: 1, background: 'var(--expense-red)', boxShadow: '0 0 20px var(--expense-red-glow)' }}
-                            >
+                            <button className="btn btn-primary" onClick={confirmImport} disabled={importLoading} style={{ flex: 1, background: 'var(--expense-red)', boxShadow: '0 0 20px var(--expense-red-glow)' }}>
                                 {importLoading ? <Loader2 size={18} className="spin" /> : 'Yes, Overwrite'}
                             </button>
                         </div>
@@ -848,49 +718,119 @@ export default function SettingsPage() {
                 </div>
             )}
 
-            {/* Bulk Insert Guide Modal */}
+            {/* Bulk Insert Results Modal */}
+            {bulkResults && (
+                <div className="modal-overlay" onClick={() => { if (bulkResults.summary.isDryRun) { setBulkResults(null); setPendingBulkData(null); } else { setBulkResults(null); } }}>
+                    <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <div className="header-with-status">
+                                <div className={`status-indicator ${bulkResults.summary.isDryRun ? 'warning' : 'success'}`}></div>
+                                <h2>{bulkResults.summary.isDryRun ? 'Review Transactions' : 'Import Successful'}</h2>
+                            </div>
+                            <button className="btn-close" onClick={() => { setBulkResults(null); setPendingBulkData(null); }}>
+                                <X size={18} />
+                            </button>
+                        </div>
+                        <div className="modal-body results-container">
+                            <div className="bulk-stats-banner">
+                                <div className="stat-pill">
+                                    <span className="label">Total</span>
+                                    <span className="value">{bulkResults.summary.total}</span>
+                                </div>
+                                <div className="stat-pill success">
+                                    <span className="label">{bulkResults.summary.isDryRun ? 'To Add' : 'Added'}</span>
+                                    <span className="value">{bulkResults.summary.added}</span>
+                                </div>
+                                <div className="stat-pill muted">
+                                    <span className="label">Skipped</span>
+                                    <span className="value">{bulkResults.summary.skipped}</span>
+                                </div>
+                            </div>
+
+                            <div className="results-scroll-area">
+                                {bulkResults.results.map((res, i) => (
+                                    <div key={i} className={`review-item ${res.status} ${res.type}`}>
+                                        <div className="item-type-icon">
+                                            {res.type === 'income' ? <TrendingUp size={16} /> : <TrendingUp size={16} style={{ transform: 'rotate(180deg)' }} />}
+                                        </div>
+                                        <div className="item-main">
+                                            <div className="item-top">
+                                                <span className="merchant">{res.merchant || 'Unnamed'}</span>
+                                                <span className={`amount ${res.type}`}>
+                                                    {res.type === 'expense' ? '-' : '+'}{formatCurrency(res.amount)}
+                                                </span>
+                                            </div>
+                                            <div className="item-bottom">
+                                                <span className="date">{res.date.split('T')[0]}</span>
+                                                <span className="dot">·</span>
+                                                <span className="category">{res.category_name || res.category_id || 'No Category'}</span>
+                                                {res.status === 'skipped' && (
+                                                    <>
+                                                        <span className="dot">·</span>
+                                                        <span className="skip-reason">Duplicate</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {bulkResults.summary.isDryRun && (
+                                            <div className="item-review-actions">
+                                                <button className="btn-icon-xs" onClick={() => handleOpenEditReview(res, i)}>
+                                                    <Edit2 size={12} />
+                                                </button>
+                                                <button className="btn-icon-xs danger" onClick={() => handleDiscardReviewItem(i)}>
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            </div>
+                                        )}
+                                        {res.status === 'skipped' && !bulkResults.summary.isDryRun && (
+                                            <div className="item-status-badge">
+                                                <AlertTriangle size={14} />
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="modal-actions">
+                            {bulkResults.summary.isDryRun ? (
+                                <>
+                                    <button className="btn btn-ghost" onClick={() => {
+                                        setBulkResults(null);
+                                        setPendingBulkData(null);
+                                    }} style={{ flex: 1 }}>Discard</button>
+                                    <button
+                                        className="btn btn-primary"
+                                        onClick={handleFinalBulkMerge}
+                                        style={{ flex: 2 }}
+                                        disabled={bulkLoading || bulkResults.summary.added === 0}
+                                    >
+                                        {bulkLoading ? <Loader2 size={18} className="spin" /> : `Import ${bulkResults.summary.added} Items`}
+                                    </button>
+                                </>
+                            ) : (
+                                <button className="btn btn-primary" onClick={() => { setBulkResults(null); window.location.reload(); }} style={{ width: '100%' }}>Done</button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Bulk Insert Guide */}
             {showBulkGuide && (
                 <div className="modal-overlay" onClick={() => setShowBulkGuide(false)}>
                     <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
                         <div className="modal-header">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                <div className="icon-circle" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}>
-                                    <FileJson size={20} />
-                                </div>
+                                <div className="icon-circle" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10B981' }}><FileJson size={20} /></div>
                                 <h2>Bulk Insert Guide</h2>
                             </div>
-                            <button className="btn-icon btn-ghost" onClick={() => setShowBulkGuide(false)}>
-                                <X size={20} />
+                            <button className="btn-close" onClick={() => setShowBulkGuide(false)}>
+                                <X size={18} />
                             </button>
                         </div>
                         <div className="modal-body">
-                            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
-                                To merge transactions, upload a JSON file containing an array of objects. 
-                                You can use <strong>internal IDs</strong> or <strong>readable names</strong> for categories and groups.
-                            </p>
-
+                            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>Upload a JSON file with an array of transaction objects.</p>
                             <div className="format-example-container">
-                                <div className="example-header">
-                                    <span>JSON Format Example</span>
-                                    <button className="btn-copy-example" onClick={() => {
-                                        const example = [
-                                            {
-                                                "type": "expense",
-                                                "amount": 50000,
-                                                "date": new Date().toISOString(),
-                                                "merchant": "Starbucks",
-                                                "category_name": "Food & Drinks",
-                                                "group_name": "Personal",
-                                                "payment_method_name": "Cash",
-                                                "note": "Morning coffee"
-                                            }
-                                        ];
-                                        navigator.clipboard.writeText(JSON.stringify(example, null, 2));
-                                        alert('Copied to clipboard!');
-                                    }}>
-                                        <Copy size={14} /> Copy
-                                    </button>
-                                </div>
                                 <pre className="code-block">
 {`[
   {
@@ -898,29 +838,87 @@ export default function SettingsPage() {
     "amount": 50000,
     "date": "2026-03-22T10:00:00Z",
     "merchant": "Starbucks",
-    "category_name": "Food & Drinks",
-    "group_name": "Personal",
-    "payment_method_name": "Cash",
-    "note": "Morning coffee"
+    "category_name": "Food & Drinks"
   },
   ...
 ]`}
                                 </pre>
                             </div>
-
-                            <div className="info-box-v2" style={{ marginTop: '20px' }}>
-                                <Info size={18} />
-                                <div>
-                                    <strong>Safe Merge</strong>
-                                    <p>The system automatically skips transactions that already exist in your database to prevent duplicates.</p>
-                                </div>
-                            </div>
                         </div>
                         <div className="modal-actions">
                             <button className="btn btn-ghost" onClick={() => setShowBulkGuide(false)} style={{ flex: 1 }}>Cancel</button>
-                            <button className="btn btn-primary" onClick={triggerBulkFileSelect} style={{ flex: 2 }}>
-                                Select JSON File
+                            <button className="btn btn-primary" onClick={triggerBulkFileSelect} style={{ flex: 2 }}>Select File</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Bulk Review Item Edit Modal */}
+            {editingReviewItem && (
+                <div className="modal-overlay" style={{ zIndex: 2000 }} onClick={() => setEditingReviewItem(null)}>
+                    <div className="modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2>Edit Item</h2>
+                            <button className="btn-close" onClick={() => setEditingReviewItem(null)}>
+                                <X size={18} />
                             </button>
+                        </div>
+                        <div className="modal-body">
+                            <div className="form-group">
+                                <label className="input-label">Type</label>
+                                <div className="type-switcher-v2">
+                                    <button 
+                                        className={`type-btn ${editingReviewItem.type === 'expense' ? 'active expense' : ''}`}
+                                        onClick={() => setEditingReviewItem({...editingReviewItem, type: 'expense'})}
+                                    >Expense</button>
+                                    <button 
+                                        className={`type-btn ${editingReviewItem.type === 'income' ? 'active income' : ''}`}
+                                        onClick={() => setEditingReviewItem({...editingReviewItem, type: 'income'})}
+                                    >Income</button>
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label className="input-label">Merchant</label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    value={editingReviewItem.merchant || ''}
+                                    onChange={e => setEditingReviewItem({...editingReviewItem, merchant: e.target.value})}
+                                />
+                            </div>
+                            <div className="form-row-v2">
+                                <div className="form-group">
+                                    <label className="input-label">Amount</label>
+                                    <input
+                                        type="number"
+                                        className="input"
+                                        value={editingReviewItem.amount}
+                                        onChange={e => setEditingReviewItem({...editingReviewItem, amount: e.target.value})}
+                                    />
+                                </div>
+                                <div className="form-group">
+                                    <label className="input-label">Date</label>
+                                    <input
+                                        type="date"
+                                        className="input"
+                                        value={editingReviewItem.date.split('T')[0]}
+                                        onChange={e => setEditingReviewItem({...editingReviewItem, date: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+                            <div className="form-group">
+                                <label className="input-label">Category</label>
+                                <input
+                                    type="text"
+                                    className="input"
+                                    value={editingReviewItem.category_name || editingReviewItem.category_id || ''}
+                                    onChange={e => setEditingReviewItem({...editingReviewItem, category_name: e.target.value})}
+                                />
+                            </div>
+                        </div>
+                        <div className="modal-actions">
+                            <button className="btn btn-ghost" onClick={() => setEditingReviewItem(null)}>Cancel</button>
+                            <button className="btn btn-primary" onClick={handleSaveReviewEdit}>Update Item</button>
                         </div>
                     </div>
                 </div>
