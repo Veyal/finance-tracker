@@ -34,11 +34,17 @@ router.get('/export', (req, res) => {
     }
 });
 
-// Transaction function for import
-const importData = db.transaction((data, userId) => {
-    // Disable foreign keys to allow deleting/inserting in any order
-    db.pragma('foreign_keys = OFF');
+// Helper to sanitize objects before insertion
+const sanitize = (obj, fields) => {
+    const result = {};
+    for (const field of fields) {
+        result[field] = obj[field] !== undefined ? obj[field] : null;
+    }
+    return result;
+};
 
+// Transaction function for import
+const runImportTransaction = db.transaction((data, userId) => {
     // Delete ONLY existing data for this user
     db.prepare('DELETE FROM transactions WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM categories WHERE user_id = ?').run(userId);
@@ -47,15 +53,6 @@ const importData = db.transaction((data, userId) => {
     db.prepare('DELETE FROM income_sources WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM lending_sources WHERE user_id = ?').run(userId);
     db.prepare('DELETE FROM savings_accounts WHERE user_id = ?').run(userId);
-
-    // Helper to sanitize objects before insertion
-    const sanitize = (obj, fields) => {
-        const result = {};
-        for (const field of fields) {
-            result[field] = obj[field] !== undefined ? obj[field] : null;
-        }
-        return result;
-    };
 
     // Insert categories
     const insertCategory = db.prepare('INSERT INTO categories (id, user_id, name, type, is_active, created_at, updated_at) VALUES (@id, @user_id, @name, @type, @is_active, @created_at, @updated_at)');
@@ -147,8 +144,6 @@ const importData = db.transaction((data, userId) => {
         row.updated_at = row.updated_at || new Date().toISOString();
         insertTransaction.run(row);
     }
-
-    db.pragma('foreign_keys = ON');
 });
 
 router.post('/import', (req, res) => {
@@ -159,12 +154,20 @@ router.post('/import', (req, res) => {
         }
 
         const userId = req.user.id;
-        importData(data, userId);
+        
+        // Disable foreign keys outside the transaction
+        db.pragma('foreign_keys = OFF');
+        
+        try {
+            runImportTransaction(data, userId);
+        } finally {
+            // Re-enable foreign keys
+            db.pragma('foreign_keys = ON');
+        }
 
         res.json({ success: true, message: 'Data imported successfully' });
     } catch (error) {
         console.error('Import error:', error);
-        db.pragma('foreign_keys = ON'); // Safety net
         res.status(500).json({ error: 'Failed to import data: ' + error.message });
     }
 });
