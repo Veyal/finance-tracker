@@ -521,6 +521,17 @@ router.get('/summary', (req, res) => {
     const userId = req.user.id;
     const { from, to } = req.query;
 
+    let dateFilter = '';
+    const dateParams = [];
+    if (from) {
+      dateFilter += ` AND date(date) >= ?`;
+      dateParams.push(from);
+    }
+    if (to) {
+      dateFilter += ` AND date(date) <= ?`;
+      dateParams.push(to);
+    }
+
     let sql = `
       SELECT 
         day,
@@ -540,7 +551,7 @@ router.get('/summary', (req, res) => {
           END as expense,
           CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END as income
         FROM transactions t
-        WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type != 'repayment'
+        WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type != 'repayment' ${dateFilter.replace(/date\(/g, 'date(t.')}
         
         UNION ALL
         
@@ -550,22 +561,12 @@ router.get('/summary', (req, res) => {
           -r.amount as expense,
           0 as income
         FROM transactions r
-        WHERE r.user_id = ? AND r.type = 'repayment' AND r.related_transaction_id IS NULL AND r.deleted_at IS NULL
+        WHERE r.user_id = ? AND r.type = 'repayment' AND r.related_transaction_id IS NULL AND r.deleted_at IS NULL ${dateFilter.replace(/date\(/g, 'date(r.')}
       )
-      WHERE 1=1
+      GROUP BY day ORDER BY day
     `;
-    const params = [userId, userId];
+    const params = [userId, ...dateParams, userId, ...dateParams];
 
-    if (from) {
-      sql += ` AND day >= ?`;
-      params.push(from);
-    }
-    if (to) {
-      sql += ` AND day <= ?`;
-      params.push(to);
-    }
-
-    sql += ` GROUP BY day ORDER BY day`;
     const summary = db.prepare(sql).all(...params);
 
     res.json(summary);
@@ -593,62 +594,45 @@ router.get('/insights', (req, res) => {
       dateParams.push(to);
     }
 
-    // By category
-    const byCategory = db.prepare(`
-      SELECT 
-        c.id, c.name, 
-        SUM(
-          t.amount - COALESCE((
-            SELECT SUM(r.amount) 
-            FROM transactions r 
-            WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
-          ), 0)
-        ) as total,
-        COUNT(*) as count
-      FROM transactions t
-      LEFT JOIN categories c ON t.category_id = c.id
-      WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type = ? ${dateFilter}
-      GROUP BY c.id
-      ORDER BY total DESC
-    `).all(userId, type, ...dateParams);
+    // Helper to generate the insight breakdown query
+    const getInsightSql = (column, label) => {
+      const table = column === 'category' ? 'categories' : (column === 'group' ? 'groups' : 'payment_methods');
+      const dateFilterT = dateFilter.replace(/date\(/g, 'date(t.');
+      return `
+        SELECT 
+          id, name, 
+          SUM(net_amount) as total,
+          COUNT(*) as count
+        FROM (
+          SELECT 
+            ${label}.id, ${label}.name, 
+            (t.amount - COALESCE((
+              SELECT SUM(r.amount) 
+              FROM transactions r 
+              WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+            ), 0)) as net_amount
+          FROM transactions t
+          LEFT JOIN ${table} ${label} ON t.${column}_id = ${label}.id
+          WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type = ? ${dateFilterT}
+          
+          UNION ALL
+          
+          SELECT 
+            ${label}.id, ${label}.name,
+            -t.amount as net_amount
+          FROM transactions t
+          LEFT JOIN ${table} ${label} ON t.${column}_id = ${label}.id
+          WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type = 'repayment' AND t.related_transaction_id IS NULL 
+          AND ? = 'expense' ${dateFilterT}
+        )
+        GROUP BY id, name
+        ORDER BY total DESC
+      `;
+    };
 
-    // By group
-    const byGroup = db.prepare(`
-      SELECT 
-        g.id, g.name, 
-        SUM(
-          t.amount - COALESCE((
-            SELECT SUM(r.amount) 
-            FROM transactions r 
-            WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
-          ), 0)
-        ) as total,
-        COUNT(*) as count
-      FROM transactions t
-      LEFT JOIN groups g ON t.group_id = g.id
-      WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type = ? ${dateFilter}
-      GROUP BY g.id
-      ORDER BY total DESC
-    `).all(userId, type, ...dateParams);
-
-    // By payment method
-    const byPaymentMethod = db.prepare(`
-      SELECT 
-        pm.id, pm.name, 
-        SUM(
-          t.amount - COALESCE((
-            SELECT SUM(r.amount) 
-            FROM transactions r 
-            WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
-          ), 0)
-        ) as total,
-        COUNT(*) as count
-      FROM transactions t
-      LEFT JOIN payment_methods pm ON t.payment_method_id = pm.id
-      WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type = ? ${dateFilter}
-      GROUP BY pm.id
-      ORDER BY total DESC
-    `).all(userId, type, ...dateParams);
+    const byCategory = db.prepare(getInsightSql('category', 'c')).all(userId, type, ...dateParams, userId, type, ...dateParams);
+    const byGroup = db.prepare(getInsightSql('group', 'g')).all(userId, type, ...dateParams, userId, type, ...dateParams);
+    const byPaymentMethod = db.prepare(getInsightSql('payment_method', 'pm')).all(userId, type, ...dateParams, userId, type, ...dateParams);
 
     // Totals
     const totals = db.prepare(`
