@@ -44,3 +44,12 @@
 - Root command: `npm run dev` (starts both client and server concurrently).
 - Client runs on `http://localhost:5173`.
 - Server runs on `http://localhost:3001` (proxied by Vite).
+
+## 🚢 Deployment & Production
+- **Production Server**: `tracker.veyal.org` (User: `des`, IP: `70.153.26.35`)
+- **Deployment Script**: Use `./deploy.sh` in the `finance-tracker` root directory.
+  - The script automatically builds the React client, syncs files via `rsync` (using `sshpass`), installs dependencies on the server, and restarts the PM2 process.
+- **Database Backup**: **Always** back up the production database before deploying.
+  - Command to backup: `mkdir -p backups/veyal && sshpass -p 'P@ssw0rd123!@#' scp -o StrictHostKeyChecking=no des@70.153.26.35:/home/des/apps/finance-tracker/server/finance.db* backups/veyal/`
+- **PM2 Config**: Managed via `ecosystem.config.cjs`.
+- **Note**: The Docker deployment (`deploy-docker.sh`) is currently ignored; stick to the standard PM2 deployment script.
