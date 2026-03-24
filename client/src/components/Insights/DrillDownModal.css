@@ -3,8 +3,10 @@
 }
 
 .drill-down-summary {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
     gap: var(--space-md);
     margin-bottom: var(--space-lg);
     padding: var(--space-md);
@@ -17,6 +19,8 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    min-width: 120px;
+    flex: 1;
 }
 
 .summary-label {
@@ -32,6 +36,22 @@
     font-size: var(--text-xl);
     font-weight: 700;
     color: var(--text-primary);
+    word-break: break-word;
+}
+
+@media (max-width: 480px) {
+    .summary-value {
+        font-size: var(--text-lg);
+    }
+    
+    .drill-down-summary {
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+    
+    .summary-item {
+        min-width: 100%;
+    }
 }
 
 .summary-value.amount-expense {
