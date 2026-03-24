@@ -11,6 +11,11 @@ import './TransactionsPage.css';
 
 // Helper function to group transactions by date
 function groupTransactionsByDate(txList, sortBy = 'date', sortOrder = 'desc') {
+    if (sortBy !== 'date') {
+        // Return a single group if not sorting by date
+        return [{ date: 'All Transactions', transactions: txList }];
+    }
+
     const groups = {};
     txList.forEach(tx => {
         const date = tx.date.split(/[T\s]/)[0]; // Get YYYY-MM-DD
@@ -23,20 +28,19 @@ function groupTransactionsByDate(txList, sortBy = 'date', sortOrder = 'desc') {
     // Convert to array
     const entries = Object.entries(groups);
 
-    // Only sort the groups by date if we are actually sorting by date
-    if (sortBy === 'date') {
-        entries.sort((a, b) => {
-            return sortOrder === 'desc'
-                ? b[0].localeCompare(a[0])
-                : a[0].localeCompare(b[0]);
-        });
-    }
+    // Sort the groups by date
+    entries.sort((a, b) => {
+        return sortOrder === 'desc'
+            ? b[0].localeCompare(a[0])
+            : a[0].localeCompare(b[0]);
+    });
 
     return entries.map(([date, transactions]) => ({ date, transactions }));
 }
 
 // Helper function to format date divider
 function formatDateDivider(dateStr) {
+    if (dateStr === 'All Transactions') return dateStr;
     const date = new Date(dateStr + 'T00:00:00');
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -63,7 +67,7 @@ import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSo
 import { CSS } from '@dnd-kit/utilities';
 
 // Sortable Transaction Item Wrapper with drag handle
-function SortableTransaction({ transaction, onEdit, onDelete, onClick }) {
+function SortableTransaction({ transaction, onEdit, onDelete, onClick, isSortable }) {
     const {
         attributes,
         listeners,
@@ -71,7 +75,7 @@ function SortableTransaction({ transaction, onEdit, onDelete, onClick }) {
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: transaction.id });
+    } = useSortable({ id: transaction.id, disabled: !isSortable });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -87,7 +91,7 @@ function SortableTransaction({ transaction, onEdit, onDelete, onClick }) {
                 onEdit={onEdit}
                 onDelete={onDelete}
                 onClick={onClick}
-                dragHandleProps={listeners}
+                dragHandleProps={isSortable ? listeners : null}
             />
         </div>
     );
@@ -264,7 +268,8 @@ export default function TransactionsPage() {
     function handleDragEnd(event) {
         const { active, over } = event;
 
-        if (over && active.id !== over.id) {
+        // Only allow reordering if sorting by date (default order)
+        if (over && active.id !== over.id && filters.sort_by === 'date') {
             setData((prev) => {
                 const oldIndex = prev.transactions.findIndex((t) => t.id === active.id);
                 const newIndex = prev.transactions.findIndex((t) => t.id === over.id);
@@ -543,6 +548,7 @@ export default function TransactionsPage() {
                                             onEdit={() => setEditingTx(tx)}
                                             onDelete={() => handleDelete(tx.id)}
                                             onClick={(tx) => setViewingTx(tx)}
+                                            isSortable={filters.sort_by === 'date'}
                                         />
                                     ))}
                                 </div>
