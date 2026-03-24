@@ -1,0 +1,84 @@
+<h2>Redesign Summary & Final Polish</h2>
+<p class="subtitle">Confirming the new Insights experience</p>
+
+<div class="section">
+  <h3>The New "Insights 2.0" Experience</h3>
+  <div class="mockup">
+    <div class="mockup-header">New Insights Dashboard</div>
+    <div class="mockup-body">
+      <!-- High Level Summary -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px;">
+        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">
+          <div style="font-size: 10px; opacity: 0.6;">NET SPENDING</div>
+          <div style="font-size: 18px; font-weight: bold; color: var(--accent-primary);">27.3M</div>
+          <div style="font-size: 10px; color: #ff6b6b;">+12% vs last month</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.05); padding: 12px; border-radius: 12px;">
+          <div style="font-size: 10px; opacity: 0.6;">DAILY AVG</div>
+          <div style="font-size: 18px; font-weight: bold;">880k</div>
+          <div style="font-size: 10px; color: #51cf66;">-5% vs usual</div>
+        </div>
+      </div>
+
+      <!-- Main Chart -->
+      <div style="background: rgba(255,255,255,0.03); padding: 16px; border-radius: 12px; margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+          <span style="font-weight: bold;">Daily Trend</span>
+          <span style="font-size: 12px; opacity: 0.6;">Recharts Engine</span>
+        </div>
+        <div style="height: 120px; border-left: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); position: relative; display: flex; align-items: flex-end; padding: 0 10px; gap: 15px;">
+           <!-- Area Chart Mock -->
+           <div style="position: absolute; bottom: 30%; left: 0; width: 100%; height: 40%; background: linear-gradient(transparent, rgba(255,126,179,0.1)); border-top: 2px solid var(--accent-primary); clip-path: polygon(0% 100%, 20% 40%, 40% 60%, 60% 20%, 80% 50%, 100% 30%, 100% 100%);"></div>
+           <div style="font-size: 8px; opacity: 0.3; width: 100%; display: flex; justify-content: space-between; position: absolute; bottom: -15px;">
+             <span>1 Mar</span><span>10 Mar</span><span>20 Mar</span><span>Today</span>
+           </div>
+        </div>
+      </div>
+
+      <!-- Category Comparison List -->
+      <div class="section">
+        <h4 style="margin-bottom: 12px;">Top Categories</h4>
+        
+        <div style="margin-bottom: 16px; cursor: pointer;" onclick="alert('Drilldown triggered!')">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <span>🍔 Food & Drinks</span>
+            <strong>8.3M <span style="color: #ff6b6b; font-size: 10px; font-weight: normal;">(+15%)</span></strong>
+          </div>
+          <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px;">
+            <div style="width: 85%; height: 100%; background: var(--accent-primary); border-radius: 4px;"></div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+            <span>⚡ Utilities</span>
+            <strong>1.7M <span style="color: #51cf66; font-size: 10px; font-weight: normal;">(-2%)</span></strong>
+          </div>
+          <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px;">
+            <div style="width: 30%; height: 100%; background: var(--accent-primary); border-radius: 4px;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>The Core Changes</h3>
+  <ul>
+    <li><strong>Accrual Basis Calculations</strong> — No more negative spending noise. Repayments reduce the category/month they belong to.</li>
+    <li><strong>Recharts Library</strong> — Moving to a pro-grade engine for the graphs.</li>
+    <li><strong>Comparative Logic</strong> — Every number gets a "vs last month" or "vs average" context.</li>
+    <li><strong>Interactive Drill-down</strong> — Tap any bar/chart point to see exactly which transactions are inside.</li>
+  </ul>
+</div>
+
+<div class="options">
+  <div class="option" data-choice="approve" onclick="toggleSelect(this)">
+    <div class="letter">✓</div>
+    <div class="content">
+      <h3>Looks Perfect</h3>
+      <p>Proceed with the redesign using these principles.</p>
+    </div>
+  </div>
+</div>

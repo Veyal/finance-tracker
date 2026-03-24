@@ -46,6 +46,7 @@
 - Server runs on `http://localhost:3001` (proxied by Vite).
 
 ## 🚢 Deployment & Production
+- **Deployment Policy**: **NEVER** run the deployment script or deploy to production unless explicitly requested by the user for the current task.
 - **Production Server**: `tracker.veyal.org` (User: `des`, IP: `70.153.26.35`)
 - **Deployment Script**: Use `./deploy.sh` in the `finance-tracker` root directory.
   - The script automatically builds the React client, syncs files via `rsync` (using `sshpass`), installs dependencies on the server, and restarts the PM2 process.

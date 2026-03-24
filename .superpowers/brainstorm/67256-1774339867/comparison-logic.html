@@ -1,0 +1,59 @@
+<h2>Refining The Spending Story</h2>
+<p class="subtitle">How should we measure your "spending story"?</p>
+
+<div class="options">
+  <div class="option" data-choice="last-month" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>vs Last Month</h3>
+      <p>Direct comparison: "You've spent 15% more on Groceries than you did last month."</p>
+    </div>
+  </div>
+  <div class="option" data-choice="rolling-average" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>vs 3-Month Average</h3>
+      <p>Trend based: "Groceries are 5% higher than your usual 3-month average."</p>
+    </div>
+  </div>
+  <div class="option" data-choice="weekly" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>vs Weekly Pace</h3>
+      <p>Pacing based: "You are spending 200k/day, which is faster than your usual pace."</p>
+    </div>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">Mockup: Category Breakdown</div>
+  <div class="mockup-body">
+    <div class="section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <strong>Dining Out</strong>
+        <span style="color: #ff6b6b;">+12% vs Avg</span>
+      </div>
+      <div style="background: rgba(255,255,255,0.1); height: 12px; border-radius: 6px; overflow: hidden;">
+        <div style="background: var(--accent-primary); width: 75%; height: 100%;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12px; margin-top: 4px; opacity: 0.6;">
+        <span>Current: 4.5M</span>
+        <span>Avg: 4.0M</span>
+      </div>
+    </div>
+    
+    <div class="section">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+        <strong>Transport</strong>
+        <span style="color: #51cf66;">-5% vs Avg</span>
+      </div>
+      <div style="background: rgba(255,255,255,0.1); height: 12px; border-radius: 6px; overflow: hidden;">
+        <div style="background: var(--accent-primary); width: 40%; height: 100%;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 12px; margin-top: 4px; opacity: 0.6;">
+        <span>Current: 1.2M</span>
+        <span>Avg: 1.3M</span>
+      </div>
+    </div>
+  </div>
+</div>

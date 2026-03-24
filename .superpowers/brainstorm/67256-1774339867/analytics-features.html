@@ -1,0 +1,58 @@
+<h2>Analytics & Data Visualization</h2>
+<p class="subtitle">Solving the "bad graph" problem with better UX</p>
+
+<div class="options">
+  <div class="option" data-choice="recharts" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Modern Chart Library</h3>
+      <p>Switch from custom SVGs to <strong>Recharts</strong> or <strong>Chart.js</strong> for smooth animations, accurate tooltips, and better responsiveness.</p>
+    </div>
+  </div>
+  <div class="option" data-choice="insights-cards" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Insight Highlights</h3>
+      <p>AI-style text cards: "Your spending on <strong>Coffee</strong> is 20% higher than last Tuesday" or "You have 3 upcoming subscriptions this week."</p>
+    </div>
+  </div>
+  <div class="option" data-choice="drilldown" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Interactive Drill-down</h3>
+      <p>Tap any category or chart point to instantly see the specific transactions behind the number.</p>
+    </div>
+  </div>
+</div>
+
+<div class="mockup">
+  <div class="mockup-header">New Analytics Concept</div>
+  <div class="mockup-body">
+    <div style="background: rgba(255,255,255,0.05); padding: 16px; border-radius: 12px; margin-bottom: 16px;">
+      <div style="font-size: 12px; text-transform: uppercase; opacity: 0.6; margin-bottom: 8px;">Spending Breakdown</div>
+      <div style="height: 100px; display: flex; align-items: flex-end; gap: 8px; padding-bottom: 20px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+        <div style="flex: 1; background: var(--accent-primary); height: 40%; border-radius: 4px 4px 0 0;"></div>
+        <div style="flex: 1; background: var(--accent-primary); height: 60%; border-radius: 4px 4px 0 0;"></div>
+        <div style="flex: 1; background: var(--accent-primary); height: 30%; border-radius: 4px 4px 0 0;"></div>
+        <div style="flex: 1; background: var(--accent-primary); height: 80%; border-radius: 4px 4px 0 0;"></div>
+        <div style="flex: 1; background: var(--accent-primary); height: 50%; border-radius: 4px 4px 0 0;"></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 10px; margin-top: 8px; opacity: 0.4;">
+        <span>MON</span><span>TUE</span><span>WED</span><span>THU</span><span>FRI</span>
+      </div>
+    </div>
+    
+    <div style="display: flex; gap: 12px;">
+      <div style="flex: 1; background: rgba(255,107,107,0.1); border: 1px solid rgba(255,107,107,0.2); padding: 12px; border-radius: 12px;">
+        <div style="font-size: 10px; color: #ff6b6b;">HIGHEST SPIKE</div>
+        <div style="font-size: 16px; font-weight: bold;">Food</div>
+        <div style="font-size: 12px; opacity: 0.6;">+45% today</div>
+      </div>
+      <div style="flex: 1; background: rgba(81,207,102,0.1); border: 1px solid rgba(81,207,102,0.2); padding: 12px; border-radius: 12px;">
+        <div style="font-size: 10px; color: #51cf66;">PREDICTION</div>
+        <div style="font-size: 16px; font-weight: bold;">2.4M</div>
+        <div style="font-size: 12px; opacity: 0.6;">Est. total</div>
+      </div>
+    </div>
+  </div>
+</div>
