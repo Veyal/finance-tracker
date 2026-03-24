@@ -9,7 +9,22 @@ import './TransactionForm.css';
 
 export default function TransactionForm({ transaction, options, onSave, onClose, onOptionsChange }) {
     const [type, setType] = useState(transaction?.type || 'expense');
-    const [amount, setAmount] = useState(transaction?.amount?.toString() || '');
+    
+    // Helper to format number with commas
+    const formatNumberWithCommas = (val) => {
+        if (val === undefined || val === null || val === '') return '';
+        // Remove non-numeric characters except dot
+        const clean = val.toString().replace(/[^0-9.]/g, '');
+        const parts = clean.split('.');
+        // Add commas to integer part
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        return parts.join('.');
+    };
+
+    const [amount, setAmount] = useState(() => {
+        return formatNumberWithCommas(transaction?.amount || '');
+    });
+
     const [date, setDate] = useState(() => {
         if (transaction?.date) {
             return transaction.date.split(/[T\s]/)[0];
@@ -54,7 +69,9 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
         e.preventDefault();
         if (loading) return;
 
-        const amountNum = parseFloat(amount);
+        // Strip commas before parsing
+        const cleanAmount = amount.toString().replace(/,/g, '');
+        const amountNum = parseFloat(cleanAmount);
         if (!amountNum || amountNum <= 0) {
             setError('Please enter a valid amount');
             return;
@@ -90,8 +107,14 @@ export default function TransactionForm({ transaction, options, onSave, onClose,
     }
 
     function handleAmountChange(e) {
-        const value = e.target.value.replace(/[^0-9.]/g, '');
-        setAmount(value);
+        const value = e.target.value;
+        // Allow only numbers, commas, and a single decimal point
+        if (/^[0-9,.]*$/.test(value)) {
+            // Check for multiple dots
+            if ((value.match(/\./g) || []).length > 1) return;
+            
+            setAmount(formatNumberWithCommas(value));
+        }
     }
 
     return (
