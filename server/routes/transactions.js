@@ -90,34 +90,26 @@ router.get('/', (req, res) => {
     const transactions = db.prepare(sql).all(...params);
 
     // Get totals for the same filters
-    // expense_total = (sum of expenses) - (sum of repayments in the same period)
-    const repaymentParams = [userId];
-    let repaymentFilter = '';
-    if (from) {
-      repaymentFilter += ` AND date(r.date) >= ?`;
-      repaymentParams.push(from);
-    }
-    if (to) {
-      repaymentFilter += ` AND date(r.date) <= ?`;
-      repaymentParams.push(to);
-    }
-
+    // expense_total = SUM(expense - all its repayments) for all expenses in this period
+    // PLUS SUM(-repayment) for any unlinked repayments in this period
     let totalsSql = `
       SELECT 
-        (
-          COALESCE(SUM(CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END), 0) -
-          COALESCE((
-            SELECT SUM(r.amount) 
-            FROM transactions r 
-            WHERE r.user_id = ? AND r.type = 'repayment' AND r.deleted_at IS NULL
-            ${repaymentFilter}
-          ), 0)
-        ) as expense_total,
-        COALESCE(SUM(CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END), 0) as income_total
-      FROM transactions t
-      WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type != 'repayment'
+        SUM(expense_net) as expense_total,
+        SUM(income_val) as income_total
+      FROM (
+        /* Part 1: Expenses and Incomes in this period */
+        SELECT 
+          CASE WHEN t.type = 'expense' THEN 
+            t.amount - COALESCE((
+              SELECT SUM(r.amount) FROM transactions r 
+              WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+            ), 0)
+          ELSE 0 END as expense_net,
+          CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END as income_val
+        FROM transactions t
+        WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type != 'repayment'
     `;
-    const totalsParams = [...repaymentParams, userId];
+    const totalsParams = [userId];
 
     if (from) {
       totalsSql += ` AND date(t.date) >= ?`;
@@ -147,6 +139,29 @@ router.get('/', (req, res) => {
       totalsSql += ` AND (t.note LIKE ? OR t.merchant LIKE ?)`;
       totalsParams.push(`%${q}%`, `%${q}%`);
     }
+
+    // Part 2: Add unlinked repayments that occurred in this period
+    // These reduce the total expense directly
+    totalsSql += `
+        UNION ALL
+        SELECT 
+          -r.amount as expense_net,
+          0 as income_val
+        FROM transactions r
+        WHERE r.user_id = ? AND r.type = 'repayment' AND r.related_transaction_id IS NULL AND r.deleted_at IS NULL
+    `;
+    totalsParams.push(userId);
+
+    if (from) {
+      totalsSql += ` AND date(r.date) >= ?`;
+      totalsParams.push(from);
+    }
+    if (to) {
+      totalsSql += ` AND date(r.date) <= ?`;
+      totalsParams.push(to);
+    }
+
+    totalsSql += `)`;
 
     const totals = db.prepare(totalsSql).get(...totalsParams);
 
@@ -512,19 +527,30 @@ router.get('/summary', (req, res) => {
         SUM(expense) as expense,
         SUM(income) as income
       FROM (
+        /* Expenses and Incomes grouped by their own date, with linked repayments subtracted */
         SELECT 
           date(t.date) as day,
-          CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END as expense,
+          CASE 
+            WHEN t.type = 'expense' THEN 
+              t.amount - COALESCE((
+                SELECT SUM(r.amount) FROM transactions r 
+                WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+              ), 0)
+            ELSE 0 
+          END as expense,
           CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END as income
         FROM transactions t
         WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type != 'repayment'
+        
         UNION ALL
+        
+        /* Unlinked repayments grouped by the day they occurred */
         SELECT 
           date(r.date) as day,
           -r.amount as expense,
           0 as income
         FROM transactions r
-        WHERE r.user_id = ? AND r.type = 'repayment' AND r.deleted_at IS NULL
+        WHERE r.user_id = ? AND r.type = 'repayment' AND r.related_transaction_id IS NULL AND r.deleted_at IS NULL
       )
       WHERE 1=1
     `;
@@ -570,89 +596,86 @@ router.get('/insights', (req, res) => {
     // By category
     const byCategory = db.prepare(`
       SELECT 
-        id, name, SUM(amount) as total, COUNT(*) as count
-      FROM (
-        SELECT 
-          c.id, c.name, t.amount
-        FROM transactions t
-        LEFT JOIN categories c ON t.category_id = c.id
-        WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type = ? ${dateFilter}
-        UNION ALL
-        SELECT 
-          c.id, c.name, -r.amount as amount
-        FROM transactions r
-        LEFT JOIN transactions t ON r.related_transaction_id = t.id
-        LEFT JOIN categories c ON t.category_id = c.id
-        WHERE r.user_id = ? AND r.deleted_at IS NULL AND r.type = 'repayment' AND ? = 'expense' ${dateFilter.replace(/date\(/g, 'date(r.')}
-      )
-      WHERE id IS NOT NULL
-      GROUP BY id
+        c.id, c.name, 
+        SUM(
+          t.amount - COALESCE((
+            SELECT SUM(r.amount) 
+            FROM transactions r 
+            WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+          ), 0)
+        ) as total,
+        COUNT(*) as count
+      FROM transactions t
+      LEFT JOIN categories c ON t.category_id = c.id
+      WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type = ? ${dateFilter}
+      GROUP BY c.id
       ORDER BY total DESC
-    `).all(userId, type, ...dateParams, userId, type, ...dateParams);
+    `).all(userId, type, ...dateParams);
 
     // By group
     const byGroup = db.prepare(`
       SELECT 
-        id, name, SUM(amount) as total, COUNT(*) as count
-      FROM (
-        SELECT 
-          g.id, g.name, t.amount
-        FROM transactions t
-        LEFT JOIN groups g ON t.group_id = g.id
-        WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type = ? ${dateFilter}
-        UNION ALL
-        SELECT 
-          g.id, g.name, -r.amount as amount
-        FROM transactions r
-        LEFT JOIN transactions t ON r.related_transaction_id = t.id
-        LEFT JOIN groups g ON t.group_id = g.id
-        WHERE r.user_id = ? AND r.deleted_at IS NULL AND r.type = 'repayment' AND ? = 'expense' ${dateFilter.replace(/date\(/g, 'date(r.')}
-      )
-      WHERE id IS NOT NULL
-      GROUP BY id
+        g.id, g.name, 
+        SUM(
+          t.amount - COALESCE((
+            SELECT SUM(r.amount) 
+            FROM transactions r 
+            WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+          ), 0)
+        ) as total,
+        COUNT(*) as count
+      FROM transactions t
+      LEFT JOIN groups g ON t.group_id = g.id
+      WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type = ? ${dateFilter}
+      GROUP BY g.id
       ORDER BY total DESC
-    `).all(userId, type, ...dateParams, userId, type, ...dateParams);
+    `).all(userId, type, ...dateParams);
 
     // By payment method
     const byPaymentMethod = db.prepare(`
       SELECT 
-        id, name, SUM(amount) as total, COUNT(*) as count
-      FROM (
-        SELECT 
-          pm.id, pm.name, t.amount
-        FROM transactions t
-        LEFT JOIN payment_methods pm ON t.payment_method_id = pm.id
-        WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type = ? ${dateFilter}
-        UNION ALL
-        SELECT 
-          pm.id, pm.name, -r.amount as amount
-        FROM transactions r
-        LEFT JOIN transactions t ON r.related_transaction_id = t.id
-        LEFT JOIN payment_methods pm ON t.payment_method_id = pm.id
-        WHERE r.user_id = ? AND r.deleted_at IS NULL AND r.type = 'repayment' AND ? = 'expense' ${dateFilter.replace(/date\(/g, 'date(r.')}
-      )
-      WHERE id IS NOT NULL
-      GROUP BY id
+        pm.id, pm.name, 
+        SUM(
+          t.amount - COALESCE((
+            SELECT SUM(r.amount) 
+            FROM transactions r 
+            WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+          ), 0)
+        ) as total,
+        COUNT(*) as count
+      FROM transactions t
+      LEFT JOIN payment_methods pm ON t.payment_method_id = pm.id
+      WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type = ? ${dateFilter}
+      GROUP BY pm.id
       ORDER BY total DESC
-    `).all(userId, type, ...dateParams, userId, type, ...dateParams);
+    `).all(userId, type, ...dateParams);
 
     // Totals
     const totals = db.prepare(`
       SELECT 
-        SUM(expense) as expense,
-        SUM(income) as income
+        SUM(expense_net) as expense,
+        SUM(income_val) as income
       FROM (
+        /* Part 1: Linked Net Expenses and Incomes in this period */
         SELECT 
-          CASE WHEN t.type = 'expense' THEN t.amount ELSE 0 END as expense,
-          CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END as income
+          CASE WHEN t.type = 'expense' THEN 
+            t.amount - COALESCE((
+              SELECT SUM(r.amount) FROM transactions r 
+              WHERE r.related_transaction_id = t.id AND r.type = 'repayment' AND r.deleted_at IS NULL
+            ), 0)
+          ELSE 0 END as expense_net,
+          CASE WHEN t.type = 'income' THEN t.amount ELSE 0 END as income_val
         FROM transactions t
         WHERE t.user_id = ? AND t.deleted_at IS NULL AND t.type != 'repayment' ${dateFilter}
+        
         UNION ALL
+        
+        /* Part 2: Unlinked Repayments in this period */
         SELECT 
-          -r.amount as expense,
-          0 as income
+          -r.amount as expense_net,
+          0 as income_val
         FROM transactions r
-        WHERE r.user_id = ? AND r.type = 'repayment' AND r.deleted_at IS NULL ${dateFilter.replace(/date\(/g, 'date(r.')}
+        WHERE r.user_id = ? AND r.type = 'repayment' AND r.related_transaction_id IS NULL AND r.deleted_at IS NULL ${dateFilter.replace(/date\(/g, 'date(r.')}
       )
     `).get(userId, ...dateParams, userId, ...dateParams);
 
