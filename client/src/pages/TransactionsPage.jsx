@@ -10,7 +10,7 @@ import PrivacyToggle from '../components/PrivacyToggle';
 import './TransactionsPage.css';
 
 // Helper function to group transactions by date
-function groupTransactionsByDate(txList) {
+function groupTransactionsByDate(txList, sortBy = 'date', sortOrder = 'desc') {
     const groups = {};
     txList.forEach(tx => {
         const date = tx.date.split(/[T\s]/)[0]; // Get YYYY-MM-DD
@@ -20,10 +20,19 @@ function groupTransactionsByDate(txList) {
         groups[date].push(tx);
     });
 
-    // Convert to array sorted by date descending
-    return Object.entries(groups)
-        .sort((a, b) => b[0].localeCompare(a[0]))
-        .map(([date, transactions]) => ({ date, transactions }));
+    // Convert to array
+    const entries = Object.entries(groups);
+
+    // Only sort the groups by date if we are actually sorting by date
+    if (sortBy === 'date') {
+        entries.sort((a, b) => {
+            return sortOrder === 'desc'
+                ? b[0].localeCompare(a[0])
+                : a[0].localeCompare(b[0]);
+        });
+    }
+
+    return entries.map(([date, transactions]) => ({ date, transactions }));
 }
 
 // Helper function to format date divider
@@ -114,6 +123,8 @@ export default function TransactionsPage() {
         group_id: '',
         payment_method_id: '',
         q: '',
+        sort_by: 'date',
+        sort_order: 'desc',
     });
 
     // Track active preset for highlighting
@@ -147,7 +158,7 @@ export default function TransactionsPage() {
 
     useEffect(() => {
         loadData();
-    }, [filters.from, filters.to, filters.type, filters.category_id, filters.group_id, filters.payment_method_id, options.savings]);
+    }, [filters.from, filters.to, filters.type, filters.category_id, filters.group_id, filters.payment_method_id, filters.sort_by, filters.sort_order, options.savings]);
 
     useEffect(() => {
         loadOptions();
@@ -164,6 +175,8 @@ export default function TransactionsPage() {
             if (filters.group_id) params.group_id = filters.group_id;
             if (filters.payment_method_id) params.payment_method_id = filters.payment_method_id;
             if (filters.q) params.q = filters.q;
+            params.sort_by = filters.sort_by;
+            params.sort_order = filters.sort_order;
             params.limit = 100;
 
             const result = await transactions.list(params);
@@ -223,6 +236,8 @@ export default function TransactionsPage() {
             group_id: '',
             payment_method_id: '',
             q: '',
+            sort_by: 'date',
+            sort_order: 'desc',
         });
     }
 
@@ -447,6 +462,33 @@ export default function TransactionsPage() {
                                 ))}
                             </select>
                         </div>
+                        <div className="filter-group">
+                            <label className="input-label">Sort By</label>
+                            <select
+                                className="select"
+                                value={filters.sort_by}
+                                onChange={(e) => setFilters(prev => ({ ...prev, sort_by: e.target.value }))}
+                            >
+                                <option value="date">Date</option>
+                                <option value="amount">Amount</option>
+                                <option value="merchant">Merchant</option>
+                            </select>
+                        </div>
+                        <div className="filter-group">
+                            <label className="input-label">Order</label>
+                            <select
+                                className="select"
+                                value={filters.sort_order}
+                                onChange={(e) => setFilters(prev => ({ ...prev, sort_order: e.target.value }))}
+                            >
+                                <option value="desc">
+                                    {filters.sort_by === 'date' ? 'Newest First' : filters.sort_by === 'amount' ? 'Highest First' : 'Z to A'}
+                                </option>
+                                <option value="asc">
+                                    {filters.sort_by === 'date' ? 'Oldest First' : filters.sort_by === 'amount' ? 'Lowest First' : 'A to Z'}
+                                </option>
+                            </select>
+                        </div>
                     </div>
 
                     <button type="button" className="btn btn-primary" onClick={handleApplyFilters}>
@@ -489,7 +531,7 @@ export default function TransactionsPage() {
                             items={data.transactions.map(t => t.id)}
                             strategy={verticalListSortingStrategy}
                         >
-                            {groupTransactionsByDate(data.transactions).map(({ date, transactions: txs }) => (
+                            {groupTransactionsByDate(data.transactions, filters.sort_by, filters.sort_order).map(({ date, transactions: txs }) => (
                                 <div key={date} className="date-group">
                                     <div className="date-divider">
                                         <span className="date-divider-text">{formatDateDivider(date)}</span>

@@ -8,7 +8,7 @@ const router = Router();
 router.get('/', (req, res) => {
   try {
     const userId = req.user.id;
-    const { from, to, type, group_id, category_id, payment_method_id, needs_review, q, limit = 50, cursor, include_repayments } = req.query;
+    const { from, to, type, group_id, category_id, payment_method_id, needs_review, q, limit = 50, cursor, include_repayments, sort_by = 'date', sort_order = 'desc' } = req.query;
 
     let sql = `
       SELECT t.*, 
@@ -76,7 +76,15 @@ router.get('/', (req, res) => {
       params.push(cursor);
     }
 
-    sql += ` ORDER BY t.date DESC, t.sort_order ASC, t.created_at DESC LIMIT ?`;
+    // Determine sort column
+    let sortColumn = 't.date';
+    if (sort_by === 'amount') sortColumn = 't.amount';
+    if (sort_by === 'merchant') sortColumn = 't.merchant';
+    
+    // Determine sort order
+    const order = sort_order.toLowerCase() === 'asc' ? 'ASC' : 'DESC';
+
+    sql += ` ORDER BY ${sortColumn} ${order}, t.sort_order ASC, t.created_at DESC LIMIT ?`;
     params.push(parseInt(limit));
 
     const transactions = db.prepare(sql).all(...params);
