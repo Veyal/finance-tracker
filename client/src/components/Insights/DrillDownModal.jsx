@@ -36,7 +36,8 @@ export default function DrillDownModal({ isOpen, onClose, title, filters, onTran
             setLoading(true);
             setError(null);
             const result = await transactionsApi.list(filters);
-            setTransactions(result);
+            // result is { transactions: [], totals: {}, next_cursor: ... }
+            setTransactions(result.transactions || []);
         } catch (err) {
             console.error('Failed to load drill-down transactions:', err);
             setError('Failed to load transactions');
