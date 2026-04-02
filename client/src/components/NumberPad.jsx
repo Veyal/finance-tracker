@@ -1,10 +1,18 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Delete } from 'lucide-react';
 import './NumberPad.css';
 
 export default function NumberPad({ onInput, onDelete, onClear, onDone, value }) {
     const keys = [1, 2, 3, 4, 5, 6, 7, 8, 9, '.', 0, 'delete'];
     const [ripples, setRipples] = useState({});
+    const timerRefs = useRef([]);
+
+    // Clean up timers on unmount
+    useEffect(() => {
+        return () => {
+            timerRefs.current.forEach(id => clearTimeout(id));
+        };
+    }, []);
 
     const handleTouchStart = (e) => {
         // Prevent default touch behavior (zooming, scrolling) on keypad
@@ -28,7 +36,7 @@ export default function NumberPad({ onInput, onDelete, onClear, onDone, value })
         }));
 
         // Remove ripple after animation
-        setTimeout(() => {
+        const timerId = setTimeout(() => {
             setRipples(prev => {
                 const copy = { ...prev };
                 if (copy[key]?.id === id) {
@@ -37,6 +45,7 @@ export default function NumberPad({ onInput, onDelete, onClear, onDone, value })
                 return copy;
             });
         }, 400);
+        timerRefs.current.push(timerId);
     }, []);
 
     const handleKeyPress = useCallback((key, e) => {
