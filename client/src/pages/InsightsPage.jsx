@@ -100,11 +100,12 @@ export default function InsightsPage() {
         : 0;
 
     // Calculate period comparison
-    const periodChange = prevPeriodTotal > 0
+    const hasBaseline = prevPeriodTotal > 0;
+    const periodChange = hasBaseline
         ? ((currentTotal - prevPeriodTotal) / prevPeriodTotal * 100).toFixed(0)
-        : 0;
-    const isIncrease = periodChange > 0;
-    const absChange = Math.abs(periodChange);
+        : null;
+    const isIncrease = periodChange !== null && Number(periodChange) > 0;
+    const absChange = periodChange !== null ? Math.abs(Number(periodChange)) : null;
 
     // Callbacks for components
     const handlePointClick = (point) => {
@@ -182,14 +183,16 @@ export default function InsightsPage() {
                                     <span className={`stat-card-value amount-${viewType}`}>
                                         {formatAmount(currentTotal)}
                                     </span>
-                                    {prevPeriodTotal > 0 && (
+                                    {(prevPeriodTotal > 0 || currentTotal > 0) && (
                                         <div className={`change-badge ${
-                                            viewType === 'expense' 
-                                                ? (isIncrease ? 'negative' : 'positive')
-                                                : (isIncrease ? 'positive' : 'negative')
+                                            absChange === null
+                                                ? 'new'
+                                                : viewType === 'expense'
+                                                    ? (isIncrease ? 'negative' : 'positive')
+                                                    : (isIncrease ? 'positive' : 'negative')
                                         }`}>
-                                            {isIncrease ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />}
-                                            <span>{absChange}%</span>
+                                            {absChange !== null && (isIncrease ? <ArrowUpRight size={12} /> : <ArrowDownRight size={12} />)}
+                                            <span>{absChange !== null ? `${absChange}%` : 'New'}</span>
                                         </div>
                                     )}
                                 </div>
