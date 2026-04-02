@@ -28,7 +28,8 @@ function SortableTransaction({ transaction, onEdit, onDelete, onClick }) {
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1,
+        opacity: isDragging ? 0.85 : 1,
+        boxShadow: isDragging ? '0 8px 32px rgba(0,0,0,0.4)' : undefined,
         zIndex: isDragging ? 100 : 'auto',
     };
 
