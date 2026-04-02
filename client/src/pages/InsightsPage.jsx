@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { TrendingDown, TrendingUp, Zap, Activity, Filter, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { transactions } from '../api/api';
-import { SpendingTrendChart, CategoryBreakdown, DrillDownModal } from '../components/Insights';
+import { SpendingTrendChart, CategoryBreakdown, DrillDownModal, InsightsCalendar } from '../components/Insights';
 import { usePrivacy } from '../context/PrivacyContext';
 import { formatCurrency } from '../utils/format';
 import './InsightsPage.css';
@@ -129,6 +129,15 @@ export default function InsightsPage() {
         if (type === 'paymentMethod') filters.payment_method_id = item.id;
 
         setDrillDownFilters(filters);
+        setShowDrillDown(true);
+    };
+
+    const handleCalendarDayClick = (ds) => {
+        const label = new Date(ds + 'T00:00:00').toLocaleDateString('en-US', {
+            weekday: 'long', month: 'long', day: 'numeric'
+        });
+        setDrillDownTitle(`Transactions on ${label}`);
+        setDrillDownFilters({ date: ds });
         setShowDrillDown(true);
     };
 
@@ -277,6 +286,11 @@ export default function InsightsPage() {
                                 />
                             </div>
                         </div>
+                    </section>
+
+                    {/* Calendar Section */}
+                    <section className="insights-section calendar-section animate-slide-up" style={{ animationDelay: '0.6s' }}>
+                        <InsightsCalendar onDayClick={handleCalendarDayClick} />
                     </section>
                 </div>
             )}
