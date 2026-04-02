@@ -42,14 +42,16 @@ export default function InsightsPage() {
                 prevFrom = twoWeeksAgo.toISOString().split('T')[0];
                 prevTo = weekAgo.toISOString().split('T')[0];
             } else if (range === 'month') {
-                from = new Date(today.getFullYear(), today.getMonth(), 1).toISOString().split('T')[0];
+                const thirtyDaysAgo = new Date(today);
+                thirtyDaysAgo.setDate(today.getDate() - 30);
+                from = thirtyDaysAgo.toISOString().split('T')[0];
                 to = today.toISOString().split('T')[0];
 
-                // Previous month
-                const prevMonthEnd = new Date(today.getFullYear(), today.getMonth(), 0);
-                const prevMonthStart = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-                prevFrom = prevMonthStart.toISOString().split('T')[0];
-                prevTo = prevMonthEnd.toISOString().split('T')[0];
+                // Previous 30 days
+                const sixtyDaysAgo = new Date(thirtyDaysAgo);
+                sixtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                prevFrom = sixtyDaysAgo.toISOString().split('T')[0];
+                prevTo = thirtyDaysAgo.toISOString().split('T')[0];
             } else {
                 from = new Date(today.getFullYear(), 0, 1).toISOString().split('T')[0];
                 to = today.toISOString().split('T')[0];
@@ -151,14 +153,18 @@ export default function InsightsPage() {
                 
                 <div className="range-selector-row">
                     <div className="range-chips">
-                        {['week', 'month', 'year'].map(r => (
+                        {[
+                            { key: 'week', label: 'Last 7 Days' },
+                            { key: 'month', label: 'Last 30 Days' },
+                            { key: 'year', label: 'This Year' },
+                        ].map(({ key, label }) => (
                             <button
-                                key={r}
+                                key={key}
                                 type="button"
-                                className={`range-chip ${range === r ? 'active' : ''}`}
-                                onClick={() => setRange(r)}
+                                className={`range-chip ${range === key ? 'active' : ''}`}
+                                onClick={() => setRange(key)}
                             >
-                                This {r}
+                                {label}
                             </button>
                         ))}
                     </div>
