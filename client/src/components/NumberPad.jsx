@@ -44,6 +44,8 @@ export default function NumberPad({ onInput, onDelete, onClear, onDone, value })
                 }
                 return copy;
             });
+            // Remove this timer from the tracking array
+            timerRefs.current = timerRefs.current.filter(t => t !== timerId);
         }, 400);
         timerRefs.current.push(timerId);
     }, []);

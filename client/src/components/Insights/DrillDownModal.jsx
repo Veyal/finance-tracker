@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { X, Loader2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { transactions as transactionsApi } from '../../api/api';
@@ -31,9 +31,9 @@ export default function DrillDownModal({ isOpen, onClose, title, filters, onTran
         if (isOpen && filters) {
             loadTransactions();
         }
-    }, [isOpen, filtersKey]);
+    }, [isOpen, filtersKey, loadTransactions]);
 
-    async function loadTransactions() {
+    const loadTransactions = useCallback(async function loadTransactions() {
         try {
             setLoading(true);
             setError(null);
@@ -47,7 +47,7 @@ export default function DrillDownModal({ isOpen, onClose, title, filters, onTran
         } finally {
             setLoading(false);
         }
-    }
+    }, [filters]);
 
     if (!isOpen) return null;
 
