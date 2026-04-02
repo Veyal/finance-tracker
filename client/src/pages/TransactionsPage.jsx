@@ -80,8 +80,9 @@ function SortableTransaction({ transaction, onEdit, onDelete, onClick, isSortabl
     const style = {
         transform: CSS.Transform.toString(transform),
         transition,
-        opacity: isDragging ? 0.5 : 1,
+        opacity: isDragging ? 0.85 : 1,
         zIndex: isDragging ? 100 : 'auto',
+        boxShadow: isDragging ? '0 8px 32px rgba(0,0,0,0.4)' : undefined,
     };
 
     return (
@@ -416,7 +417,11 @@ export default function TransactionsPage() {
                                 type="date"
                                 className="input"
                                 value={filters.from}
-                                onChange={(e) => setFilters(prev => ({ ...prev, from: e.target.value }))}
+                                onChange={(e) => {
+                                    const newFrom = e.target.value;
+                                    if (filters.to && newFrom > filters.to) return;
+                                    setFilters(prev => ({ ...prev, from: newFrom }));
+                                }}
                             />
                         </div>
                         <div className="filter-group">
@@ -425,7 +430,11 @@ export default function TransactionsPage() {
                                 type="date"
                                 className="input"
                                 value={filters.to}
-                                onChange={(e) => setFilters(prev => ({ ...prev, to: e.target.value }))}
+                                onChange={(e) => {
+                                    const newTo = e.target.value;
+                                    if (filters.from && newTo < filters.from) return;
+                                    setFilters(prev => ({ ...prev, to: newTo }));
+                                }}
                             />
                         </div>
                         <div className="filter-group">
