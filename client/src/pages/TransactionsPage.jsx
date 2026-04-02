@@ -190,9 +190,8 @@ export default function TransactionsPage() {
             if (options.savings && options.savings.length > 0) {
                 result.transactions = result.transactions.map(tx => {
                     if (tx.type === 'savings_deposit' || tx.type === 'savings_withdrawal') {
-                        // Try to find the saving account
-                        // Assuming the ID field might be saving_id, savings_id, or account_id
-                        const savingId = tx.saving_id || tx.savings_id || tx.account_id;
+                        // Use the correct field name from the transactions table
+                        const savingId = tx.savings_account_id;
                         if (savingId) {
                             const account = options.savings.find(s => s.id === savingId);
                             if (account) {
