@@ -137,6 +137,7 @@ export default function InsightsPage() {
             weekday: 'long', month: 'long', day: 'numeric'
         });
         setDrillDownTitle(`Transactions on ${label}`);
+        // No type filter — calendar shows net (all types), so drill-down shows all types too
         setDrillDownFilters({ date: ds });
         setShowDrillDown(true);
     };

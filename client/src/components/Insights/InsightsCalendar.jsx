@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChevronLeft, ChevronRight, Loader2, AlertCircle, CalendarDays } from 'lucide-react';
 import { transactions } from '../../api/api';
 import { usePrivacy } from '../../context/PrivacyContext';
@@ -21,8 +21,9 @@ export default function InsightsCalendar({ onDayClick }) {
         try {
             setLoading(true);
             setError(null);
-            const firstDay = new Date(year, month, 1).toISOString().split('T')[0];
-            const lastDay = new Date(year, month + 1, 0).toISOString().split('T')[0];
+            const pad = (n) => String(n).padStart(2, '0');
+            const firstDay = `${year}-${pad(month + 1)}-01`;
+            const lastDay = `${year}-${pad(month + 1)}-${pad(new Date(year, month + 1, 0).getDate())}`;
             const data = await transactions.summary({ from: firstDay, to: lastDay });
             setDailyData(Array.isArray(data) ? data : []);
         } catch (err) {
@@ -37,29 +38,31 @@ export default function InsightsCalendar({ onDayClick }) {
         loadData();
     }, [loadData]);
 
-    // Build a lookup map: "YYYY-MM-DD" -> { expense, income }
-    const dataMap = {};
-    dailyData.forEach(d => { dataMap[d.day] = d; });
+    const dataMap = useMemo(() => {
+        const map = {};
+        dailyData.forEach(d => { map[d.day] = d; });
+        return map;
+    }, [dailyData]);;
 
-    // Build calendar grid cells
-    function getDays() {
-        const firstWeekday = new Date(year, month, 1).getDay(); // 0=Sun
+    const cells = useMemo(() => {
+        const firstWeekday = new Date(year, month, 1).getDay();
         const daysInMonth = new Date(year, month + 1, 0).getDate();
-        const cells = [];
-        for (let i = 0; i < firstWeekday; i++) cells.push(null);
-        for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-        return cells;
-    }
+        const result = [];
+        for (let i = 0; i < firstWeekday; i++) result.push(null);
+        for (let d = 1; d <= daysInMonth; d++) result.push(d);
+        return result;
+    }, [year, month]);
 
     function dateStr(day) {
         return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     }
 
-    const today = new Date();
-    const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const todayStr = useMemo(() => {
+        const today = new Date();
+        return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    }, []);
 
     const monthLabel = currentDate.toLocaleString('default', { month: 'long', year: 'numeric' });
-    const cells = getDays();
 
     return (
         <div className="insights-calendar card-glass">
@@ -126,7 +129,7 @@ export default function InsightsCalendar({ onDayClick }) {
                             <div
                                 key={ds}
                                 className={`ic-cell ${colorClass} ${isToday ? 'ic-cell-today' : ''} ${hasData ? 'ic-cell-clickable' : ''}`}
-                                onClick={() => hasData && onDayClick(ds)}
+                                onClick={() => hasData && onDayClick?.(ds)}
                             >
                                 <span className="ic-day-number">{day}</span>
                                 {hasData && (
