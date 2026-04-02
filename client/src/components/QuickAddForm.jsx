@@ -103,14 +103,14 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
 
     function formatDisplayAmount(amt) {
         if (!amt) return '0';
-        return formatNumber(parseInt(amt));
+        return formatNumber(parseFloat(amt));
     }
 
     // Helper to add new items
     async function handleAddItem(
-        type, name, setLoading, setShow, setNewName, api, setIds
+        type, name, isLoading, setLoading, setShow, setNewName, api, setIds
     ) {
-        if (!name.trim() || type.loading) return;
+        if (!name.trim() || isLoading) return;
         setLoading(true);
         triggerImpact('medium');
         try {
@@ -290,8 +290,10 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                             <div className="quick-add-numpad">
                                 <NumberPad
                                     onInput={(val) => {
-                                        if (val === '.' && amount.includes('.')) return;
-                                        setAmount(prev => (prev === '0' && val !== '.' ? val : prev + val));
+                                        setAmount(prev => {
+                                            if (val === '.' && prev.includes('.')) return prev;
+                                            return prev === '0' && val !== '.' ? val : prev + val;
+                                        });
                                         triggerImpact('light');
                                     }}
                                     onDelete={() => {
@@ -366,9 +368,9 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                                                         onChange={(e) => setNewCategoryName(e.target.value)}
                                                         placeholder="New Category"
                                                         autoFocus
-                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddItem('category', newCategoryName, setAddCategoryLoading, setShowAddCategory, setNewCategoryName, categories, setCategoryId)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddItem('category', newCategoryName, addCategoryLoading, setAddCategoryLoading, setShowAddCategory, setNewCategoryName, categories, setCategoryId)}
                                                     />
-                                                    <button className="inline-add-btn" onClick={() => handleAddItem('category', newCategoryName, setAddCategoryLoading, setShowAddCategory, setNewCategoryName, categories, setCategoryId)}>
+                                                    <button className="inline-add-btn" onClick={() => handleAddItem('category', newCategoryName, addCategoryLoading, setAddCategoryLoading, setShowAddCategory, setNewCategoryName, categories, setCategoryId)}>
                                                         {addCategoryLoading ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
                                                     </button>
                                                     <button className="inline-cancel-btn" onClick={() => setShowAddCategory(false)}><X size={16} /></button>
@@ -404,9 +406,9 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                                                         onChange={(e) => setNewGroupName(e.target.value)}
                                                         placeholder="New Group"
                                                         autoFocus
-                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddItem('group', newGroupName, setAddGroupLoading, setShowAddGroup, setNewGroupName, groups, setGroupId)}
+                                                        onKeyDown={(e) => e.key === 'Enter' && handleAddItem('group', newGroupName, addGroupLoading, setAddGroupLoading, setShowAddGroup, setNewGroupName, groups, setGroupId)}
                                                     />
-                                                    <button className="inline-add-btn" onClick={() => handleAddItem('group', newGroupName, setAddGroupLoading, setShowAddGroup, setNewGroupName, groups, setGroupId)}>
+                                                    <button className="inline-add-btn" onClick={() => handleAddItem('group', newGroupName, addGroupLoading, setAddGroupLoading, setShowAddGroup, setNewGroupName, groups, setGroupId)}>
                                                         {addGroupLoading ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
                                                     </button>
                                                     <button className="inline-cancel-btn" onClick={() => setShowAddGroup(false)}><X size={16} /></button>
@@ -443,9 +445,9 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                                                     onChange={(e) => setNewIncomeSourceName(e.target.value)}
                                                     placeholder="New Source"
                                                     autoFocus
-                                                    onKeyDown={(e) => e.key === 'Enter' && handleAddItem('income source', newIncomeSourceName, setAddIncomeSourceLoading, setShowAddIncomeSource, setNewIncomeSourceName, incomeSources, setIncomeSourceId)}
+                                                    onKeyDown={(e) => e.key === 'Enter' && handleAddItem('income source', newIncomeSourceName, addIncomeSourceLoading, setAddIncomeSourceLoading, setShowAddIncomeSource, setNewIncomeSourceName, incomeSources, setIncomeSourceId)}
                                                 />
-                                                <button className="inline-add-btn" onClick={() => handleAddItem('income source', newIncomeSourceName, setAddIncomeSourceLoading, setShowAddIncomeSource, setNewIncomeSourceName, incomeSources, setIncomeSourceId)}>
+                                                <button className="inline-add-btn" onClick={() => handleAddItem('income source', newIncomeSourceName, addIncomeSourceLoading, setAddIncomeSourceLoading, setShowAddIncomeSource, setNewIncomeSourceName, incomeSources, setIncomeSourceId)}>
                                                     {addIncomeSourceLoading ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
                                                 </button>
                                                 <button className="inline-cancel-btn" onClick={() => setShowAddIncomeSource(false)}><X size={16} /></button>
@@ -482,9 +484,9 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
                                                 onChange={(e) => setNewPaymentName(e.target.value)}
                                                 placeholder="New Method"
                                                 autoFocus
-                                                onKeyDown={(e) => e.key === 'Enter' && handleAddItem('payment', newPaymentName, setAddPaymentLoading, setShowAddPayment, setNewPaymentName, paymentMethods, setPaymentMethodId)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleAddItem('payment', newPaymentName, addPaymentLoading, setAddPaymentLoading, setShowAddPayment, setNewPaymentName, paymentMethods, setPaymentMethodId)}
                                             />
-                                            <button className="inline-add-btn" onClick={() => handleAddItem('payment', newPaymentName, setAddPaymentLoading, setShowAddPayment, setNewPaymentName, paymentMethods, setPaymentMethodId)}>
+                                            <button className="inline-add-btn" onClick={() => handleAddItem('payment', newPaymentName, addPaymentLoading, setAddPaymentLoading, setShowAddPayment, setNewPaymentName, paymentMethods, setPaymentMethodId)}>
                                                 {addPaymentLoading ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
                                             </button>
                                             <button className="inline-cancel-btn" onClick={() => setShowAddPayment(false)}><X size={16} /></button>
