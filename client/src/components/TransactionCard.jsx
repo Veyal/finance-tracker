@@ -20,8 +20,8 @@ export default function TransactionCard({ transaction, onClick, dragHandleProps 
         note
     } = transaction;
 
-    const hasRepayments = repayment_total > 0;
-    const displayAmount = hasRepayments && net_amount !== undefined ? net_amount : amount;
+    const hasRepayments = Number(repayment_total) > 0;
+    const displayAmount = hasRepayments && net_amount != null ? net_amount : amount;
     const needsReview = type === 'expense' && (!category_name || !group_name || !payment_method_name);
 
     const displayName = merchant || category_name || income_source_name || saving_name || 'Unlabeled';
