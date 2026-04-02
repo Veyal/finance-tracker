@@ -27,12 +27,6 @@ export default function DrillDownModal({ isOpen, onClose, title, filters, onTran
 
     const filtersKey = filters ? Object.keys(filters).sort().map(k => `${k}=${filters[k]}`).join('&') : '';
 
-    useEffect(() => {
-        if (isOpen && filters) {
-            loadTransactions();
-        }
-    }, [isOpen, filtersKey, loadTransactions]);
-
     const loadTransactions = useCallback(async function loadTransactions() {
         try {
             setLoading(true);
@@ -48,6 +42,12 @@ export default function DrillDownModal({ isOpen, onClose, title, filters, onTran
             setLoading(false);
         }
     }, [filters]);
+
+    useEffect(() => {
+        if (isOpen && filters) {
+            loadTransactions();
+        }
+    }, [isOpen, filtersKey, loadTransactions]);
 
     if (!isOpen) return null;
 
