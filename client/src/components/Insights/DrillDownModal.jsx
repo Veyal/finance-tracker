@@ -25,11 +25,13 @@ export default function DrillDownModal({ isOpen, onClose, title, filters, onTran
     const [transactions, setTransactions] = useState([]);
     const [error, setError] = useState(null);
 
+    const filtersKey = filters ? Object.keys(filters).sort().map(k => `${k}=${filters[k]}`).join('&') : '';
+
     useEffect(() => {
         if (isOpen && filters) {
             loadTransactions();
         }
-    }, [isOpen, JSON.stringify(filters)]);
+    }, [isOpen, filtersKey]);
 
     async function loadTransactions() {
         try {
@@ -37,7 +39,8 @@ export default function DrillDownModal({ isOpen, onClose, title, filters, onTran
             setError(null);
             const result = await transactionsApi.list(filters);
             // result is { transactions: [], totals: {}, next_cursor: ... }
-            setTransactions(result.transactions || []);
+            const txList = result?.transactions;
+            setTransactions(Array.isArray(txList) ? txList : []);
         } catch (err) {
             console.error('Failed to load drill-down transactions:', err);
             setError('Failed to load transactions');
