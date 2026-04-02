@@ -53,6 +53,7 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
     const [addIncomeSourceLoading, setAddIncomeSourceLoading] = useState(false);
 
     const amountInputRef = useRef(null);
+    const successTimerRef = useRef(null);
     const dragControls = useDragControls();
 
 
@@ -100,6 +101,13 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
             setTimeout(() => amountInputRef.current?.focus(), 100);
         }
     }, [step]);
+
+    // Cleanup success timer on unmount
+    useEffect(() => {
+        return () => {
+            if (successTimerRef.current) clearTimeout(successTimerRef.current);
+        };
+    }, []);
 
     function formatDisplayAmount(amt) {
         if (!amt) return '0';
@@ -160,9 +168,10 @@ export default function QuickAddForm({ options, onSave, onClose, onOptionsChange
             if (paymentMethodId) localStorage.setItem(STORAGE_KEYS.lastPayment, paymentMethodId);
             if (incomeSourceId) localStorage.setItem(STORAGE_KEYS.lastIncomeSource, incomeSourceId);
 
+            setLoading(false);
             setStep(2); // Success!
             triggerSuccess();
-            setTimeout(() => {
+            successTimerRef.current = setTimeout(() => {
                 onSave(data);
             }, 1200); // 1.2s to enjoy the success animation
         } catch (err) {
