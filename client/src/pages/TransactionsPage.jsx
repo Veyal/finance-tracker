@@ -7,6 +7,9 @@ import TransactionForm from '../components/TransactionForm';
 import TransactionDetailModal from '../components/TransactionDetailModal';
 import SummaryCard from '../components/SummaryCard';
 import PrivacyToggle from '../components/PrivacyToggle';
+import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
+import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import './TransactionsPage.css';
 
 // Helper function to group transactions by date
@@ -61,10 +64,6 @@ function formatDateDivider(dateStr) {
         });
     }
 }
-
-import { DndContext, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors } from '@dnd-kit/core';
-import { arrayMove, SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
-import { CSS } from '@dnd-kit/utilities';
 
 // Sortable Transaction Item Wrapper with drag handle
 function SortableTransaction({ transaction, onEdit, onDelete, onClick, isSortable }) {
