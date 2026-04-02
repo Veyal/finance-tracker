@@ -14,6 +14,7 @@ export default function InsightsPage() {
     const [dailyData, setDailyData] = useState([]);
     const [prevPeriodTotal, setPrevPeriodTotal] = useState(0);
     const [loading, setLoading] = useState(true);
+    const [dateRange, setDateRange] = useState({ from: '', to: '' });
 
     // Drill down state
     const [showDrillDown, setShowDrillDown] = useState(false);
@@ -67,6 +68,7 @@ export default function InsightsPage() {
                 transactions.insights({ from: prevFrom, to: prevTo, type: viewType })
             ]);
 
+            setDateRange({ from, to });
             setData(insightsResult);
             setDailyData(summaryResult || []);
             setPrevPeriodTotal(viewType === 'expense'
@@ -121,11 +123,11 @@ export default function InsightsPage() {
 
     const handleCategoryClick = (item, type) => {
         setDrillDownTitle(`${item.name} Transactions`);
-        const filters = { type: viewType };
-        if (type === 'category') filters.categoryId = item.id;
-        if (type === 'group') filters.groupId = item.id;
-        if (type === 'paymentMethod') filters.paymentMethodId = item.id;
-        
+        const filters = { type: viewType, from: dateRange.from, to: dateRange.to };
+        if (type === 'category') filters.category_id = item.id;
+        if (type === 'group') filters.group_id = item.id;
+        if (type === 'paymentMethod') filters.payment_method_id = item.id;
+
         setDrillDownFilters(filters);
         setShowDrillDown(true);
     };
