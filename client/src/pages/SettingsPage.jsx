@@ -9,6 +9,8 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { categories, groups, paymentMethods, incomeSources, auth, transactions as transactionsApi, data as dataApi } from '../api/api';
 import { formatCurrency } from '../utils/format';
+import GmailSyncButton from '../components/GmailSyncButton';
+import { handleOAuthCallback } from '../services/gmailAuth';
 import './SettingsPage.css';
 
 export default function SettingsPage() {
@@ -55,6 +57,16 @@ export default function SettingsPage() {
 
     useEffect(() => {
         loadData();
+    }, []);
+
+    useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const code = params.get('code');
+        if (code) {
+            handleOAuthCallback(code).catch(err => {
+                console.error('Gmail OAuth callback failed:', err);
+            });
+        }
     }, []);
 
     // ... (keep loadData and other existing functions)
@@ -471,6 +483,12 @@ export default function SettingsPage() {
                         </div>
                         {bulkLoading ? <Loader2 size={18} className="spin" /> : <ChevronRight size={18} />}
                     </button>
+                    <div className="settings-item-v2" style={{ cursor: 'default', display: 'block', padding: 0 }}>
+                        <GmailSyncButton onSyncComplete={(result) => {
+                            setBulkResults(result);
+                            setPendingBulkData(null);
+                        }} />
+                    </div>
                     <button className="settings-item-v2" onClick={handleImportClick} disabled={importLoading}>
                         <div className="item-icon-v2" style={{ color: '#F59E0B' }}><Upload size={20} /></div>
                         <div className="item-text-v2">
