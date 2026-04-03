@@ -53,16 +53,6 @@
     flex-wrap: wrap;
 }
 
-.gmail-date-row .input-label {
-    white-space: nowrap;
-    min-width: 70px;
-}
-
-.gmail-date-input {
-    flex: 1;
-    min-width: 140px;
-    max-width: 180px;
-}
 
 .gmail-action-row {
     display: flex;

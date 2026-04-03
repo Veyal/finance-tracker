@@ -3,6 +3,7 @@ import { Mail, Loader2, AlertCircle, CheckCircle, Unlink } from 'lucide-react';
 import { isConnected, startOAuthFlow, disconnect } from '../services/gmailAuth';
 import { syncFromGmail, GmailAuthError } from '../services/gmailSync';
 import { transactions as transactionsApi, categories, groups, paymentMethods } from '../api/api';
+import DatePicker from './DatePicker';
 import './GmailSyncButton.css';
 
 export default function GmailSyncButton({ onSyncComplete }) {
@@ -100,12 +101,10 @@ export default function GmailSyncButton({ onSyncComplete }) {
 
             <div className="gmail-sync-controls">
                 <div className="gmail-date-row">
-                    <label className="input-label">Sync since</label>
-                    <input
-                        type="date"
-                        className="input gmail-date-input"
+                    <DatePicker
+                        label="Sync since"
                         value={since}
-                        onChange={e => setSince(e.target.value)}
+                        onChange={setSince}
                         disabled={syncing}
                     />
                 </div>
