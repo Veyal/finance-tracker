@@ -867,11 +867,11 @@ export default function SettingsPage() {
                             <div className="form-group">
                                 <label className="input-label">Type</label>
                                 <div className="type-switcher-v2">
-                                    <button 
+                                    <button
                                         className={`type-btn ${editingReviewItem.type === 'expense' ? 'active expense' : ''}`}
                                         onClick={() => setEditingReviewItem({...editingReviewItem, type: 'expense'})}
                                     >Expense</button>
-                                    <button 
+                                    <button
                                         className={`type-btn ${editingReviewItem.type === 'income' ? 'active income' : ''}`}
                                         onClick={() => setEditingReviewItem({...editingReviewItem, type: 'income'})}
                                     >Income</button>
@@ -901,18 +901,58 @@ export default function SettingsPage() {
                                     <input
                                         type="date"
                                         className="input"
-                                        value={editingReviewItem.date.split('T')[0]}
+                                        value={(editingReviewItem.date || '').split('T')[0]}
                                         onChange={e => setEditingReviewItem({...editingReviewItem, date: e.target.value})}
                                     />
                                 </div>
                             </div>
                             <div className="form-group">
                                 <label className="input-label">Category</label>
+                                <select
+                                    className="select"
+                                    value={editingReviewItem.category_id || ''}
+                                    onChange={e => setEditingReviewItem({...editingReviewItem, category_id: e.target.value, category_name: e.target.options[e.target.selectedIndex].text})}
+                                >
+                                    <option value="">No Category</option>
+                                    {data.categories.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="input-label">Group</label>
+                                <select
+                                    className="select"
+                                    value={editingReviewItem.group_id || ''}
+                                    onChange={e => setEditingReviewItem({...editingReviewItem, group_id: e.target.value})}
+                                >
+                                    <option value="">No Group</option>
+                                    {data.groups.map(g => (
+                                        <option key={g.id} value={g.id}>{g.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="input-label">Payment Method</label>
+                                <select
+                                    className="select"
+                                    value={editingReviewItem.payment_method_id || ''}
+                                    onChange={e => setEditingReviewItem({...editingReviewItem, payment_method_id: e.target.value})}
+                                >
+                                    <option value="">No Payment Method</option>
+                                    {data.paymentMethods.map(pm => (
+                                        <option key={pm.id} value={pm.id}>{pm.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="form-group">
+                                <label className="input-label">Note</label>
                                 <input
                                     type="text"
                                     className="input"
-                                    value={editingReviewItem.category_name || editingReviewItem.category_id || ''}
-                                    onChange={e => setEditingReviewItem({...editingReviewItem, category_name: e.target.value})}
+                                    placeholder="Optional note"
+                                    value={editingReviewItem.note || ''}
+                                    onChange={e => setEditingReviewItem({...editingReviewItem, note: e.target.value})}
                                 />
                             </div>
                         </div>

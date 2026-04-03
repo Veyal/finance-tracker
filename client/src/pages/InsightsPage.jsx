@@ -9,7 +9,7 @@ import './InsightsPage.css';
 export default function InsightsPage() {
     const { isPrivacyMode } = usePrivacy();
     const [range, setRange] = useState('month');
-    const [viewType, setViewType] = useState('expense');
+    const [viewType, setViewType] = useState('all'); // 'expense' | 'income' | 'all'
     const [data, setData] = useState(null);
     const [dailyData, setDailyData] = useState([]);
     const [prevPeriodTotal, setPrevPeriodTotal] = useState(0);
@@ -62,10 +62,11 @@ export default function InsightsPage() {
                 prevTo = new Date(today.getFullYear() - 1, 11, 31).toISOString().split('T')[0];
             }
 
+            const insightsType = viewType === 'all' ? undefined : viewType;
             const [insightsResult, summaryResult, prevInsights] = await Promise.all([
-                transactions.insights({ from, to, type: viewType }),
+                transactions.insights({ from, to, ...(insightsType ? { type: insightsType } : {}) }),
                 transactions.summary({ from, to }),
-                transactions.insights({ from: prevFrom, to: prevTo, type: viewType })
+                transactions.insights({ from: prevFrom, to: prevTo, ...(insightsType ? { type: insightsType } : {}) })
             ]);
 
             setDateRange({ from, to });
@@ -73,7 +74,9 @@ export default function InsightsPage() {
             setDailyData(summaryResult || []);
             setPrevPeriodTotal(viewType === 'expense'
                 ? prevInsights?.totals?.expense || 0
-                : prevInsights?.totals?.income || 0
+                : viewType === 'income'
+                    ? prevInsights?.totals?.income || 0
+                    : (prevInsights?.totals?.income || 0) - (prevInsights?.totals?.expense || 0)
             );
         } catch (error) {
             console.error('Failed to load insights:', error);
@@ -92,15 +95,21 @@ export default function InsightsPage() {
         return formatCurrency(amount);
     }
 
-    // Calculate daily average
+    // Calculate stats
+    const totalExpense = data?.totals?.expense || 0;
+    const totalIncome = data?.totals?.income || 0;
     const currentTotal = viewType === 'expense'
-        ? (data?.totals?.expense || 0)
-        : (data?.totals?.income || 0);
+        ? totalExpense
+        : viewType === 'income'
+            ? totalIncome
+            : totalIncome - totalExpense; // net for 'all'
 
     const avgDaily = dailyData.length > 0
         ? (viewType === 'expense'
             ? dailyData.reduce((sum, d) => sum + (d.expense || 0), 0) / dailyData.length
-            : dailyData.reduce((sum, d) => sum + (d.income || 0), 0) / dailyData.length)
+            : viewType === 'income'
+                ? dailyData.reduce((sum, d) => sum + (d.income || 0), 0) / dailyData.length
+                : dailyData.reduce((sum, d) => sum + (d.income || 0) - (d.expense || 0), 0) / dailyData.length)
         : 0;
 
     // Calculate period comparison
@@ -113,17 +122,17 @@ export default function InsightsPage() {
 
     // Callbacks for components
     const handlePointClick = (point) => {
-        setDrillDownTitle(`Transactions on ${new Date(point.day).toLocaleDateString()}`);
+        setDrillDownTitle(`Transactions on ${new Date(point.day + 'T00:00:00').toLocaleDateString()}`);
         setDrillDownFilters({
             date: point.day,
-            type: viewType
+            ...(viewType !== 'all' ? { type: viewType } : {}),
         });
         setShowDrillDown(true);
     };
 
     const handleCategoryClick = (item, type) => {
         setDrillDownTitle(`${item.name} Transactions`);
-        const filters = { type: viewType, from: dateRange.from, to: dateRange.to };
+        const filters = { from: dateRange.from, to: dateRange.to, ...(viewType !== 'all' ? { type: viewType } : {}) };
         if (type === 'category') filters.category_id = item.id;
         if (type === 'group') filters.group_id = item.id;
         if (type === 'paymentMethod') filters.payment_method_id = item.id;
@@ -147,38 +156,46 @@ export default function InsightsPage() {
             <header className="insights-header">
                 <div className="header-title-row">
                     <h1>Insights</h1>
-                    <div className="view-type-toggle">
-                        <button 
-                            className={`toggle-btn ${viewType === 'expense' ? 'active expense' : ''}`}
+                </div>
+
+                <div className="quick-filters">
+                    {[
+                        { key: 'week', label: 'Last 7 Days' },
+                        { key: 'month', label: 'Last 30 Days' },
+                        { key: 'year', label: 'This Year' },
+                    ].map(({ key, label }) => (
+                        <button
+                            key={key}
+                            type="button"
+                            className={`chip ${range === key ? 'active' : ''}`}
+                            onClick={() => setRange(key)}
+                        >
+                            {label}
+                        </button>
+                    ))}
+
+                    <div className="type-chips">
+                        <button
+                            type="button"
+                            className={`chip chip-expense ${viewType === 'expense' ? 'active' : ''}`}
                             onClick={() => setViewType('expense')}
                         >
                             Expense
                         </button>
-                        <button 
-                            className={`toggle-btn ${viewType === 'income' ? 'active income' : ''}`}
+                        <button
+                            type="button"
+                            className={`chip chip-all ${viewType === 'all' ? 'active' : ''}`}
+                            onClick={() => setViewType('all')}
+                        >
+                            All
+                        </button>
+                        <button
+                            type="button"
+                            className={`chip chip-income ${viewType === 'income' ? 'active' : ''}`}
                             onClick={() => setViewType('income')}
                         >
                             Income
                         </button>
-                    </div>
-                </div>
-                
-                <div className="range-selector-row">
-                    <div className="range-chips">
-                        {[
-                            { key: 'week', label: 'Last 7 Days' },
-                            { key: 'month', label: 'Last 30 Days' },
-                            { key: 'year', label: 'This Year' },
-                        ].map(({ key, label }) => (
-                            <button
-                                key={key}
-                                type="button"
-                                className={`range-chip ${range === key ? 'active' : ''}`}
-                                onClick={() => setRange(key)}
-                            >
-                                {label}
-                            </button>
-                        ))}
                     </div>
                 </div>
             </header>
@@ -192,13 +209,15 @@ export default function InsightsPage() {
                     {/* Top Stats Cards */}
                     <section className="stats-summary-grid">
                         <div className="stat-summary-card card-glass animate-slide-up" style={{ animationDelay: '0.1s' }}>
-                            <div className={`stat-card-icon ${viewType}`}>
+                            <div className={`stat-card-icon ${viewType === 'all' ? 'daily' : viewType}`}>
                                 {viewType === 'expense' ? <TrendingDown size={20} /> : <TrendingUp size={20} />}
                             </div>
                             <div className="stat-card-info">
-                                <span className="stat-card-label">Total {viewType === 'expense' ? 'Spending' : 'Income'}</span>
+                                <span className="stat-card-label">
+                                    {viewType === 'expense' ? 'Total Spending' : viewType === 'income' ? 'Total Income' : 'Net Balance'}
+                                </span>
                                 <div className="stat-card-value-row">
-                                    <span className={`stat-card-value amount-${viewType}`}>
+                                    <span className={`stat-card-value ${viewType === 'all' ? (currentTotal >= 0 ? 'amount-income' : 'amount-expense') : `amount-${viewType}`}`}>
                                         {formatAmount(currentTotal)}
                                     </span>
                                     {(prevPeriodTotal > 0 || currentTotal > 0) && (
@@ -236,7 +255,10 @@ export default function InsightsPage() {
                             <div className="stat-card-info">
                                 <span className="stat-card-label">Active Days</span>
                                 <span className="stat-card-value">
-                                    {dailyData.filter(d => (viewType === 'expense' ? d.expense : d.income) > 0).length}
+                                    {dailyData.filter(d => viewType === 'all'
+                                        ? (d.expense > 0 || d.income > 0)
+                                        : (viewType === 'expense' ? d.expense : d.income) > 0
+                                    ).length}
                                 </span>
                             </div>
                         </div>
@@ -248,9 +270,9 @@ export default function InsightsPage() {
                             <h3><Activity size={18} /> Daily Trends</h3>
                         </div>
                         <div className="chart-container card-glass">
-                            <SpendingTrendChart 
-                                data={dailyData} 
-                                type={viewType} 
+                            <SpendingTrendChart
+                                data={dailyData}
+                                type={viewType === 'all' ? 'expense' : viewType}
                                 onPointClick={handlePointClick}
                             />
                         </div>
@@ -264,25 +286,25 @@ export default function InsightsPage() {
                         <div className="breakdowns-grid">
                             <div className="breakdown-card card-glass">
                                 <h4 className="breakdown-title">By Category</h4>
-                                <CategoryBreakdown 
+                                <CategoryBreakdown
                                     data={data?.byCategory || []}
-                                    type={viewType}
+                                    type={viewType === 'all' ? 'expense' : viewType}
                                     onCategoryClick={(item) => handleCategoryClick(item, 'category')}
                                 />
                             </div>
                             <div className="breakdown-card card-glass">
                                 <h4 className="breakdown-title">By Group</h4>
-                                <CategoryBreakdown 
+                                <CategoryBreakdown
                                     data={data?.byGroup || []}
-                                    type={viewType}
+                                    type={viewType === 'all' ? 'expense' : viewType}
                                     onCategoryClick={(item) => handleCategoryClick(item, 'group')}
                                 />
                             </div>
                             <div className="breakdown-card card-glass">
                                 <h4 className="breakdown-title">By Payment Method</h4>
-                                <CategoryBreakdown 
+                                <CategoryBreakdown
                                     data={data?.byPaymentMethod || []}
-                                    type={viewType}
+                                    type={viewType === 'all' ? 'expense' : viewType}
                                     onCategoryClick={(item) => handleCategoryClick(item, 'paymentMethod')}
                                 />
                             </div>

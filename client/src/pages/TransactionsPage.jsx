@@ -147,11 +147,9 @@ export default function TransactionsPage() {
                 return { from: weekAgo.toISOString().split('T')[0], to: today };
             }
             case 'month': {
-                const now = new Date();
-                const y = now.getFullYear();
-                const m = String(now.getMonth() + 1).padStart(2, '0');
-                const startOfMonth = `${y}-${m}-01`;
-                return { from: startOfMonth, to: today };
+                const thirtyDaysAgo = new Date(now);
+                thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                return { from: thirtyDaysAgo.toISOString().split('T')[0], to: today };
             }
             case 'all':
                 return { from: '', to: '' };
@@ -363,14 +361,14 @@ export default function TransactionsPage() {
                     className={`chip ${activePreset === 'week' ? 'active' : ''}`}
                     onClick={() => handleQuickDate('week')}
                 >
-                    This Week
+                    Last 7 Days
                 </button>
                 <button
                     type="button"
                     className={`chip ${activePreset === 'month' ? 'active' : ''}`}
                     onClick={() => handleQuickDate('month')}
                 >
-                    This Month
+                    Last 30 Days
                 </button>
 
                 <div className="type-chips">
