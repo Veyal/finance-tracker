@@ -1,0 +1,109 @@
+/* GmailSyncButton widget — lives inside settings-list-v2 */
+
+.gmail-sync-widget {
+    padding: var(--space-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.gmail-sync-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+}
+
+.gmail-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(66, 133, 244, 0.12);
+    color: #4285F4;
+    flex-shrink: 0;
+}
+
+.gmail-icon.connected {
+    background: var(--income-green-glow);
+    color: var(--income-green);
+}
+
+.gmail-connected-badge {
+    font-size: var(--text-xs);
+    color: var(--income-green);
+    font-weight: 700;
+    margin-left: var(--space-xs);
+}
+
+.gmail-sync-controls {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding-left: 0;
+}
+
+.gmail-date-row {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+}
+
+.gmail-date-row .input-label {
+    white-space: nowrap;
+    min-width: 70px;
+}
+
+.gmail-date-input {
+    flex: 1;
+    min-width: 140px;
+    max-width: 180px;
+}
+
+.gmail-action-row {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.gmail-disconnect-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+    padding: 6px var(--space-sm);
+}
+
+.gmail-disconnect-btn:hover {
+    color: var(--expense-red);
+}
+
+.gmail-feedback {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    font-size: var(--text-xs);
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-md);
+}
+
+.gmail-feedback.error {
+    background: var(--expense-red-glow);
+    color: var(--expense-red);
+}
+
+.gmail-feedback.success {
+    background: var(--income-green-glow);
+    color: var(--income-green);
+}
+
+.gmail-connect-btn {
+    align-self: flex-start;
+    margin-top: var(--space-xs);
+}
