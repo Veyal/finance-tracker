@@ -1,4 +1,5 @@
 const CLIENT_ID = import.meta.env.VITE_GMAIL_CLIENT_ID;
+const CLIENT_SECRET = import.meta.env.VITE_GMAIL_CLIENT_SECRET;
 const REDIRECT_URI = `${window.location.origin}/settings`;
 const SCOPES = 'https://www.googleapis.com/auth/gmail.readonly';
 
@@ -77,6 +78,7 @@ export async function handleOAuthCallback(code) {
         body: new URLSearchParams({
             code,
             client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET,
             code_verifier: verifier,
             redirect_uri: REDIRECT_URI,
             grant_type: 'authorization_code',
@@ -108,6 +110,7 @@ export async function refreshAccessToken() {
         body: new URLSearchParams({
             refresh_token: refreshToken,
             client_id: CLIENT_ID,
+            client_secret: CLIENT_SECRET,
             grant_type: 'refresh_token',
         }),
     });
